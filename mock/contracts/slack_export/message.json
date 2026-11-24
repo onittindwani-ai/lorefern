@@ -1,0 +1,1 @@
+{"files": ["channels.json", "groups.json", "dms.json", "users.json"], "message_example": {"type": "message", "user": "U2147483697", "text": "Hello world", "ts": "1355517523.000005"}}

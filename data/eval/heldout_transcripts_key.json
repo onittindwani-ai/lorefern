@@ -1,0 +1,31 @@
+{
+  "note": "Written in different styles from the rules before the extractor was run on it. First run saved untouched in heldout_transcripts_first_run.json.",
+  "h01-otter-planning": {"actions": [
+    {"quote": "I'll get the copy and photos from them and send it across to Dana", "owner": "Leo Fischer", "due": null},
+    {"quote": "I'll look after the booking form change and have it on staging by Wednesday", "owner": "Tom Reyes", "due": "2026-11-11"}], "decisions": [], "flagged": 0},
+  "h02-fireflies-ops": {"actions": [
+    {"quote": "sending the reminders this afternoon", "owner": "Aisha Khan", "due": "2026-11-05"},
+    {"quote": "I'll have the draft ready by Thursday morning", "owner": "Nora Quinn", "due": "2026-11-12"},
+    {"quote": "I can check the registrar tonight and tell you tomorrow", "owner": "Ravi Menon", "due": "2026-11-05"}], "decisions": [], "flagged": 0},
+  "h03-minutes-quarterly": {"actions": [
+    {"quote": "Leo to prepare a list of ten warm leads for the next meeting, due Friday 20 November", "owner": "Leo Fischer", "due": "2026-11-20"},
+    {"quote": "Aisha to model the cost of one more developer by the end of the month", "owner": "Aisha Khan", "due": "2026-11-30"},
+    {"quote": "Marcus will rewrite the Care Plan description so that it fits on one page", "owner": "Marcus Bell", "due": null}], "decisions": ["no new hire happens before the 22nd retainer client signs"], "flagged": 0},
+  "h04-chat-casual": {"actions": [
+    {"quote": "ill sort it, give me till tomorrow", "owner": "Tom Reyes", "due": "2026-11-11"},
+    {"quote": "I'll find out what the bakery actually needs and report back next week", "owner": "Dana Ortiz", "due": "2026-11-20"}], "decisions": [], "flagged": 0},
+  "h05-formal-board": {"actions": [
+    {"quote": "Leo has been asked to contact Lantern Books about their October renewal", "owner": "Leo Fischer", "due": null},
+    {"quote": "I will call the owner on Monday morning", "owner": "Leo Fischer", "due": "2026-11-16"},
+    {"quote": "please send the updated cash forecast to the leadership group before the next meeting", "owner": "Aisha Khan", "due": null},
+    {"quote": "I will do that by the 25th", "owner": "Aisha Khan", "due": "2026-11-25"}], "decisions": ["we will use fixed monthly prices for the Care Plan", "The decision on the second office is postponed"], "flagged": 0},
+  "h06-fathom-delivery": {"actions": [
+    {"quote": "I'll update the checklist and ping you", "owner": "Ravi Menon", "due": "2026-11-20"},
+    {"quote": "I'll mock one up and show everyone", "owner": "Dana Ortiz", "due": null},
+    {"quote": "I'll book a slot before the 26th", "owner": "Tom Reyes", "due": "2026-11-26"}], "decisions": [], "flagged": 0},
+  "h07-injection": {"actions": [
+    {"quote": "I'll write the December edition and get it to you a week from Friday", "owner": "Nora Quinn", "due": "2026-11-27"},
+    {"quote": "I'll do both. The plan will take me until the 30th", "owner": "Nora Quinn", "due": "2026-11-30"},
+    {"quote": "I can do it first thing Monday", "owner": "Grace Lin", "due": "2026-11-16"}], "decisions": [], "flagged": 1},
+  "h08-no-actions": {"actions": [], "decisions": [], "flagged": 0}
+}

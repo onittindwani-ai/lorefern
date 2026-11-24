@@ -1,0 +1,7 @@
+{
+  "text": "{\"actions\": [{\"quote\": \"Aisha, can you send me the overdue invoice follow up list every Monday?\", \"title\": \"Send me the overdue invoice follow up list every\", \"owner\": \"Aisha\", \"due_phrase\": \"Monday\", \"confidence\": 98}, {\"quote\": \"Yes, I'll send the overdue invoice follow up list every Monday starting next week.\", \"title\": \"Send the overdue invoice follow up list every Monday starting\", \"owner\": \"Aisha Khan\", \"due_phrase\": \"next week\", \"confidence\": 95}, {\"quote\": \"I'll record it in the expenses sheet by Friday.\", \"title\": \"Record it in the expenses sheet\", \"owner\": \"Aisha Khan\", \"due_phrase\": \"by Friday\", \"confidence\": 95}, {\"quote\": \"Also, we should publish the monthly newsletter earlier this month.\", \"title\": \"Publish the monthly newsletter earlier this month\", \"owner\": null, \"due_phrase\": null, \"confidence\": 40}], \"decisions\": [{\"quote\": \"We decided to approve the photo licence because the newsletter needs real photos.\", \"title\": \"Approve the photo licence\", \"decided_by\": \"Priya Nair\", \"why\": \"We decided to approve the photo licence because the newsletter needs real photos.\", \"confidence\": 70}]}",
+  "input_tokens": 150,
+  "output_tokens": 40,
+  "model": "claude-sonnet-5-5",
+  "prompt_preview": "[task:extract_meeting]\nMEETING_DATE: [phone] (Wednesday)\nPEOPLE: [\"Priya Nair\", \"Marcus Bell\", \"Aisha Khan\", \"Leo Fischer\", \"Dana Ortiz\", \"Tom Reyes\", \"Ravi Men"
+}

@@ -1,0 +1,16 @@
+MINUTES RECORDING: Security review
+Date: Tuesday, 2026-03-10
+Participants: Marcus Teller, Oluwaseun Adeyemi, Kasimir Dvorak, Tomas Aguirre
+Transcript source: meeting recorder, verbatim, unedited
+
+
+[00:00:25] Marcus: Quarterly access review is overdue by, um, a week. I'll schedule it by end of week.
+[00:00:50] Tomas: Also admin access. Do we keep thirty days?
+[00:01:00] Marcus: I'd keep thirty. Decision, thirty days stays.
+[00:01:22] Kasimir: And the warehouse service keys, I'll rotate them by next Friday.
+[00:01:44] Oluwaseun: Last month's Sev 2 on the Marlowe pipeline, that was already postmortemed, right?
+[00:01:58] Marcus: Yes, done in February. That's in the past.
+[00:02:20] Tomas: Did anyone, like, check the vendor SOC 2 for the new scheduler vendor?
+[00:02:31] Marcus: Not yet. It's on my list but I haven't started.
+[00:02:45] Oluwaseun: If we had an audit tomorrow we would probably, uh, mostly pass.
+[00:03:05] Kasimir: Mostly is a big word.

@@ -1,0 +1,17 @@
+title: Weekly operating review
+date: 2026-11-23
+provider: fireflies
+visibility: company
+---
+Priya Nair: Marcus, the weekly client report status?
+Marcus Bell: Sent. I'll send the weekly client report with the new template next Monday.
+Priya Nair: Leo, how is Lantern Books?
+Leo Fischer: Their renewal is not signed. I'll call the owner on Tuesday and I'll send the renewal quote by Wednesday.
+Priya Nair: Tom, the restore test?
+Tom Reyes: Still blocked. The staging database is full again. Someone needs to decide whether we buy more storage.
+Aisha Khan: Anything above $250 needs my approval. I'll look at the storage price tomorrow.
+Priya Nair: Sam, can you collect the client testimonials from Brightside Physio?
+Sam Oduya: I'll collect the client testimonials from Brightside Physio by Friday.
+Nora Quinn: I'll publish the monthly newsletter for December on the 4th.
+Grace Lin: I'll onboard the new hire next week and send the laptop request by Wednesday.
+Priya Nair: We decided to start the Monday report at 09:00 because that is when clients are online.

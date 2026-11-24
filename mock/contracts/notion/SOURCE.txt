@@ -1,0 +1,4 @@
+Read 2026-11-23: https://developers.notion.com/reference/post-search (page text; the last 1,235 characters were not read).
+Documented: POST /v1/search, headers Authorization: Bearer, Notion-Version (the page says "2026-03-11" is the only allowed value), Content-Type application/json; body query (optional), filter {property: "object", value: "page" or "data_source"}, page_size, start_cursor; response object "list", results, next_cursor (null at the end), has_more.
+Finding: the adapter sent Notion-Version 2022-06-28 and ignored has_more and next_cursor (it read only the first page). Both changed in this step. The blocks children endpoint (GET /v1/blocks/{id}/children) was NOT fetched: UNVERIFIED.
+Nothing was run against Notion.

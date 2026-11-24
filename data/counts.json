@@ -1,0 +1,103 @@
+{
+ "tables": 14,
+ "api_paths": 53,
+ "api_operations": 58,
+ "pages": 11,
+ "screenshots": 39,
+ "tool_groups": 8,
+ "tools_scored": 28,
+ "seed": {
+  "company_files": 59,
+  "meetings": 12,
+  "planted_tasks": 35,
+  "slack_files": 9,
+  "people": 10,
+  "stuck_pairs": 18,
+  "heldout_transcripts": 8
+ },
+ "heldout_questions": 56,
+ "eval": {
+  "answers_first_run": {
+   "correct": 22,
+   "of": 56,
+   "leaks": 0
+  },
+  "answers_after_tuning": {
+   "correct": 32,
+   "of": 56,
+   "leaks": 0
+  },
+  "answers_dev": {
+   "correct": 33,
+   "of": 38
+  },
+  "extraction": {
+   "transcripts": 8,
+   "expected_actions": 20,
+   "found_actions": 15,
+   "precision": 0.8,
+   "recall": 0.6,
+   "quote_validity": 1.0
+  },
+  "independent": {
+   "set_a_first_run": {
+    "correct": 42,
+    "of": 79,
+    "restricted_refused_clean": 7,
+    "restricted_of": 10,
+    "tool_flagged_leaks": 1,
+    "actions_matched": 16,
+    "actions_key": 25,
+    "precision_strict": 0.615,
+    "recall": 0.64,
+    "decisions_found": [
+     6,
+     10
+    ]
+   },
+   "set_a_after_improvements": {
+    "correct": 45,
+    "of": 79,
+    "restricted_refused_clean": 7,
+    "restricted_of": 10,
+    "tool_flagged_leaks": 1,
+    "actions_matched": 19,
+    "actions_key": 25,
+    "precision_strict": 0.679,
+    "recall": 0.76,
+    "decisions_found": [
+     6,
+     10
+    ]
+   },
+   "set_b_first_run": {
+    "correct": 65,
+    "of": 87,
+    "restricted_refused_clean": 9,
+    "restricted_of": 13,
+    "tool_flagged_leaks": 1,
+    "actions_matched": 15,
+    "actions_key": 21,
+    "precision_strict": 0.536,
+    "recall": 0.714,
+    "decisions_found": [
+     8,
+     10
+    ]
+   }
+  },
+  "contract_tests": 9,
+  "model_path_tests": 27,
+  "llm_fixtures": 29
+ },
+ "e2e": {
+  "tests": 30,
+  "files": 5
+ },
+ "tests": {
+  "passed": 213,
+  "skipped": 1,
+  "failed": 0,
+  "coverage_percent": 92.0
+ }
+}

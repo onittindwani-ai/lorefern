@@ -1,0 +1,12 @@
+[
+  {"name": "Priya Nair", "email": "priya@pinegate.example.test", "role": "Founder and chief executive", "aliases": ["Priya"]},
+  {"name": "Marcus Bell", "email": "marcus@pinegate.example.test", "role": "Head of delivery", "aliases": ["Marcus"]},
+  {"name": "Aisha Khan", "email": "aisha@pinegate.example.test", "role": "Finance and operations", "aliases": ["Aisha"]},
+  {"name": "Leo Fischer", "email": "leo@pinegate.example.test", "role": "Account manager", "aliases": ["Leo"]},
+  {"name": "Dana Ortiz", "email": "dana@pinegate.example.test", "role": "Designer", "aliases": ["Dana"]},
+  {"name": "Tom Reyes", "email": "tom@pinegate.example.test", "role": "Lead developer", "aliases": ["Tom"]},
+  {"name": "Ravi Menon", "email": "ravi@pinegate.example.test", "role": "Developer", "aliases": ["Ravi"]},
+  {"name": "Nora Quinn", "email": "nora@pinegate.example.test", "role": "Marketing", "aliases": ["Nora"]},
+  {"name": "Grace Lin", "email": "grace@pinegate.example.test", "role": "People and office", "aliases": ["Grace"]},
+  {"name": "Sam Oduya", "email": "sam@pinegate.example.test", "role": "Support", "aliases": ["Sam"]}
+]

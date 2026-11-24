@@ -1,0 +1,13 @@
+title: Ops catch up
+date: 2026-11-05
+provider: fireflies
+visibility: company
+---
+Aisha: Quick one on invoices. Two are overdue, Corner Cycle and Lantern.
+Priya: Can you chase them today?
+Aisha: Yes, sending the reminders this afternoon.
+Priya: Nora, the newsletter draft is still not in the folder.
+Nora: Sorry, that slipped. I'll have the draft ready by Thursday morning.
+Priya: Fine. And somebody should check whether the domain for Lantern renews this month.
+Ravi: I can check the registrar tonight and tell you tomorrow.
+Priya: Thanks. We are done.

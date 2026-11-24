@@ -1,0 +1,5 @@
+Read 2026-11-23 (public pages, page text only, no machine readable spec fetched):
+- https://developers.google.com/identity/protocols/oauth2/service-account (JWT header and claims, token request, response fields)
+- https://developers.google.com/identity/protocols/oauth2/web-server (refresh token request and response; the refresh section sits after character 100000 and was read with an offset)
+Not fetched: the Drive v3 files.list and files.export reference pages were read in an earlier step (see docs/facts/knowledge-sources.md); their field list and the `fields`, `alt=media` parameters stay UNVERIFIED in this folder.
+Nothing was run against Google.

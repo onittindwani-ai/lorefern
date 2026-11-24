@@ -1,0 +1,7 @@
+{
+  "text": "Last week 1 tasks were completed and 0 decisions were confirmed. 13 tasks are stuck and 7 proposed tasks wait for a person.",
+  "input_tokens": 150,
+  "output_tokens": 40,
+  "model": "claude-haiku-5-5",
+  "prompt_preview": "[task:review_intro]\nFACTS:\n{\"completed\": 1, \"decisions\": 0, \"meetings\": 1, \"stuck\": 13, \"waiting\": 7, \"process_gaps\": 2}\nEND"
+}

@@ -1,0 +1,20 @@
+[
+ {
+  "type": "message",
+  "user": "U08",
+  "text": "Newsletter is out. Open rate was 41 percent.",
+  "ts": "1762300000.0001"
+ },
+ {
+  "type": "message",
+  "user": "U01",
+  "text": "Great work Nora.",
+  "ts": "1762300001.0001"
+ },
+ {
+  "type": "message",
+  "user": "U09",
+  "text": "Reminder: the office is closed on 27 November.",
+  "ts": "1762300002.0001"
+ }
+]

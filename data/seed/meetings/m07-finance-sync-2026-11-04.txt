@@ -1,0 +1,14 @@
+title: Finance sync
+date: 2026-11-04
+provider: fireflies
+visibility: finance
+---
+Aisha Khan: October closed. Revenue was close to the plan.
+Priya Nair: What about overdue invoices?
+Aisha Khan: Lantern Books is still late. I'll chase the overdue invoices on Monday and escalate to Priya if it is 14 days late.
+Priya Nair: Fine. We decided to pause new work for any client that is 14 days late because we cannot fund their work.
+Aisha Khan: I'll write that into the invoice follow up SOP by the 18th.
+Priya Nair: Aisha, can you model the cost of one more developer by next Friday?
+Aisha Khan: Yes, I'll build the model this week.
+Priya Nair: Also, the domain renewals. Who pays?
+Aisha Khan: I'll renew the domains for Pinegate itself on the 9th, the client ones are with Ravi.

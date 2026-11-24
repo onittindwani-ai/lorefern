@@ -1,0 +1,7 @@
+{
+  "text": "{\"sentences\": [{\"text\": \"Client sites use Next.js and a Postgres database.\", \"passage_ids\": [104]}], \"confidence\": 70, \"cannot_answer\": false}",
+  "input_tokens": 150,
+  "output_tokens": 40,
+  "model": "claude-sonnet-5-5",
+  "prompt_preview": "[task:write_answer]\nWrite the answer sentences for the question in the first data block. Use only the passages in the second data block.\nKEY_WORDS: [[\"site\", 2."
+}

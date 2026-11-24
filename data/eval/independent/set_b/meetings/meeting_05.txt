@@ -1,0 +1,15 @@
+MINUTES RECORDING: Orlin Freight change request
+Date: Tuesday, 2026-03-24
+Participants: Beatrix Lindqvist, Oluwaseun Adeyemi, Kasimir Dvorak, Ingrid Solheim
+Transcript source: meeting recorder, verbatim, unedited
+
+
+[00:00:35] Oluwaseun: The change request for Orlin adds two new depots. It's about forty hours of work.
+[00:01:02] Ingrid: We absorb the first twenty hours. Decision: up to twenty hours of rework unbilled, the rest is billed at the rate card.
+[00:01:28] Oluwaseun: I'll send the written change request to Orlin on Friday.
+[00:01:50] Kasimir: I can rerun the backtest tomorrow. Oh, wait, no, Thursday, the data load isn't ready until then.
+[00:02:15] Ingrid: Thursday, then.
+[00:02:30] Beatrix: What if they threaten to walk over the extra billing?
+[00:02:44] Ingrid: Then we talk. That's a bridge for later.
+[00:03:05] Beatrix: If they walk we lose the biggest account, so, yeah.
+[00:03:25] Kasimir: Maybe we should have principals review all change requests at some point.

@@ -1,0 +1,14 @@
+title: Delivery sync
+date: 2026-11-12
+provider: fathom
+visibility: company
+---
+[00:00:12] Marcus Bell: Reports went out on time this week, thanks everyone.
+[00:00:40] Ravi Menon: I've been meaning to fix the release checklist, it still says Friday deploys are allowed.
+[00:00:55] Marcus Bell: Please do. Can you update it before the end of next week?
+[00:01:05] Ravi Menon: Sure thing, I'll update the checklist and ping you.
+[00:01:30] Dana Ortiz: I'd like to try a new template for the reports. I'll mock one up and show everyone.
+[00:01:44] Marcus Bell: Nice, bring it to the Monday review.
+[00:02:10] Tom Reyes: Backup restore test is due this quarter. We have not done it since February.
+[00:02:20] Marcus Bell: Tom, you own that. Can you schedule it in the next two weeks?
+[00:02:30] Tom Reyes: Will do, I'll book a slot before the 26th.

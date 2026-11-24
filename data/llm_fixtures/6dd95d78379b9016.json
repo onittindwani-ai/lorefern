@@ -1,0 +1,7 @@
+{
+  "text": "{\"sentences\": [{\"text\": \"Leo Fischer holds a discovery call within 3 working days.\", \"passage_ids\": [77]}, {\"text\": \"Reviews happen twice a year, in May and in November.\", \"passage_ids\": [125]}], \"confidence\": 70, \"cannot_answer\": false}",
+  "input_tokens": 150,
+  "output_tokens": 40,
+  "model": "claude-sonnet-5-5",
+  "prompt_preview": "[task:write_answer]\nWrite the answer sentences for the question in the first data block. Use only the passages in the second data block.\nKEY_WORDS: [[\"performan"
+}

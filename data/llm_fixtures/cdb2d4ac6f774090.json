@@ -1,0 +1,7 @@
+{
+  "text": "{\"label\": \"collect client testimonials\", \"summary\": \"\"}",
+  "input_tokens": 150,
+  "output_tokens": 40,
+  "model": "claude-haiku-5-5",
+  "prompt_preview": "[task:name_process]\nLABEL: collect client testimonials\nGive this recurring process a short plain name from the examples in the data block.\n\nReply with only JSON"
+}

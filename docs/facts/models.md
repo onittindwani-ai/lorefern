@@ -1,0 +1,13 @@
+# Language model path
+
+UNVERIFIED live. Date written: 2026-11-23.
+
+What the code does (`apps/api/src/lorefern/model_tasks.py`): it goes through the base wrapper (`sendora_core.llm`), which sends `POST /v1/messages` to the Anthropic Messages API with the key in `x-api-key`, the `anthropic-version` header, the system prompt, the question, passages and transcripts inside marked untrusted blocks, and a JSON schema in `output_config.format`. The request and response fields follow the vendor documentation as read for the base on 2026-11-23 (see the hub's FACTS-AND-SOURCES). Models used: `claude-sonnet-5-5` for writing answer sentences and reading meetings, `claude-haiku-5-5` for process names and the review intro.
+
+Four jobs: write the answer sentences (each with the ids of the passages it relies on and a confidence), read one meeting (action items with a verbatim quote, an owner as named and the due date words as spoken, and decisions with a verbatim quote), give a recurring process a plain name, and write two sentences for the top of the weekly review from its numbers.
+
+What code does around the model (all tested against a fake server): the groundedness check runs on every sentence a model writes and removes unsupported ones; sentences that give orders, claim an action was done or carry a link that is not in the passages are dropped first; passage sentences and transcript lines that give orders are never sent to the model; marker lookalikes cannot close a data block; a model sees only passages the asker may see; a meeting quote is accepted only when found again in the transcript, the date is worked out by code from spoken words, an unknown owner is left empty, and a title that does not come from its quote is replaced by the quote; the schemas have no field for a visibility tag, a status, an owner id or an approval, and the module has no access to any of those functions (a test reads its imports); a bad answer, a kill switch or a spent budget falls back to the rules.
+
+What was run: the whole path against a fake server on this machine (`mock/anthropic_mock.py`) that checks the request shape, and replay of recorded answers (`data/llm_fixtures/`, made by that fake server, not by a real model). **Never run with a real key.** How a real model reads real documents and meetings, its cost and its error rate are unknown. A test also proves that with `LLM_BACKEND` unset no connection is made even when a key is in the environment.
+
+Switches: `LLM_BACKEND` (offline, fixture, anthropic), `ANSWER_WRITER` (model by default, effective only when a model backend is on), `MEETING_EXTRACTOR`, `PROCESS_WORDING`, `REVIEW_WRITER` (rules by default). See `04-ENVIRONMENT-VARIABLES.md`.

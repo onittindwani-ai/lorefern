@@ -1,0 +1,14 @@
+title: Harbor Dental debrief
+date: 2026-10-21
+provider: fathom
+visibility: clients
+---
+Leo Fischer: Harbor Dental liked the booking page but they want the button to stay green.
+Marcus Bell: Fine. We decided to keep the green button because the client asked for it in writing.
+Leo Fischer: I'll send the client a confirmation email by tomorrow.
+Marcus Bell: Tom, the second clinic needs its own booking calendar. Can you set that up by Friday?
+Tom Reyes: I'll set up the second booking calendar this week.
+Sam Oduya: They also asked about their renewal. I'll chase the overdue invoices for Harbor Dental if Aisha shares the list.
+Aisha Khan: I'll share the list tomorrow.
+Marcus Bell: Someone needs to renew the domain for Harbor Dental, it expires in December.
+Leo Fischer: Let me check the registrar and renew the domain next week.

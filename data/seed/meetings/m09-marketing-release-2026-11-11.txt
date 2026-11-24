@@ -1,0 +1,15 @@
+title: Marketing and release planning
+date: 2026-11-11
+provider: fathom
+visibility: company
+---
+Nora Quinn: For December, I'll draft the newsletter by the 25th. We also need client testimonials.
+Priya Nair: Nora, please collect the client testimonials from the five clients.
+Nora Quinn: I'll email them by Friday.
+Ravi Menon: The release checklist is updated. I'll deploy the Brightside Physio page on Tuesday.
+Tom Reyes: Remember, no Friday releases.
+Ravi Menon: Yes, I'll deploy the Brightside Physio page on Tuesday morning.
+Priya Nair: We decided to publish two blog posts a month instead of four because quality matters more than volume.
+Nora Quinn: Understood. I'll write the first post by next Wednesday.
+Marcus Bell: Someone needs to update the pricing page for the new Care Plan wording.
+Dana Ortiz: I'll update the pricing page this week.

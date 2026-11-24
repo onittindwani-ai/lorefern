@@ -1,0 +1,3 @@
+Read 2026-11-23: https://docs.fireflies.ai/graphql-api/query/transcripts (page text). No machine readable schema was fetched.
+What the page showed: header "Authorization: Bearer <key>", query transcripts(title, date, limit, skip, host_email ...), sentences { index speaker_name speaker_id text raw_text start_time end_time ai_filters }, summary { keywords action_items outline shorthand_bullet overview }. The page's response example holds only title and id, and does not state the output type of `date` (the `date` ARGUMENT is a Float in milliseconds, deprecated for fromDate and toDate). The adapter treats an output date of digits as milliseconds: UNVERIFIED.
+Nothing was run against Fireflies.

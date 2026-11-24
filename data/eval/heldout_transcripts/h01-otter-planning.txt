@@ -1,0 +1,22 @@
+title: Planning call, Brightside Physio
+date: 2026-11-04
+provider: otter
+visibility: clients
+---
+Marcus Bell  0:03
+Okay, Brightside wants the new location page live before their open day.
+
+Leo Fischer  0:19
+That's on me. I'll get the copy and photos from them and send it across to Dana.
+
+Dana Ortiz  0:41
+Fine. Once I have the photos I can turn the layout around in two days.
+
+Marcus Bell  0:58
+Great. Tom, the booking form needs a second clinic option. Are you able to pick that up?
+
+Tom Reyes  1:10
+Yes, I'll look after the booking form change and have it on staging by Wednesday.
+
+Marcus Bell  1:30
+Good. I'll tell the client the page goes live on the 18th.

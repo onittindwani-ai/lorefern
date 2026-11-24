@@ -1,0 +1,4 @@
+Read 2026-11-23: https://developers.fathom.ai/api-reference/meetings/list-meetings (page text). No OpenAPI file was fetched.
+Documented: GET /meetings on https://api.fathom.ai/external/v1, header X-Api-Key (Bearer also supported), query include_transcript (default false, not available to OAuth connected apps, which use /recordings), include_action_items (default false), cursor. Response: items[], next_cursor (nullable), recording_id (integer), title, created_at (date-time), transcript[] {speaker.display_name, text, timestamp HH:MM:SS}, action_items[] {description, assignee {name, email, team}}.
+Finding: the adapter reads `m.get("title") or m.get("meeting_title")` and str(recording_id): both fine.
+Nothing was run against Fathom.

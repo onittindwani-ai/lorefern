@@ -1,0 +1,244 @@
+{
+ "questions": 56,
+ "correct": 32,
+ "accuracy": 0.571,
+ "leaks": 0,
+ "citations_checked": 51,
+ "citations_valid": 51,
+ "per_class": {
+  "conflict": {
+   "n": 3,
+   "correct": 3,
+   "accuracy": 1.0
+  },
+  "decision": {
+   "n": 7,
+   "correct": 5,
+   "accuracy": 0.714
+  },
+  "meeting": {
+   "n": 4,
+   "correct": 1,
+   "accuracy": 0.25
+  },
+  "out_of_scope": {
+   "n": 3,
+   "correct": 3,
+   "accuracy": 1.0
+  },
+  "restricted": {
+   "n": 6,
+   "correct": 5,
+   "accuracy": 0.833
+  },
+  "single": {
+   "n": 22,
+   "correct": 8,
+   "accuracy": 0.364
+  },
+  "two_doc": {
+   "n": 5,
+   "correct": 1,
+   "accuracy": 0.2
+  },
+  "unanswerable": {
+   "n": 6,
+   "correct": 6,
+   "accuracy": 1.0
+  }
+ },
+ "misses": [
+  {
+   "id": "h01",
+   "class": "single",
+   "question": "How long do I have to expect before someone answers a support email from a client?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h02",
+   "class": "single",
+   "question": "What time does the team's Monday review start and who runs it?",
+   "audience": "staff",
+   "why": "cited ['05-operations-weekly-operating-review-sop', 'meeting-2026-11-09-weekly-operating-review', 'meeting-2026-11-23-weekly-operating-review']",
+   "answer": "Priya Nair: We decided to start the Monday report at 09:00 because that is when clients are online. Priya reads the stuck work and the new d"
+  },
+  {
+   "id": "h03",
+   "class": "single",
+   "question": "Where do we run client websites?",
+   "audience": "staff",
+   "why": "cited ['01-company-company-profile']",
+   "answer": "After launch we run them for a monthly fee, and we send each client a monthly performance report. We build websites and booking systems for "
+  },
+  {
+   "id": "h04",
+   "class": "single",
+   "question": "How much does the monthly maintenance plan cost a customer?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h05",
+   "class": "single",
+   "question": "When can I not push a change live for a client?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h09",
+   "class": "single",
+   "question": "In which months do the performance reviews take place?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h10",
+   "class": "single",
+   "question": "What do we do on the day after a client invoice is late?",
+   "audience": "staff",
+   "why": "outcome conflict, wanted answer",
+   "answer": "Payment terms: the client pays each invoice within 30 days of the invoice date. Invoices are due within 14 days of the invoice date. Two doc"
+  },
+  {
+   "id": "h11",
+   "class": "single",
+   "question": "At what point do we stop doing new work for a client who has not paid?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h12",
+   "class": "single",
+   "question": "Who looks after backups and how often is a restore tried?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h13",
+   "class": "single",
+   "question": "What database technology do the client sites run on?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h16",
+   "class": "single",
+   "question": "Are we allowed to promise a client better search rankings?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h17",
+   "class": "single",
+   "question": "What must everyone use to store passwords?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h20",
+   "class": "single",
+   "question": "What happens when a client website goes down during the working day?",
+   "audience": "staff",
+   "why": "outcome conflict, wanted answer",
+   "answer": "Book the kickoff call within 5 working days. Leo Fischer holds a discovery call within 3 working days. Two documents give different answers."
+  },
+  {
+   "id": "h21",
+   "class": "two_doc",
+   "question": "A client site is down. Who takes charge and how often must they post news?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h22",
+   "class": "two_doc",
+   "question": "Who owns invoicing, and what is the first step when an invoice is overdue?",
+   "audience": "staff",
+   "why": "missing: Aisha Khan, friendly reminder",
+   "answer": "She owns invoicing and spending approvals. - Leo Fischer: account manager. At 7 days overdue, call the client contact. The newsletter goes o"
+  },
+  {
+   "id": "h23",
+   "class": "two_doc",
+   "question": "Which developer owns release checks and what time of day must deployments happen by?",
+   "audience": "staff",
+   "why": "missing: Ravi Menon, 15:00",
+   "answer": "He owns client onboarding. - Dana Ortiz: designer. - Tom Reyes: lead developer. Deploy to the staging site and check the booking form. Never"
+  },
+  {
+   "id": "h25",
+   "class": "two_doc",
+   "question": "What is the plan for the number of retainer clients and when may we hire another developer?",
+   "audience": "leadership",
+   "why": "cited ['meeting-2026-11-18-leadership-monthly']",
+   "answer": "Priya Nair: We decided not to hire a developer until the 22nd retainer client signs because the cash plan only works that way."
+  },
+  {
+   "id": "h31",
+   "class": "decision",
+   "question": "Did we change the price of the maintenance plan and for how long is it fixed?",
+   "audience": "leadership",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h32",
+   "class": "decision",
+   "question": "What is our rule for clients who pay two weeks late?",
+   "audience": "finance",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h33",
+   "class": "meeting",
+   "question": "Who is supposed to renew the Lantern Books domain and when?",
+   "audience": "staff",
+   "why": "missing: Wednesday",
+   "answer": "Ravi Menon: Someone needs to renew the domain for Lantern Books."
+  },
+  {
+   "id": "h34",
+   "class": "meeting",
+   "question": "What did Tom say was stopping the restore test?",
+   "audience": "staff",
+   "why": "cited ['06-product-and-engineering-backup-and-restore']",
+   "answer": "Tom Reyes tests a restore once a quarter and writes down the result."
+  },
+  {
+   "id": "h36",
+   "class": "meeting",
+   "question": "What did the team argue about on 2 November regarding report days?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h44",
+   "class": "restricted",
+   "question": "Did anyone make an offer to buy the company?",
+   "audience": "staff",
+   "why": "outcome answer, wanted not_found",
+   "answer": "Any expense above $500 needs written approval from Aisha Khan before you buy."
+  },
+  {
+   "id": "h55",
+   "class": "single",
+   "question": "What are we planning to spend on tools next year?",
+   "audience": "finance",
+   "why": "cited ['05-operations-expense-policy', 'slack-finance-2026-11-12']",
+   "answer": "Tools spend is on plan. Receipts are kept for 7 years."
+  }
+ ]
+}

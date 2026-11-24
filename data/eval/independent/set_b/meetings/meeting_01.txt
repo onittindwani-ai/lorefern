@@ -1,0 +1,17 @@
+MINUTES RECORDING: Tooling review, Jira to Linear
+Date: Tuesday, 2026-01-13
+Participants: Oluwaseun Adeyemi, Kasimir Dvorak, Marcus Teller, Elio Caruso
+Transcript source: meeting recorder, verbatim, unedited
+
+
+[00:00:41] Oluwaseun: Right, so, um, as of yesterday we are on Linear, that was the call.
+[00:01:05] Kasimir: Yeah, so, the backlog is, like, nine hundred tickets. I'll export the whole Jira backlog by Friday.
+[00:01:30] Oluwaseun: Good. Marcus, SSO?
+[00:01:38] Marcus: I haven't actually, uh, tested the Linear SSO config yet. I'll review it by next Friday.
+[00:02:02] Elio: And the Jira licences, we pay till end of month. I'll cancel them on the thirty-first, not before, otherwise we lose the export window.
+[00:02:30] Oluwaseun: Agreed. Decision recorded: we stay on Linear, no dual running after January.
+[00:02:55] Kasimir: What about the, the Prefect tickets, do those migrate?
+[00:03:04] Oluwaseun: Yes, that is a question for the export script, not a task.
+[00:03:20] Marcus: We could, in theory, keep Jira read only for a year, but, I mean, why.
+[00:03:40] Kasimir: Ha, because I like the old purple.
+[00:03:55] Oluwaseun: Somebody ought to update the onboarding doc to say Linear.

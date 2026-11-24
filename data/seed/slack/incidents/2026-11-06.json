@@ -1,0 +1,26 @@
+[
+ {
+  "type": "message",
+  "user": "U10",
+  "text": "Brightside Physio says the booking form shows an error.",
+  "ts": "1762300000.0001"
+ },
+ {
+  "type": "message",
+  "user": "U06",
+  "text": "Taking it. The cause is an expired certificate on the staging proxy, not production. Fixing now.",
+  "ts": "1762300001.0001"
+ },
+ {
+  "type": "message",
+  "user": "U06",
+  "text": "Fixed after 40 minutes. We will add a calendar reminder for certificate renewals.",
+  "ts": "1762300002.0001"
+ },
+ {
+  "type": "message",
+  "user": "U01",
+  "text": "Thanks Tom. Please write the short note.",
+  "ts": "1762300003.0001"
+ }
+]

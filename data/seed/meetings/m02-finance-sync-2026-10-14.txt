@@ -1,0 +1,14 @@
+title: Finance sync
+date: 2026-10-14
+provider: fireflies
+visibility: finance
+---
+Aisha Khan: Cash is fine. Three invoices are due this month and one is overdue.
+Priya Nair: Aisha, can you send me the overdue invoice follow up list every Monday?
+Aisha Khan: Yes, I'll send the overdue invoice follow up list every Monday starting next week.
+Priya Nair: Nora asked to buy a $300 photo licence. Does that need approval?
+Aisha Khan: Under our rules anything above $250 needs my approval, so yes.
+Priya Nair: Then I approve it. We decided to approve the photo licence because the newsletter needs real photos.
+Aisha Khan: I'll record it in the expenses sheet by Friday.
+Priya Nair: Also, we should publish the monthly newsletter earlier this month.
+Aisha Khan: Nora owns that, but someone needs to ask her.

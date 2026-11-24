@@ -1,0 +1,14 @@
+title: Support huddle
+date: 2026-11-10
+provider: meetily
+visibility: company
+---
+Sam: ok so Harbor Dental emailed again about the green button
+Tom: lol the green button
+Sam: can u have a look at it Tom? its in the staging site i think
+Tom: yeah ill sort it, give me till tomorrow
+Dana: i can send you the exact green code if that helps
+Sam: perfect
+Sam: also Elm Street want to know if the cake order form can show allergens
+Dana: hmm. not sure we should. I'll find out what the bakery actually needs and report back next week
+Sam: great thx

@@ -1,0 +1,15 @@
+MINUTES RECORDING: Hiring plan
+Date: Tuesday, 2026-04-07
+Participants: Noor Haddad, Tomas Aguirre, Ingrid Solheim, Beatrix Lindqvist
+Transcript source: meeting recorder, verbatim, unedited
+
+
+[00:00:28] Noor: The board approved six hires. I'll open the two consultant requisitions by Friday.
+[00:00:58] Tomas: Senior data engineer first. Decision: the senior data engineer is the first of the six to be hired.
+[00:01:20] Beatrix: And I can, um, jump on first screens for the sales engineer, if that's a thing.
+[00:01:34] Ingrid: It isn't yet. Let's not.
+[00:01:50] Noor: I'll send the revised scorecard template to the hiring managers on Monday.
+[00:02:14] Tomas: Do we need two reviewers on the technical stage?
+[00:02:22] Noor: Policy says one panel, so, that's a question for later.
+[00:02:40] Ingrid: We should probably build a referral bonus at some point.
+[00:02:55] Beatrix: I'd refer my cat.

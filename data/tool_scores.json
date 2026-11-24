@@ -1,0 +1,1232 @@
+{
+ "dated": "2026-11-23",
+ "note": "Judgements from sources and our own adapter work on the date shown, not benchmarks. A tool marked not run was scored from its description only, and a source marked not fetched was not read.",
+ "weights": {
+  "fit": 35,
+  "setup": 15,
+  "reliability": 15,
+  "cost": 15,
+  "data": 10,
+  "integration": 10
+ },
+ "criteria_names": {
+  "fit": "Fit",
+  "setup": "Setup effort",
+  "reliability": "Reliability and upkeep",
+  "cost": "Cost",
+  "data": "Data control",
+  "integration": "Integration depth"
+ },
+ "groups": [
+  {
+   "id": "wiki",
+   "job": "Where the company writes things down (wiki or notes tool)",
+   "reference": "notion",
+   "recommendation": {
+    "beginner": "Keep writing where the team already writes. If there is no place yet, start with the plain folder template in this repo: it needs no account and Lorefern reads it directly.",
+    "implementer": "Notion has a read only adapter here that was tested against a local stand in, not against Notion. For Docmost, Outline, Wiki.js or BookStack, export to Markdown into the company folder and let Lorefern read the folder. That path is tested.",
+    "cost_sensitive": "A Markdown folder in Git costs nothing. Docmost, Outline, Wiki.js and BookStack are open source and cost a small server. Notion has its own price page; read it yourself.",
+    "open_source_when": "Open source wikis are the right call when the client wants documents on their own server or the team can run Docker. They are the wrong call when the team already lives in Notion and will not move."
+   },
+   "tools": [
+    {
+     "id": "notion",
+     "name": "Notion",
+     "kind": "paid",
+     "supported_in_lorefern": "Read only adapter tested against a stand in",
+     "run": "not run against Notion",
+     "sources": [
+      {
+       "url": "https://developers.notion.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 80,
+       "evidence": "Where many small companies already keep documents, so Lorefern meets them there."
+      },
+      "setup": {
+       "score": 60,
+       "evidence": "Needs an integration token and each page shared with it. Judged from the steps, not run."
+      },
+      "reliability": {
+       "score": 80,
+       "evidence": "Mature hosted service with a stable public API."
+      },
+      "cost": {
+       "score": 50,
+       "evidence": "Seat pricing. No figures quoted, read the price page."
+      },
+      "data": {
+       "score": 45,
+       "evidence": "Data sits with the vendor. Notion permissions are not copied into Lorefern tags."
+      },
+      "integration": {
+       "score": 55,
+       "evidence": "Adapter reads pages as text only. Databases and comments are not read."
+      }
+     }
+    },
+    {
+     "id": "docmost",
+     "name": "Docmost",
+     "kind": "open_source",
+     "supported_in_lorefern": "No adapter. Export to Markdown into the folder",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://docmost.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 70,
+       "evidence": "Self hosted wiki with spaces and pages. Close to Notion for plain documents, without its databases."
+      },
+      "setup": {
+       "score": 55,
+       "evidence": "Needs Docker and a database. Setup judged from its description, not run."
+      },
+      "reliability": {
+       "score": 65,
+       "evidence": "Younger project, so expect faster change. Not tested here."
+      },
+      "cost": {
+       "score": 90,
+       "evidence": "Free to run. You pay for the server."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Documents stay on your server."
+      },
+      "integration": {
+       "score": 30,
+       "evidence": "No adapter here. Markdown export into the company folder is the tested route."
+      }
+     }
+    },
+    {
+     "id": "outline",
+     "name": "Outline",
+     "kind": "open_source",
+     "supported_in_lorefern": "No adapter. Export to Markdown into the folder",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://www.getoutline.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 75,
+       "evidence": "Team wiki with a clean editor, close to Notion for written knowledge."
+      },
+      "setup": {
+       "score": 45,
+       "evidence": "Needs a database, file storage and a sign in provider to run yourself. Judged, not run."
+      },
+      "reliability": {
+       "score": 75,
+       "evidence": "Active project with a hosted edition and a self hosted one."
+      },
+      "cost": {
+       "score": 75,
+       "evidence": "Self hosting is free in licence terms of the source, but check its current licence yourself."
+      },
+      "data": {
+       "score": 95,
+       "evidence": "Self hosted keeps data with you."
+      },
+      "integration": {
+       "score": 30,
+       "evidence": "No adapter here. Use the Markdown export."
+      }
+     }
+    },
+    {
+     "id": "wikijs",
+     "name": "Wiki.js",
+     "kind": "open_source",
+     "supported_in_lorefern": "No adapter. Folder or Git sync into the company folder",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://js.wiki/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 65,
+       "evidence": "A wiki that can keep pages as Markdown files in Git, which is exactly what Lorefern reads."
+      },
+      "setup": {
+       "score": 65,
+       "evidence": "Docker image and a database. Judged from its description, not run."
+      },
+      "reliability": {
+       "score": 65,
+       "evidence": "Long lived project. Its next major version was in progress when last checked from memory."
+      },
+      "cost": {
+       "score": 95,
+       "evidence": "Free to run. Judged from its description."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Pages stay on your server, or in your Git repository."
+      },
+      "integration": {
+       "score": 55,
+       "evidence": "Git storage means the company folder can simply be its checkout."
+      }
+     }
+    },
+    {
+     "id": "bookstack",
+     "name": "BookStack",
+     "kind": "open_source",
+     "supported_in_lorefern": "No adapter. Export to Markdown into the folder",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://www.bookstackapp.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 60,
+       "evidence": "Books, chapters and pages. Good for procedures, less flexible than Notion."
+      },
+      "setup": {
+       "score": 65,
+       "evidence": "A PHP application with a database. Judged, not run."
+      },
+      "reliability": {
+       "score": 80,
+       "evidence": "Steady, long lived project with regular releases."
+      },
+      "cost": {
+       "score": 95,
+       "evidence": "Free to run. Judged from its description."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Everything stays on your server."
+      },
+      "integration": {
+       "score": 30,
+       "evidence": "No adapter here. Use the Markdown export."
+      }
+     }
+    },
+    {
+     "id": "folder",
+     "name": "Plain Markdown folder (the template)",
+     "kind": "open_source",
+     "supported_in_lorefern": "Built and tested. The default and the demo knowledge base",
+     "run": "run in the tests and the demo",
+     "sources": [
+      {
+       "url": "https://github.com/onittindwani-ai/lorefern",
+       "checked": "this repo"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 70,
+       "evidence": "Every document has an owner, a review date and a visibility tag in plain text. Fits what Lorefern checks."
+      },
+      "setup": {
+       "score": 85,
+       "evidence": "Copy the folder, fill it in. No account."
+      },
+      "reliability": {
+       "score": 90,
+       "evidence": "Plain files do not break. Someone must keep them current."
+      },
+      "cost": {
+       "score": 100,
+       "evidence": "Free. Judged from its description."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Files stay where you keep them."
+      },
+      "integration": {
+       "score": 100,
+       "evidence": "Read directly, with a checker for the structure."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "drive",
+   "job": "Shared file storage",
+   "reference": "gdrive",
+   "recommendation": {
+    "beginner": "If the company files already live in Google Drive, copy the folders that matter into the company folder template and let Lorefern read that. It is the simplest and safest start.",
+    "implementer": "The Drive adapter is read only and was tested against a local stand in only. Use a service account limited to one folder, and read doc 13 first: Drive sharing rules are not copied into Lorefern.",
+    "cost_sensitive": "A synced plain folder costs nothing. Nextcloud is open source and costs a small server.",
+    "open_source_when": "Open source storage is the right call when files must stay on a server you control. It is the wrong call for a team that already shares everything in Drive."
+   },
+   "tools": [
+    {
+     "id": "gdrive",
+     "name": "Google Drive",
+     "kind": "paid",
+     "supported_in_lorefern": "Read only adapter tested against a stand in",
+     "run": "not run against Google",
+     "sources": [
+      {
+       "url": "https://developers.google.com/drive/api",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 80,
+       "evidence": "Where many companies keep documents. Lorefern reads Google Docs as text and ordinary files."
+      },
+      "setup": {
+       "score": 50,
+       "evidence": "Needs a Google Cloud project, the Drive API and a service account, then sharing a folder with it. Judged, not run."
+      },
+      "reliability": {
+       "score": 85,
+       "evidence": "Mature, widely used service."
+      },
+      "cost": {
+       "score": 60,
+       "evidence": "Free storage tiers exist and paid plans have their own page. No figures quoted."
+      },
+      "data": {
+       "score": 45,
+       "evidence": "Data sits with Google. Drive permissions are not copied into Lorefern tags."
+      },
+      "integration": {
+       "score": 55,
+       "evidence": "Read only. Comments, revisions and shared drives are not read."
+      }
+     }
+    },
+    {
+     "id": "nextcloud",
+     "name": "Nextcloud",
+     "kind": "open_source",
+     "supported_in_lorefern": "No adapter. Sync a folder and read it as the company folder",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://nextcloud.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 65,
+       "evidence": "Self hosted file storage with sync clients. A synced folder is what Lorefern reads."
+      },
+      "setup": {
+       "score": 45,
+       "evidence": "A PHP application with a database. Real work to run well. Judged, not run."
+      },
+      "reliability": {
+       "score": 70,
+       "evidence": "Long lived project, regular releases. You do the updates."
+      },
+      "cost": {
+       "score": 90,
+       "evidence": "Free to run, you pay for the server."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Files stay on your server."
+      },
+      "integration": {
+       "score": 40,
+       "evidence": "Through a synced folder only."
+      }
+     }
+    },
+    {
+     "id": "synced_folder",
+     "name": "Plain synced folder",
+     "kind": "open_source",
+     "supported_in_lorefern": "Built and tested",
+     "run": "run in the tests and the demo",
+     "sources": [
+      {
+       "url": "https://github.com/onittindwani-ai/lorefern",
+       "checked": "this repo"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 55,
+       "evidence": "Any sync tool that puts files on the server works. No permissions model beyond the tags."
+      },
+      "setup": {
+       "score": 90,
+       "evidence": "Point KNOWLEDGE_DIR at the folder."
+      },
+      "reliability": {
+       "score": 90,
+       "evidence": "Plain files, nothing to keep running."
+      },
+      "cost": {
+       "score": 100,
+       "evidence": "Free. Judged from its description."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Stays where you put it."
+      },
+      "integration": {
+       "score": 100,
+       "evidence": "Read directly. Judged from its description."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "chat",
+   "job": "Team chat (read from an export)",
+   "reference": "slack",
+   "recommendation": {
+    "beginner": "Skip chat at first. Add a Slack export later, one public channel at a time, and map each channel to a visibility tag.",
+    "implementer": "Lorefern reads a Slack export folder or zip. The layout was written from memory and is UNVERIFIED against a real export, so test it on the client's own export before promising anything. Never import private channels or direct messages without the owner's written yes.",
+    "cost_sensitive": "A one off export costs nothing. Mattermost and Zulip are open source chat tools, but Lorefern has no reader for their exports.",
+    "open_source_when": "Open source chat is the right call when messages must stay on your own server. It is the wrong call when the team already uses Slack and will not move."
+   },
+   "tools": [
+    {
+     "id": "slack",
+     "name": "Slack",
+     "kind": "paid",
+     "supported_in_lorefern": "Export reader (folder or zip) tested on a made up export. Layout UNVERIFIED",
+     "run": "not run against a real export",
+     "sources": [
+      {
+       "url": "https://slack.com/help/articles/201658943-Export-your-workspace-data",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 70,
+       "evidence": "Decisions often live in channels. Lorefern reads channel files as documents."
+      },
+      "setup": {
+       "score": 60,
+       "evidence": "Exports are a feature of the workspace plan and owner role. Plan limits not checked."
+      },
+      "reliability": {
+       "score": 80,
+       "evidence": "Mature service. The export layout can change."
+      },
+      "cost": {
+       "score": 50,
+       "evidence": "Seat pricing. No figures quoted."
+      },
+      "data": {
+       "score": 45,
+       "evidence": "Data sits with the vendor. Channel tags are set by you, not copied from Slack."
+      },
+      "integration": {
+       "score": 40,
+       "evidence": "Messages only. Threads, files and edits are not rebuilt."
+      }
+     }
+    },
+    {
+     "id": "mattermost",
+     "name": "Mattermost",
+     "kind": "open_source",
+     "supported_in_lorefern": "No reader",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://mattermost.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 65,
+       "evidence": "Self hosted team chat with a similar shape to Slack."
+      },
+      "setup": {
+       "score": 50,
+       "evidence": "Needs a server and a database. Judged, not run."
+      },
+      "reliability": {
+       "score": 75,
+       "evidence": "Established open core project. You do the updates."
+      },
+      "cost": {
+       "score": 85,
+       "evidence": "A free edition exists. Paid editions have their own page."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Messages stay on your server."
+      },
+      "integration": {
+       "score": 0,
+       "evidence": "No reader here. Use the recipe prompts to have Claude Code or Codex write one."
+      }
+     }
+    },
+    {
+     "id": "zulip",
+     "name": "Zulip",
+     "kind": "open_source",
+     "supported_in_lorefern": "No reader",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://zulip.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 60,
+       "evidence": "Topic based open source chat. Good for long running threads."
+      },
+      "setup": {
+       "score": 50,
+       "evidence": "Needs a server. Judged, not run."
+      },
+      "reliability": {
+       "score": 75,
+       "evidence": "Active project. You do the updates."
+      },
+      "cost": {
+       "score": 85,
+       "evidence": "Free to self host. A hosted plan has its own page."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Messages stay on your server."
+      },
+      "integration": {
+       "score": 0,
+       "evidence": "No reader here. Judged from its description."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "meetings",
+   "job": "Meeting recorder and transcripts",
+   "reference": "fireflies",
+   "recommendation": {
+    "beginner": "Paste a transcript on the Meetings page, or put transcript files in a folder. That needs no recorder account at all.",
+    "implementer": "Fireflies and Fathom adapters were written from their own current API docs and tested against local stand ins only. Meetily is open source and local, but its free edition names no export format, so use its transcript as a text file. Otter's export layout could not be read.",
+    "cost_sensitive": "Pasting text is free. Meetily is free software that runs on your own computer. Recorders have their own plans, read each price page yourself.",
+    "open_source_when": "Meetily is the right call when audio must never leave the laptop. It is the wrong call when a team needs a bot that joins calls and shares notes by default."
+   },
+   "tools": [
+    {
+     "id": "fireflies",
+     "name": "Fireflies",
+     "kind": "paid",
+     "supported_in_lorefern": "Adapter written from the vendor API docs, tested against a stand in",
+     "run": "not run against Fireflies",
+     "sources": [
+      {
+       "url": "https://docs.fireflies.ai/",
+       "checked": "2026-11-23"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 85,
+       "evidence": "Gives sentences with speaker names and times, and its own action items. That matches what Lorefern reads."
+      },
+      "setup": {
+       "score": 65,
+       "evidence": "Needs an API key from account settings, then the adapter runs. Not run live."
+      },
+      "reliability": {
+       "score": 80,
+       "evidence": "Established service with a GraphQL API."
+      },
+      "cost": {
+       "score": 50,
+       "evidence": "Plan limits apply to API use. Price page not read, no figures quoted."
+      },
+      "data": {
+       "score": 45,
+       "evidence": "Recordings and transcripts sit with the vendor."
+      },
+      "integration": {
+       "score": 70,
+       "evidence": "Read only: transcripts and its action items."
+      }
+     }
+    },
+    {
+     "id": "fathom",
+     "name": "Fathom",
+     "kind": "paid",
+     "supported_in_lorefern": "Adapter written from the vendor API docs, tested against a stand in",
+     "run": "not run against Fathom",
+     "sources": [
+      {
+       "url": "https://developers.fathom.ai/",
+       "checked": "2026-11-23"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 80,
+       "evidence": "Returns a transcript and action items for each meeting."
+      },
+      "setup": {
+       "score": 65,
+       "evidence": "Needs an API key. Not run live."
+      },
+      "reliability": {
+       "score": 75,
+       "evidence": "Newer service with a documented API."
+      },
+      "cost": {
+       "score": 60,
+       "evidence": "Has a free tier at the time of writing from memory. Check its price page."
+      },
+      "data": {
+       "score": 45,
+       "evidence": "Data sits with the vendor."
+      },
+      "integration": {
+       "score": 65,
+       "evidence": "Read only: meetings, transcript and action items."
+      }
+     }
+    },
+    {
+     "id": "otter",
+     "name": "Otter",
+     "kind": "paid",
+     "supported_in_lorefern": "No adapter. Its text export can be pasted or placed in a folder",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://help.otter.ai/",
+       "checked": "page returned a refusal, not read"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 70,
+       "evidence": "Well known recorder. Text export layout UNVERIFIED because its help page could not be read."
+      },
+      "setup": {
+       "score": 75,
+       "evidence": "Export then paste or drop in a folder. Judged, not run."
+      },
+      "reliability": {
+       "score": 75,
+       "evidence": "Mature service. Judged from its description."
+      },
+      "cost": {
+       "score": 50,
+       "evidence": "Price page not read. Judged from its description."
+      },
+      "data": {
+       "score": 45,
+       "evidence": "Data sits with the vendor."
+      },
+      "integration": {
+       "score": 20,
+       "evidence": "No adapter. Manual export only."
+      }
+     }
+    },
+    {
+     "id": "meetily",
+     "name": "Meetily",
+     "kind": "open_source",
+     "supported_in_lorefern": "No adapter. Place its transcript as a text file in the meetings folder",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://github.com/Zackriya-Solutions/meeting-minutes",
+       "checked": "2026-11-23"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 65,
+       "evidence": "Local recorder with on device transcription. Free edition names no export format, so output is copied as text."
+      },
+      "setup": {
+       "score": 55,
+       "evidence": "A desktop app you install yourself. Judged, not run."
+      },
+      "reliability": {
+       "score": 60,
+       "evidence": "Younger project. Its Markdown, PDF and Word exports are in its paid edition."
+      },
+      "cost": {
+       "score": 95,
+       "evidence": "The free edition costs nothing."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Audio and text stay on your computer."
+      },
+      "integration": {
+       "score": 25,
+       "evidence": "No adapter. Text file import only."
+      }
+     }
+    },
+    {
+     "id": "pasted",
+     "name": "Pasted or dropped transcript text",
+     "kind": "open_source",
+     "supported_in_lorefern": "Built and tested. Import form on the Meetings page and a meetings folder",
+     "run": "run in the tests and the demo",
+     "sources": [
+      {
+       "url": "https://github.com/onittindwani-ai/lorefern",
+       "checked": "this repo"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 55,
+       "evidence": "Works with any recorder, because you give Lorefern plain text."
+      },
+      "setup": {
+       "score": 95,
+       "evidence": "Paste and press Import."
+      },
+      "reliability": {
+       "score": 95,
+       "evidence": "Nothing to keep running."
+      },
+      "cost": {
+       "score": 100,
+       "evidence": "Free. Judged from its description."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Stays in your own database."
+      },
+      "integration": {
+       "score": 60,
+       "evidence": "Reads speaker lines of the form Name: words."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "search",
+   "job": "Search index for the knowledge base",
+   "reference": "vector_db",
+   "recommendation": {
+    "beginner": "Keep the built in SQLite search for a demo and for a small company. You do not need to set up anything else.",
+    "implementer": "Use SQLite full text for a single client on one server, Postgres full text when the client runs on Postgres. Add real embeddings only after you measure that keyword search misses too many questions (the held out numbers in this repo show it does for wording that differs from the pages).",
+    "cost_sensitive": "Both full text options cost nothing extra. A hosted vector database adds a monthly bill and a second place your data lives.",
+    "open_source_when": "Open source search is the right call for a company knowledge base of a few thousand pages. A hosted vector database is worth it when meaning based search over a large, changing set matters more than cost."
+   },
+   "tools": [
+    {
+     "id": "vector_db",
+     "name": "Hosted vector database (for example Pinecone)",
+     "kind": "paid",
+     "supported_in_lorefern": "Not built. Lorefern uses a hashed word vector stand in",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://docs.pinecone.io/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 85,
+       "evidence": "Meaning based search finds pages that share no words with the question, which is the weakness measured in this repo."
+      },
+      "setup": {
+       "score": 55,
+       "evidence": "Needs an account, an index and a way to make embeddings."
+      },
+      "reliability": {
+       "score": 85,
+       "evidence": "Managed service. This is a judgement, not a measurement."
+      },
+      "cost": {
+       "score": 40,
+       "evidence": "Usage priced. Not read today."
+      },
+      "data": {
+       "score": 40,
+       "evidence": "Documents and vectors leave your server."
+      },
+      "integration": {
+       "score": 0,
+       "evidence": "No adapter exists in Lorefern."
+      }
+     }
+    },
+    {
+     "id": "sqlite_fts",
+     "name": "SQLite full text (FTS5)",
+     "kind": "open_source",
+     "supported_in_lorefern": "Built and tested",
+     "run": "run in the tests and the demo",
+     "sources": [
+      {
+       "url": "https://www.sqlite.org/fts5.html",
+       "checked": "2026-11-23 (BM25 and MATCH used as documented)"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 60,
+       "evidence": "Word matching with ranking. Misses questions that use other words than the page, as the held out set shows."
+      },
+      "setup": {
+       "score": 95,
+       "evidence": "Ships inside Python, nothing to install."
+      },
+      "reliability": {
+       "score": 90,
+       "evidence": "Very stable, runs in one file."
+      },
+      "cost": {
+       "score": 100,
+       "evidence": "Free. This is a judgement, not a measurement."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Data stays in your database file."
+      },
+      "integration": {
+       "score": 100,
+       "evidence": "Used directly, with a rebuild step."
+      }
+     }
+    },
+    {
+     "id": "postgres_fts",
+     "name": "Postgres full text",
+     "kind": "open_source",
+     "supported_in_lorefern": "Built, SQL path exercised in a throwaway Postgres 17",
+     "run": "run in a local test",
+     "sources": [
+      {
+       "url": "https://www.postgresql.org/docs/current/textsearch.html",
+       "checked": "2026-11-23"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 60,
+       "evidence": "Same word matching idea as SQLite, with stemming rules of its own."
+      },
+      "setup": {
+       "score": 80,
+       "evidence": "Already there when the client runs Postgres."
+      },
+      "reliability": {
+       "score": 90,
+       "evidence": "Stable and widely run. This is a judgement, not a measurement."
+      },
+      "cost": {
+       "score": 100,
+       "evidence": "Free. This is a judgement, not a measurement."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Stays in your database. This is a judgement, not a measurement."
+      },
+      "integration": {
+       "score": 90,
+       "evidence": "Lorefern stores stems and queries them with to_tsvector."
+      }
+     }
+    },
+    {
+     "id": "pgvector",
+     "name": "pgvector (Postgres extension)",
+     "kind": "open_source",
+     "supported_in_lorefern": "Not built. Not installed in the local Postgres used here",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://github.com/pgvector/pgvector",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 80,
+       "evidence": "Would allow meaning based search inside Postgres if embeddings are produced elsewhere."
+      },
+      "setup": {
+       "score": 50,
+       "evidence": "Needs the extension on the host. Not present in the local Postgres 17 used for tests, and host support is UNVERIFIED."
+      },
+      "reliability": {
+       "score": 75,
+       "evidence": "Well known extension. This is a judgement, not a measurement."
+      },
+      "cost": {
+       "score": 95,
+       "evidence": "Free, plus embedding costs."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Stays in your database. This is a judgement, not a measurement."
+      },
+      "integration": {
+       "score": 0,
+       "evidence": "No adapter exists in Lorefern."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "answerer",
+   "job": "Who writes the answer sentences",
+   "reference": "anthropic",
+   "recommendation": {
+    "beginner": "Use the offline rules writer to try the product. It copies sentences from your pages, which is dull but never invents anything.",
+    "implementer": "Measure before you switch: run the held out questions and the test cases with the model writer in a test account, and keep the groundedness check on whatever writes the words.",
+    "cost_sensitive": "The offline writer costs nothing. A model writer costs per use. Read the price page yourself.",
+    "open_source_when": "There is no open source model scored here. Self hosted models are possible but were not tried."
+   },
+   "tools": [
+    {
+     "id": "anthropic",
+     "name": "Language model (Anthropic API)",
+     "kind": "paid",
+     "supported_in_lorefern": "Plug in written against the base wrapper, never run",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://docs.anthropic.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 90,
+       "evidence": "Can phrase one answer from several pages and handle other wording and languages, which the offline writer cannot."
+      },
+      "setup": {
+       "score": 60,
+       "evidence": "Needs an API key. This is a judgement, not a measurement."
+      },
+      "reliability": {
+       "score": 85,
+       "evidence": "Hosted service with limits."
+      },
+      "cost": {
+       "score": 50,
+       "evidence": "Priced per token. Not read today."
+      },
+      "data": {
+       "score": 50,
+       "evidence": "Document text and questions would leave the server, wrapped as untrusted data. No model is wired in yet."
+      },
+      "integration": {
+       "score": 40,
+       "evidence": "The writer interface exists and the groundedness check judges its output. Never run live."
+      }
+     }
+    },
+    {
+     "id": "offline_rules",
+     "name": "Offline rules writer (built in)",
+     "kind": "open_source",
+     "supported_in_lorefern": "Built and tested",
+     "run": "run in the tests and the demo",
+     "sources": [
+      {
+       "url": "data/eval/heldout_first_run.json",
+       "checked": "2026-11-23 (our own first run numbers)"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 40,
+       "evidence": "Copies the best source sentences. First run on the held out set: see docs/ANSWER-EVAL.md, it is weak on different wording."
+      },
+      "setup": {
+       "score": 100,
+       "evidence": "Nothing to set up. This is a judgement, not a measurement."
+      },
+      "reliability": {
+       "score": 95,
+       "evidence": "Deterministic, same input same output."
+      },
+      "cost": {
+       "score": 100,
+       "evidence": "Free. This is a judgement, not a measurement."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "Nothing leaves the server."
+      },
+      "integration": {
+       "score": 100,
+       "evidence": "Built in. This is a judgement, not a measurement."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "database",
+   "job": "Where Lorefern stores its data",
+   "reference": "postgres",
+   "recommendation": {
+    "beginner": "Leave the default SQLite file for the demo and a small trial. It needs nothing.",
+    "implementer": "Use Postgres for a real install so several people can work at once and backups are routine. The migration cycle was run on a throwaway Postgres 17. The search path on Postgres was not measured for answer quality.",
+    "cost_sensitive": "SQLite costs nothing. Postgres is a line on your hosting bill.",
+    "open_source_when": "Both are open source. Pick Postgres when you need more than one writer or managed backups."
+   },
+   "tools": [
+    {
+     "id": "postgres",
+     "name": "PostgreSQL",
+     "kind": "open_source",
+     "supported_in_lorefern": "Migrations run up, down and up again on a throwaway cluster",
+     "run": "run in a local test",
+     "sources": [
+      {
+       "url": "https://www.postgresql.org/docs/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 90,
+       "evidence": "Handles many readers and writers and has managed hosting almost everywhere."
+      },
+      "setup": {
+       "score": 65,
+       "evidence": "Needs a server or a managed plan."
+      },
+      "reliability": {
+       "score": 95,
+       "evidence": "Very mature. Judged from its description."
+      },
+      "cost": {
+       "score": 85,
+       "evidence": "Free software. Hosting costs apply."
+      },
+      "data": {
+       "score": 95,
+       "evidence": "You choose where it runs."
+      },
+      "integration": {
+       "score": 90,
+       "evidence": "Full migration path is tested."
+      }
+     }
+    },
+    {
+     "id": "sqlite",
+     "name": "SQLite",
+     "kind": "open_source",
+     "supported_in_lorefern": "Built and tested. The default",
+     "run": "run in the tests and the demo",
+     "sources": [
+      {
+       "url": "https://www.sqlite.org/docs.html",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 60,
+       "evidence": "One file. Fine for a trial and a very small company. One writer at a time."
+      },
+      "setup": {
+       "score": 100,
+       "evidence": "Nothing to set up. Judged from its description."
+      },
+      "reliability": {
+       "score": 90,
+       "evidence": "Solid, but a single file must be backed up with care."
+      },
+      "cost": {
+       "score": 100,
+       "evidence": "Free. Judged from its description."
+      },
+      "data": {
+       "score": 100,
+       "evidence": "A file on your disk. Judged from its description."
+      },
+      "integration": {
+       "score": 100,
+       "evidence": "Everything in this repo runs on it."
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "hosting",
+   "job": "Where Lorefern runs",
+   "reference": "railway",
+   "recommendation": {
+    "beginner": "Vercel for the web part and Railway for the API and worker is the least work.",
+    "implementer": "Hetzner with Docker Compose when you run several clients and want one bill and full control. Keep the web on Vercel if you like preview deploys.",
+    "cost_sensitive": "A small Hetzner server is the cheapest for the API. Check current prices yourself.",
+    "open_source_when": "Self hosting is the right call when data must stay in one place you control. It costs your time for updates and backups."
+   },
+   "tools": [
+    {
+     "id": "railway",
+     "name": "Railway",
+     "kind": "paid",
+     "supported_in_lorefern": "Config written, not deployed",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://docs.railway.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 80,
+       "evidence": "Runs the API and the worker from one repo with a Postgres add on."
+      },
+      "setup": {
+       "score": 85,
+       "evidence": "Connect the repo and set variables."
+      },
+      "reliability": {
+       "score": 80,
+       "evidence": "Managed platform. This is a judgement, not a measurement."
+      },
+      "cost": {
+       "score": 65,
+       "evidence": "Usage priced. Not read today."
+      },
+      "data": {
+       "score": 55,
+       "evidence": "Vendor hosted. This is a judgement, not a measurement."
+      },
+      "integration": {
+       "score": 70,
+       "evidence": "Dockerfiles and a railway.json are in the repo. Not deployed."
+      }
+     }
+    },
+    {
+     "id": "vercel",
+     "name": "Vercel",
+     "kind": "paid",
+     "supported_in_lorefern": "Web app config written, not deployed",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://vercel.com/docs/monorepos",
+       "checked": "2026-11-23 (root directory setting for a monorepo)"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 80,
+       "evidence": "Hosts the Next.js web app only. The API must run elsewhere."
+      },
+      "setup": {
+       "score": 90,
+       "evidence": "Import the repo and set the root directory to apps/web."
+      },
+      "reliability": {
+       "score": 85,
+       "evidence": "Managed platform. This is a judgement, not a measurement."
+      },
+      "cost": {
+       "score": 65,
+       "evidence": "Free and paid tiers. Not read today."
+      },
+      "data": {
+       "score": 55,
+       "evidence": "Vendor hosted. This is a judgement, not a measurement."
+      },
+      "integration": {
+       "score": 75,
+       "evidence": "Needs API_BASE_URL and SESSION_SECRET. Not deployed."
+      }
+     }
+    },
+    {
+     "id": "hetzner",
+     "name": "Hetzner VPS with Docker Compose",
+     "kind": "paid",
+     "supported_in_lorefern": "Compose, Caddy and cloud init written, not deployed",
+     "run": "not run",
+     "sources": [
+      {
+       "url": "https://docs.hetzner.com/",
+       "checked": "not fetched"
+      }
+     ],
+     "scores": {
+      "fit": {
+       "score": 85,
+       "evidence": "Runs everything in one place, including Postgres and automatic HTTPS through Caddy."
+      },
+      "setup": {
+       "score": 50,
+       "evidence": "You manage the server, firewall and updates."
+      },
+      "reliability": {
+       "score": 80,
+       "evidence": "As reliable as you keep it."
+      },
+      "cost": {
+       "score": 90,
+       "evidence": "Among the cheapest options in general. Not read today."
+      },
+      "data": {
+       "score": 85,
+       "evidence": "You choose the region and hold the data."
+      },
+      "integration": {
+       "score": 75,
+       "evidence": "Compose file, Caddyfile, backup script and cloud init are in the repo. Not run."
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "unscored_named": [
+  {
+   "name": "Any SMTP email service",
+   "why": "Reminders are sent through plain SMTP after another person approves. It was tested against a local stand in only. Any provider that offers SMTP works the same way."
+  },
+  {
+   "name": "Anthropic API (see the answer writer group)",
+   "why": "Scored there as the model option."
+  },
+  {
+   "name": "Gmail, Outlook, Teams, Zoom and other tools",
+   "why": "No adapter. Use the recipe prompts to have Claude Code or Codex write one."
+  }
+ ]
+}

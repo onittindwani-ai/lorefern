@@ -1,0 +1,14 @@
+[
+ {
+  "type": "message",
+  "user": "U01",
+  "text": "Decision on Dana's raise: yes, 6 percent from January.",
+  "ts": "1762300000.0001"
+ },
+ {
+  "type": "message",
+  "user": "U03",
+  "text": "Agreed. I will update payroll in the new year.",
+  "ts": "1762300001.0001"
+ }
+]

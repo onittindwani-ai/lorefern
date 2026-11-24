@@ -1,0 +1,3 @@
+{"method": "POST", "path": "/v1/search", "notion_version": "2026-03-11", "headers": ["Authorization", "Notion-Version", "Content-Type"],
+ "body_optional": ["query", "filter", "page_size", "start_cursor"], "filter_example": {"property": "object", "value": "page"},
+ "response_fields": ["object", "results", "next_cursor", "has_more"], "object_value": "list"}

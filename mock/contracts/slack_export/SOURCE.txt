@@ -1,0 +1,3 @@
+Read 2026-11-23: https://slack.com/help/articles/220556107-How-to-read-Slack-data-exports (page text).
+Documented: channels.json (public channels), groups.json (private channels), dms.json (direct messages), users.json (org_users.json for Enterprise), one folder per conversation, one JSON file per date with messages; message fields type, user, text, ts. The page does not state the day file name format; the reader's YYYY-MM-DD.json is an assumption: UNVERIFIED. The reader handles channels only, not dms.json or groups.json.
+Nothing was run against a real export.

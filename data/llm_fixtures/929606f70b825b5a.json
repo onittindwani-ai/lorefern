@@ -1,0 +1,7 @@
+{
+  "text": "{\"sentences\": [{\"text\": \"Priya Nair: Ravi, the release checklist still allows Friday deploys.\", \"passage_ids\": [185]}, {\"text\": \"Deploy to the staging site and check the booking form.\", \"passage_ids\": [102]}, {\"text\": \"Aisha Khan: Lantern Books is 12 days late.\", \"passage_ids\": [185]}], \"confidence\": 70, \"cannot_answer\": false}",
+  "input_tokens": 150,
+  "output_tokens": 40,
+  "model": "claude-sonnet-5-5",
+  "prompt_preview": "[task:write_answer]\nWrite the answer sentences for the question in the first data block. Use only the passages in the second data block.\nKEY_WORDS: [[\"releas\", "
+}

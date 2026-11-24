@@ -1,0 +1,16 @@
+title: Weekly operating review
+date: 2026-10-26
+provider: fireflies
+visibility: company
+---
+Priya Nair: Marcus, the weekly client report status?
+Marcus Bell: Sent. But the weekly client report SOP is out of date, I'll update the weekly client report SOP by the end of the month.
+Priya Nair: Ravi, the release checklist still allows Friday deploys.
+Ravi Menon: Right. I'll fix the release checklist and send it to Marcus by Wednesday.
+Priya Nair: We decided to ban releases on Fridays because they caused two incidents last quarter.
+Tom Reyes: Agreed, no Friday releases.
+Priya Nair: Aisha, any late invoices?
+Aisha Khan: Lantern Books is 12 days late. I'll chase the overdue invoices today and call them on Thursday.
+Nora Quinn: The monthly newsletter is scheduled. Someone should collect client testimonials for the next issue.
+Priya Nair: Leo, can you collect two client testimonials by next Friday?
+Leo Fischer: Yes, I'll ask Harbor Dental and Elm Street Bakery.

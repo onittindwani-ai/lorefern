@@ -1,0 +1,11 @@
+title: Quarterly planning minutes
+date: 2026-11-09
+provider: file
+visibility: leadership
+---
+Notes: Attendees were Priya, Marcus, Aisha and Leo. The team reviewed the 15 retainer clients and the target of 24.
+Notes: Leo to prepare a list of ten warm leads for the next meeting, due Friday 20 November.
+Notes: Aisha to model the cost of one more developer by the end of the month.
+Notes: It was agreed that no new hire happens before the 22nd retainer client signs.
+Notes: Marcus will rewrite the Care Plan description so that it fits on one page.
+Notes: Open question: should the price rise in March? No owner yet.

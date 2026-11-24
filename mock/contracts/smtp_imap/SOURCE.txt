@@ -1,0 +1,3 @@
+Copied unchanged from a sibling system (same pages, same date, read 2026-11-23).
+Protocols, not a web API: SMTP (RFC 5321) and message format (RFC 5322). There is no OpenAPI or other machine readable contract. The adapter uses Python's standard library (smtplib, email).
+What is tested: the adapter against the local fake server (apps/api/tests) and that a message it builds has the RFC 5322 header fields (mock/tests/test_contracts.py). Never run against a real mail host.

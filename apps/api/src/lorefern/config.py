@@ -1,0 +1,111 @@
+"""Lorefern settings. Subclass of the base settings with this system's variables (names only, never values, in docs)."""
+
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import Field
+
+from sendora_core.settings import BaseAppSettings
+
+
+class Settings(BaseAppSettings):
+    app_name: str = "lorefern"
+    database_url: str = "sqlite:///./lorefern.sqlite3"
+
+    owner_email: str = "owner@example.test"
+    owner_password_hash: str | None = None
+    approver_email: str | None = None
+    approver_password_hash: str | None = None
+    login_burst: int = Field(default=5, ge=1, le=1000)  # sign in tries in a row before a short wait; the browser tests raise it
+
+    company_name: str = "Pinegate Works"
+    knowledge_adapter: str = "seed"  # seed, drive, notion
+    meetings_adapter: str = "seed"  # seed, fireflies, fathom, file
+    email_adapter: str = "seed"  # seed or smtp (task reminders)
+    knowledge_dir: str = ""  # a folder of markdown, text and PDF files
+    seed_dir: str = ""
+
+    # Who may sign in as which audience. JSON object of email to audience. Nobody is added by default outside demo mode: the implementer lists the client's people.
+    members_json: str = ""
+    drive_token: str = Field(default="", repr=False)  # one short lived access token, for a first try only
+    drive_service_account_json: str = Field(default="", repr=False)  # the text of a service account key file
+    drive_service_account_file: str = ""  # or the path to that file
+    drive_client_id: str = ""
+    drive_client_secret: str = Field(default="", repr=False)
+    drive_refresh_token: str = Field(default="", repr=False)
+    drive_subject: str = ""  # optional: a user to act as, with domain wide delegation
+    drive_scope: str = "https://www.googleapis.com/auth/drive.readonly"
+    drive_token_uri: str = "https://oauth2.googleapis.com/token"
+    drive_base_url: str = "https://www.googleapis.com"
+    notion_token: str = ""
+    notion_base_url: str = "https://api.notion.com"
+    fireflies_token: str = ""
+    fireflies_base_url: str = "https://api.fireflies.ai"
+    fathom_token: str = ""
+    fathom_base_url: str = "https://api.fathom.ai"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+    email_from: str = "lorefern@example.test"
+
+    # What a language model may do when LLM_BACKEND is fixture or anthropic (with LLM_BACKEND=offline, the default, none of these call anything). Live use is UNVERIFIED.
+    answer_writer: Literal["rules", "model"] = "model"  # ANSWER_WRITER=model writes the answer sentences with the model when a model backend is on; the groundedness check still runs on every sentence
+    meeting_extractor: Literal["rules", "model"] = "rules"  # MEETING_EXTRACTOR=model lets the model propose action items and decisions (code checks every quote); a person still approves each one
+    process_wording: Literal["rules", "model"] = "rules"  # PROCESS_WORDING=model lets the model name the recurring processes that code counted
+    review_writer: Literal["rules", "model"] = "rules"  # REVIEW_WRITER=model adds a two sentence intro, from the review's numbers only, at the top of the weekly review
+
+    # Task rules. Decided defaults (a normal Monday to Friday week); the implementer changes them per client.
+    working_days: str = "Mon,Tue,Wed,Thu,Fri"
+    stuck_no_update_days: int = 10
+    stuck_blocked_days: int = 5
+    overload_open_tasks: int = 8
+    overload_due_soon: int = 5
+    approve_min_confidence: float = 0.0  # every proposal needs a person regardless
+    sop_review_days: int = 180
+    weekly_review_weekday: int = 0  # Monday
+    require_second_approver: bool = False
+
+    def _members_raw(self) -> dict:
+        import json
+
+        try:
+            raw = json.loads(self.members_json) if self.members_json else {}
+        except ValueError:
+            return {}
+        return {str(k).lower(): v for k, v in raw.items()} if isinstance(raw, dict) else {}
+
+    def member_hashes(self) -> dict[str, str]:
+        """Password hashes for people added in MEMBERS_JSON as {"email": {"audience": "staff", "password_hash": "..."}}."""
+        return {e: v["password_hash"] for e, v in self._members_raw().items() if isinstance(v, dict) and v.get("password_hash")}
+
+    def members(self) -> dict[str, str]:
+        base = {self.owner_email.lower(): "owner"}
+        if self.approver_email:
+            base[self.approver_email.lower()] = "leadership"
+        if self.demo_mode:
+            base.update({"approver@example.test": "leadership", "finance@example.test": "finance", "staff@example.test": "staff"})
+        for email, v in self._members_raw().items():
+            aud = v.get("audience") if isinstance(v, dict) else v
+            if aud in ("leadership", "finance", "staff") and email != self.owner_email.lower():
+                base[email] = aud
+        return base
+
+    def drive_credentials(self) -> bool:
+        return bool(self.drive_service_account_json or self.drive_service_account_file or (self.drive_client_id and self.drive_client_secret and self.drive_refresh_token) or self.drive_token)
+
+    def problems(self) -> list[str]:
+        out = [p for p in super().problems() if not (self.demo_mode and p.startswith("MODE is live while DEMO_MODE"))]
+        if not self.demo_mode and not self.owner_password_hash:
+            out.append("OWNER_PASSWORD_HASH is empty. Create one with tools/hash_password.py and set it before you run outside demo mode.")
+        need = {"drive": (self.drive_credentials(), "DRIVE_SERVICE_ACCOUNT_JSON, DRIVE_SERVICE_ACCOUNT_FILE, DRIVE_CLIENT_ID with DRIVE_CLIENT_SECRET and DRIVE_REFRESH_TOKEN, or DRIVE_TOKEN"), "notion": (self.notion_token, "NOTION_TOKEN")}
+        if self.knowledge_adapter in need and not need[self.knowledge_adapter][0]:
+            out.append(f"KNOWLEDGE_ADAPTER is {self.knowledge_adapter} but {need[self.knowledge_adapter][1]} is empty.")
+        mneed = {"fireflies": (self.fireflies_token, "FIREFLIES_TOKEN"), "fathom": (self.fathom_token, "FATHOM_TOKEN")}
+        if self.meetings_adapter in mneed and not mneed[self.meetings_adapter][0]:
+            out.append(f"MEETINGS_ADAPTER is {self.meetings_adapter} but {mneed[self.meetings_adapter][1]} is empty.")
+        if self.email_adapter == "smtp" and not (self.smtp_host and self.smtp_user):
+            out.append("EMAIL_ADAPTER is smtp but SMTP_HOST or SMTP_USER is empty.")
+        return out

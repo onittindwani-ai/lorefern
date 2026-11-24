@@ -1,0 +1,13 @@
+title: Retrospective
+date: 2026-11-16
+provider: file
+visibility: company
+---
+Priya Nair: Let's look back at the month. What went well?
+Marcus Bell: I sent the Harbor Dental report on the third working day, as promised.
+Dana Ortiz: I finished the bakery menu design last Tuesday.
+Tom Reyes: The restore test passed, I already did it on Friday.
+Priya Nair: What should we stop doing?
+Leo Fischer: Maybe we should think about fewer status meetings, but I am not sure.
+Priya Nair: We might revisit that in January if it still feels heavy.
+Aisha Khan: I won't be in on Friday, by the way.

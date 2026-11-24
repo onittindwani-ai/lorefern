@@ -1,0 +1,17 @@
+title: Weekly operating review
+date: 2026-10-19
+provider: fireflies
+visibility: company
+---
+Priya Nair: Marcus, the weekly client report. Did it go out?
+Marcus Bell: It went out on Tuesday. I'll improve the weekly client report template and share it by next Friday.
+Priya Nair: Tom, the backup restore test is due this quarter.
+Tom Reyes: I know. I'll run the backup restore test in November.
+Priya Nair: Nora, the newsletter?
+Nora Quinn: I'll publish the monthly newsletter on Thursday. Dana, can you send me the header image by Wednesday?
+Dana Ortiz: Sure, I'll send the header image on Wednesday.
+Priya Nair: Leo, how is the onboarding of Brightside Physio?
+Leo Fischer: The kickoff call is booked for Monday.
+Grace Lin: We should also review the leave policy because people keep asking about the carry over.
+Priya Nair: Grace, can you review the leave policy and bring a proposal to the next review?
+Grace Lin: I'll do that by the 26th.

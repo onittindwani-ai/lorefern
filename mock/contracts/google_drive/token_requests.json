@@ -1,0 +1,21 @@
+{
+  "endpoint": "https://oauth2.googleapis.com/token",
+  "method": "POST",
+  "content_type": "application/x-www-form-urlencoded",
+  "service_account": {
+    "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+    "form_fields": ["grant_type", "assertion"],
+    "jwt_header": {"alg": "RS256", "typ": "JWT"},
+    "claims_required": ["iss", "scope", "aud", "exp", "iat"],
+    "claims_optional": ["sub"],
+    "aud": "https://oauth2.googleapis.com/token",
+    "max_lifetime_seconds": 3600
+  },
+  "refresh": {
+    "grant_type": "refresh_token",
+    "form_fields_required": ["client_id", "grant_type", "refresh_token"],
+    "form_fields_optional": ["client_secret"]
+  },
+  "response_fields": ["access_token", "expires_in", "scope", "token_type"],
+  "token_type": "Bearer"
+}

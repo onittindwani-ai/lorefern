@@ -1,0 +1,8 @@
+{
+  "url": "https://api.fireflies.ai/graphql",
+  "method": "POST",
+  "auth_header": "Authorization: Bearer <key>",
+  "query_fields": {"transcripts": ["id", "title", "date", "sentences", "summary", "participants"], "sentences": ["speaker_name", "text"], "summary": ["action_items"]},
+  "documented_sentence_fields": ["index", "speaker_name", "speaker_id", "text", "raw_text", "start_time", "end_time", "ai_filters"],
+  "documented_summary_fields": ["keywords", "action_items", "outline", "shorthand_bullet", "overview"]
+}

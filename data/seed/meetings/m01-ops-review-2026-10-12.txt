@@ -1,0 +1,16 @@
+title: Weekly operating review
+date: 2026-10-12
+provider: fireflies
+visibility: company
+---
+Priya Nair: Let's start. Marcus, where are we on the weekly client report for this week?
+Marcus Bell: The weekly client report is half done. I'll send the weekly client report to all five clients by Tuesday.
+Priya Nair: Good. Leo, Brightside Physio signed the Care Plan, so the onboarding of the new client starts now.
+Leo Fischer: Right. I'll send the welcome email and the kickoff form to Brightside Physio by Wednesday.
+Priya Nair: Dana, can you design the new location page for Brightside Physio by the end of the week?
+Dana Ortiz: Yes, I can have a first design by Friday.
+Aisha Khan: Two invoices are late. I'll chase the overdue invoices on Thursday.
+Priya Nair: We decided to keep Friday as the day we freeze releases because Friday releases caused two incidents last quarter.
+Tom Reyes: Agreed. Also, someone needs to renew the domain for Corner Cycle Co before it expires.
+Priya Nair: Ravi, can you renew the domains this week?
+Ravi Menon: I'll renew the domain for Corner Cycle Co by Thursday.

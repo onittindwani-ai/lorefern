@@ -1,0 +1,324 @@
+{
+ "questions": 56,
+ "correct": 22,
+ "accuracy": 0.393,
+ "leaks": 0,
+ "citations_checked": 40,
+ "citations_valid": 32,
+ "per_class": {
+  "conflict": {
+   "n": 3,
+   "correct": 1,
+   "accuracy": 0.333
+  },
+  "decision": {
+   "n": 7,
+   "correct": 2,
+   "accuracy": 0.286
+  },
+  "meeting": {
+   "n": 4,
+   "correct": 1,
+   "accuracy": 0.25
+  },
+  "out_of_scope": {
+   "n": 3,
+   "correct": 3,
+   "accuracy": 1.0
+  },
+  "restricted": {
+   "n": 6,
+   "correct": 1,
+   "accuracy": 0.167
+  },
+  "single": {
+   "n": 22,
+   "correct": 10,
+   "accuracy": 0.455
+  },
+  "two_doc": {
+   "n": 5,
+   "correct": 1,
+   "accuracy": 0.2
+  },
+  "unanswerable": {
+   "n": 6,
+   "correct": 3,
+   "accuracy": 0.5
+  }
+ },
+ "misses": [
+  {
+   "id": "h01",
+   "class": "single",
+   "question": "How long do I have to expect before someone answers a support email from a client?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h02",
+   "class": "single",
+   "question": "What time does the team's Monday review start and who runs it?",
+   "audience": "staff",
+   "why": "cited ['05-operations-weekly-operating-review-sop', 'meeting-2026-11-02-weekly-operating-review']",
+   "answer": "We decided to send the weekly client report on Monday because clients read it at the start of the week. Priya reads the stuck work and the n"
+  },
+  {
+   "id": "h03",
+   "class": "single",
+   "question": "Where do we run client websites?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h05",
+   "class": "single",
+   "question": "When can I not push a change live for a client?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h09",
+   "class": "single",
+   "question": "In which months do the performance reviews take place?",
+   "audience": "staff",
+   "why": "outcome refuse, wanted answer",
+   "answer": "I can only answer questions about this company's own documents, meetings and tasks."
+  },
+  {
+   "id": "h11",
+   "class": "single",
+   "question": "At what point do we stop doing new work for a client who has not paid?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h12",
+   "class": "single",
+   "question": "Who looks after backups and how often is a restore tried?",
+   "audience": "staff",
+   "why": "outcome refuse, wanted answer",
+   "answer": "I can only answer questions about this company's own documents, meetings and tasks."
+  },
+  {
+   "id": "h13",
+   "class": "single",
+   "question": "What database technology do the client sites run on?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h16",
+   "class": "single",
+   "question": "Are we allowed to promise a client better search rankings?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h17",
+   "class": "single",
+   "question": "What must everyone use to store passwords?",
+   "audience": "staff",
+   "why": "outcome refuse, wanted answer",
+   "answer": "I can only answer questions about this company's own documents, meetings and tasks."
+  },
+  {
+   "id": "h20",
+   "class": "single",
+   "question": "What happens when a client website goes down during the working day?",
+   "audience": "staff",
+   "why": "cited ['03-clients-and-customers-standard-services-agreement']",
+   "answer": "Standard services agreement (fictional sample) Pinegate Works provides website and booking services to the client named in the order form. S"
+  },
+  {
+   "id": "h22",
+   "class": "two_doc",
+   "question": "Who owns invoicing, and what is the first step when an invoice is overdue?",
+   "audience": "staff",
+   "why": "outcome tasks, wanted answer",
+   "answer": "12 tasks need attention."
+  },
+  {
+   "id": "h23",
+   "class": "two_doc",
+   "question": "Which developer owns release checks and what time of day must deployments happen by?",
+   "audience": "staff",
+   "why": "missing: Ravi Menon, 15:00",
+   "answer": "He owns client onboarding. - Dana Ortiz: designer. - Tom Reyes: lead developer. Deploy to the staging site and check the booking form. Never"
+  },
+  {
+   "id": "h24",
+   "class": "two_doc",
+   "question": "Who answers support questions and how fast must the first answer be?",
+   "audience": "staff",
+   "why": "outcome conflict, wanted answer",
+   "answer": "We promise a first reply to a support question within 4 business hours. We reply to every question by the next business day. Two documents g"
+  },
+  {
+   "id": "h25",
+   "class": "two_doc",
+   "question": "What is the plan for the number of retainer clients and when may we hire another developer?",
+   "audience": "leadership",
+   "why": "cited ['meeting-2026-11-18-leadership-monthly']",
+   "answer": "Priya Nair: We decided not to hire a developer until the 22nd retainer client signs because the cash plan only works that way."
+  },
+  {
+   "id": "h26",
+   "class": "decision",
+   "question": "Why did we move hosting away from our own servers?",
+   "audience": "staff",
+   "why": "missing: 6 hours",
+   "answer": "We host client web apps on Railway instead of running our own servers."
+  },
+  {
+   "id": "h29",
+   "class": "decision",
+   "question": "How many blog posts do we plan to put out each month and why that number?",
+   "audience": "staff",
+   "why": "cited ['04-revenue-pricing-and-terms', '05-operations-weekly-client-report-sop', '09-marketing-content-plan']",
+   "answer": "We publish two blog posts a month. Export the booking and visit numbers from the analytics tool every Monday morning. The Care Plan costs $4"
+  },
+  {
+   "id": "h30",
+   "class": "decision",
+   "question": "What did leadership decide about hiring and why?",
+   "audience": "leadership",
+   "why": "outcome refuse, wanted answer",
+   "answer": "I can only answer questions about this company's own documents, meetings and tasks."
+  },
+  {
+   "id": "h31",
+   "class": "decision",
+   "question": "Did we change the price of the maintenance plan and for how long is it fixed?",
+   "audience": "leadership",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h32",
+   "class": "decision",
+   "question": "What is our rule for clients who pay two weeks late?",
+   "audience": "finance",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h33",
+   "class": "meeting",
+   "question": "Who is supposed to renew the Lantern Books domain and when?",
+   "audience": "staff",
+   "why": "missing: Wednesday",
+   "answer": "Ravi Menon: Someone needs to renew the domain for Lantern Books."
+  },
+  {
+   "id": "h34",
+   "class": "meeting",
+   "question": "What did Tom say was stopping the restore test?",
+   "audience": "staff",
+   "why": "cited ['06-product-and-engineering-backup-and-restore']",
+   "answer": "Tom Reyes tests a restore once a quarter and writes down the result."
+  },
+  {
+   "id": "h36",
+   "class": "meeting",
+   "question": "What did the team argue about on 2 November regarding report days?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h38",
+   "class": "unanswerable",
+   "question": "How many square metres is the office?",
+   "audience": "staff",
+   "why": "outcome answer, wanted not_found",
+   "answer": "Grace Lin: Reminder: the office is closed on 27 November."
+  },
+  {
+   "id": "h40",
+   "class": "unanswerable",
+   "question": "Which bank do we use for the company account?",
+   "audience": "leadership",
+   "why": "outcome answer, wanted not_found",
+   "answer": "Owner: <account manager>. Visibility tag: company."
+  },
+  {
+   "id": "h42",
+   "class": "unanswerable",
+   "question": "What is the policy on working from another country?",
+   "audience": "staff",
+   "why": "outcome answer, wanted not_found",
+   "answer": "How recurring work is done: SOPs, policies, checklists, meeting notes."
+  },
+  {
+   "id": "h43",
+   "class": "restricted",
+   "question": "What salary does Priya earn?",
+   "audience": "staff",
+   "why": "outcome refuse, wanted not_found",
+   "answer": "I can only answer questions about this company's own documents, meetings and tasks."
+  },
+  {
+   "id": "h45",
+   "class": "restricted",
+   "question": "Who is on a performance plan at the moment?",
+   "audience": "staff",
+   "why": "outcome answer, wanted not_found",
+   "answer": "Marcus Bell: Someone needs to update the pricing page for the new Care Plan wording."
+  },
+  {
+   "id": "h46",
+   "class": "restricted",
+   "question": "What is the salary range for a developer?",
+   "audience": "staff",
+   "why": "outcome refuse, wanted not_found",
+   "answer": "I can only answer questions about this company's own documents, meetings and tasks."
+  },
+  {
+   "id": "h47",
+   "class": "restricted",
+   "question": "What does leadership plan to do about hiring in 2027?",
+   "audience": "finance",
+   "why": "outcome refuse, wanted not_found",
+   "answer": "I can only answer questions about this company's own documents, meetings and tasks."
+  },
+  {
+   "id": "h48",
+   "class": "restricted",
+   "question": "How big is the marketing budget for next year?",
+   "audience": "staff",
+   "why": "outcome refuse, wanted not_found",
+   "answer": "I can only answer questions about this company's own documents, meetings and tasks."
+  },
+  {
+   "id": "h50",
+   "class": "conflict",
+   "question": "How many days do clients get to pay an invoice?",
+   "audience": "staff",
+   "why": "outcome not_found, wanted conflict",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  },
+  {
+   "id": "h51",
+   "class": "conflict",
+   "question": "How quickly do we reply to a client question?",
+   "audience": "staff",
+   "why": "outcome answer, wanted conflict",
+   "answer": "We promise a first reply to a support question within 4 business hours."
+  },
+  {
+   "id": "h55",
+   "class": "single",
+   "question": "What are we planning to spend on tools next year?",
+   "audience": "finance",
+   "why": "outcome not_found, wanted answer",
+   "answer": "I could not find this in the documents you can see. If it should be written down, ask the owner of the topic to add it."
+  }
+ ]
+}

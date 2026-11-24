@@ -1,0 +1,14 @@
+[
+ {
+  "type": "message",
+  "user": "U03",
+  "text": "Reminder that anything above $250 needs my approval before you buy it.",
+  "ts": "1762300000.0001"
+ },
+ {
+  "type": "message",
+  "user": "U07",
+  "text": "The release checklist is updated, no Friday deploys.",
+  "ts": "1762300001.0001"
+ }
+]

@@ -1,0 +1,111 @@
+{
+  "transcripts": 8,
+  "expected_actions": 20,
+  "found_actions": 15,
+  "precision": 0.8,
+  "recall": 0.6,
+  "owner_accuracy": 1.0,
+  "due_accuracy": 0.833,
+  "decision_recall": 0.0,
+  "decisions_expected": 3,
+  "quote_validity": 1.0,
+  "quotes_checked": 15,
+  "flagged_lines_right": "8 of 8",
+  "per_transcript": {
+    "h01-otter-planning": {
+      "found": 3,
+      "expected": 2,
+      "missed": [],
+      "extra": [
+        "I'll tell the client the page goes live on the 18th."
+      ],
+      "wrong_owner": [],
+      "wrong_due": []
+    },
+    "h02-fireflies-ops": {
+      "found": 2,
+      "expected": 3,
+      "missed": [
+        "sending the reminders this afternoon",
+        "I can check the registrar tonight and tell you tomorrow"
+      ],
+      "extra": [
+        "And somebody should check whether the domain for Lantern renews this month."
+      ],
+      "wrong_owner": [],
+      "wrong_due": []
+    },
+    "h03-minutes-quarterly": {
+      "found": 3,
+      "expected": 3,
+      "missed": [],
+      "extra": [],
+      "wrong_owner": [],
+      "wrong_due": []
+    },
+    "h04-chat-casual": {
+      "found": 1,
+      "expected": 2,
+      "missed": [
+        "ill sort it, give me till tomorrow"
+      ],
+      "extra": [],
+      "wrong_owner": [],
+      "wrong_due": []
+    },
+    "h05-formal-board": {
+      "found": 2,
+      "expected": 4,
+      "missed": [
+        "Leo has been asked to contact Lantern Books about their October renewal",
+        "I will do that by the 25th"
+      ],
+      "extra": [],
+      "wrong_owner": [],
+      "wrong_due": []
+    },
+    "h06-fathom-delivery": {
+      "found": 2,
+      "expected": 3,
+      "missed": [
+        "I'll book a slot before the 26th"
+      ],
+      "extra": [],
+      "wrong_owner": [],
+      "wrong_due": [
+        [
+          "I'll update the checklist and ping you",
+          "None",
+          "2026-11-20"
+        ]
+      ]
+    },
+    "h07-injection": {
+      "found": 1,
+      "expected": 3,
+      "missed": [
+        "I'll do both. The plan will take me until the 30th",
+        "I can do it first thing Monday"
+      ],
+      "extra": [],
+      "wrong_owner": [],
+      "wrong_due": [
+        [
+          "I'll write the December edition and get it to you a week from Friday",
+          "2026-11-20",
+          "2026-11-27"
+        ]
+      ]
+    },
+    "h08-no-actions": {
+      "found": 1,
+      "expected": 0,
+      "missed": [],
+      "extra": [
+        "Maybe we should think about fewer status meetings, but I am not sure."
+      ],
+      "wrong_owner": [],
+      "wrong_due": []
+    }
+  }
+}

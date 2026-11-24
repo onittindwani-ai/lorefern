@@ -1,0 +1,16 @@
+title: Weekly operating review
+date: 2026-11-02
+provider: fireflies
+visibility: company
+---
+Priya Nair: The question this week is whether we send the monthly report on Monday or Friday.
+Marcus Bell: I want Monday. Friday is too crowded and clients read reports at the start of the week.
+Dana Ortiz: I disagree. Friday gives me time to finish the charts, Monday is too early.
+Marcus Bell: Then I'll prepare the charts on Thursday so Monday works.
+Priya Nair: OK. We decided to send the weekly client report on Monday because clients read it at the start of the week.
+Dana Ortiz: Fine, I'll finish the charts on Thursday.
+Leo Fischer: Elm Street Bakery signed too, so I'll start the onboarding of the new client tomorrow.
+Nora Quinn: I'll publish the monthly newsletter on Thursday with the testimonial from Harbor Dental.
+Tom Reyes: The backup restore test is still pending. I'll book the backup restore test for the 20th.
+Priya Nair: Ravi, can you renew the domains for the other clients too?
+Ravi Menon: I'll renew the domains for every client by the 10th.
