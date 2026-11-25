@@ -14,7 +14,7 @@ import re
 
 import httpx
 
-from lorefern.adapters.base import RemoteMeeting, safe_base_url
+from lorefern.adapters.base import RemoteMeeting, RemoteMeetings, safe_base_url
 from sendora_core.adapters import AdapterError
 
 _LINE = re.compile(r"^\s*(?:\[[\d:]+\]\s*)?([A-Z][\w .'\-]{0,40}?)\s*:\s+(.+)$")
@@ -63,15 +63,17 @@ class FirefliesMeetings:
             raise AdapterError("FIREFLIES_TOKEN is empty.")
         self.client = client or httpx.Client(base_url=safe_base_url(settings.fireflies_base_url), timeout=30)
 
-    QUERY = "query { transcripts(limit: 50) { id title date sentences { speaker_name text } summary { action_items } participants } }"
+    LIMIT = 50
+    QUERY = "query { transcripts(limit: %d) { id title date sentences { speaker_name text } summary { action_items } participants } }" % LIMIT
 
-    def list_meetings(self) -> list[RemoteMeeting]:
+    def list_meetings(self) -> RemoteMeetings:
         r = self.client.post("/graphql", headers={"Authorization": f"Bearer {self.settings.fireflies_token}"}, json={"query": self.QUERY})
         if r.status_code in (401, 403):
             raise AdapterError("Fireflies refused the key. Copy a new API key from the Integrations page of your Fireflies account.")
         r.raise_for_status()
-        out = []
-        for t in (r.json().get("data") or {}).get("transcripts") or []:
+        found = (r.json().get("data") or {}).get("transcripts") or []
+        out = RemoteMeetings(complete=len(found) < self.LIMIT)  # a full page may have more behind it, so it is not known to be everything
+        for t in found:
             date = str(t.get("date") or "")[:10]
             if date.isdigit():  # milliseconds since 1970
                 from datetime import UTC, datetime
@@ -83,8 +85,12 @@ class FirefliesMeetings:
         return out
 
     def healthcheck(self):
+        """One small request (who the key belongs to), never a download of 50 transcripts."""
         try:
-            self.list_meetings()
+            r = self.client.post("/graphql", headers={"Authorization": f"Bearer {self.settings.fireflies_token}"}, json={"query": "query { user { user_id } }"})
+            if r.status_code in (401, 403):
+                raise AdapterError("Fireflies refused the key. Copy a new API key from the Integrations page of your Fireflies account.")
+            r.raise_for_status()
             return True, "Connected."
         except Exception as exc:
             return False, str(exc) if isinstance(exc, AdapterError) else f"Could not reach Fireflies: {type(exc).__name__}."
@@ -97,8 +103,8 @@ class FathomMeetings:
             raise AdapterError("FATHOM_TOKEN is empty.")
         self.client = client or httpx.Client(base_url=safe_base_url(settings.fathom_base_url), timeout=30)
 
-    def list_meetings(self) -> list[RemoteMeeting]:
-        out, cursor = [], None
+    def list_meetings(self) -> RemoteMeetings:
+        out, cursor = RemoteMeetings(), None
         for _ in range(20):
             params = {"include_transcript": "true", "include_action_items": "true", **({"cursor": cursor} if cursor else {})}
             r = self.client.get("/external/v1/meetings", params=params, headers={"X-Api-Key": self.settings.fathom_token})
@@ -112,12 +118,17 @@ class FathomMeetings:
                 out.append(RemoteMeeting(str(m.get("recording_id")), m.get("title") or m.get("meeting_title") or "Meeting", str(m.get("created_at", ""))[:10], "fathom", lines, [], items))
             cursor = body.get("next_cursor")
             if not cursor:
+                out.complete = True  # paged to the end
                 break
         return out
 
     def healthcheck(self):
+        """One small request (the first page of meetings, without transcripts), never every page with every transcript."""
         try:
-            self.list_meetings()
+            r = self.client.get("/external/v1/meetings", headers={"X-Api-Key": self.settings.fathom_token})
+            if r.status_code in (401, 403):
+                raise AdapterError("Fathom refused the key. Create a new API key in your Fathom settings.")
+            r.raise_for_status()
             return True, "Connected."
         except Exception as exc:
             return False, str(exc) if isinstance(exc, AdapterError) else f"Could not reach Fathom: {type(exc).__name__}."
@@ -160,17 +171,26 @@ class FileMeetings:
 
         return Path(self.settings.knowledge_dir) / "meetings" if self.settings.knowledge_dir else None
 
-    def list_meetings(self) -> list[RemoteMeeting]:
-        d, out = self._dir(), []
+    def list_meetings(self) -> RemoteMeetings:
+        """Complete only when the folder is there and every transcript file in it was read: a file that is skipped (a link, too large, unreadable) or a folder that is not there is not a
+        deleted meeting."""
+        d, out = self._dir(), RemoteMeetings()
         if d is None or not d.is_dir():
             return out
         root = d.resolve()
+        complete = True
         for p in sorted(d.glob("*.txt")):
             if p.is_symlink() or root not in p.resolve().parents or p.stat().st_size > self.MAX_BYTES:
+                complete = False
                 continue
-            m = load_transcript_file(p)
+            try:
+                m = load_transcript_file(p)
+            except OSError:
+                complete = False
+                continue
             m.visibility = visibility_of(p)  # type: ignore[attr-defined]
             out.append(m)
+        out.complete = complete
         return out
 
     def healthcheck(self):

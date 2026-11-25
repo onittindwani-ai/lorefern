@@ -33,7 +33,7 @@ def overview(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_
     return {"audience": aud, "open_tasks": count(Task, Task.status.in_(("open", "in_progress", "blocked")), Task.tag.in_(tags)), "proposed": count(Task, Task.status == "proposed", Task.tag.in_(tags)),
             "stuck": len({x.task_id for x in st if x.task_id}), "documents": count(Document, Document.tag.in_(tags)), "meetings": count(Meeting, Meeting.tag.in_(tags)),
             "decisions": count(Decision, Decision.status == "confirmed", Decision.tag.in_(tags)), "proposed_decisions": count(Decision, Decision.status == "proposed", Decision.tag.in_(tags)),
-            "pending_approvals": sum(1 for a in s.scalars(select(Approval).where(Approval.status == "pending")) if aud in {"owner", "leadership"} and approval_visible(s, a, aud)), "processes_gap": sum(1 for p in sops.visible(s, aud) if p["coverage"] != "covered"),
+            "pending_approvals": sum(1 for a in s.scalars(select(Approval).where(Approval.status == "pending")) if aud in {"owner", "leadership"} and approval_visible(s, a, aud)), "processes_gap": sum(1 for p in sops.visible(s, aud, ctx.today(s), ctx.settings) if p["coverage"] != "covered"),
             "today": ctx.today(s).isoformat(), "company": ctx.settings.company_name}
 
 
@@ -155,7 +155,7 @@ def decisions(s: Session = Depends(db, scope="function"), aud: str = Depends(vie
 
 @router.get("/sops", summary="The SOP coverage map")
 def sop_map(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), aud: str = Depends(viewer)):
-    procs = sops.visible(s, aud)
+    procs = sops.visible(s, aud, ctx.today(s), ctx.settings)
     tags = allowed_tags(aud)
     sop_docs = [d for d in s.scalars(select(Document).where(Document.doc_type == "sop", Document.tag.in_(tags)))]
     used = {p["sop"]["id"] for p in procs if p["sop"]}

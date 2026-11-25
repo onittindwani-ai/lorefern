@@ -135,7 +135,7 @@
     "tags": [
      "auth"
     ],
-    "summary": "End the session (the web app clears the cookie)",
+    "summary": "End the session: the token stops working on this server and its live streams close (the web app also clears the cookie)",
     "operationId": "logout_api_auth_logout_post",
     "responses": {
      "200": {
@@ -1581,7 +1581,7 @@
     "tags": [
      "admin"
     ],
-    "summary": "Pending and recent approvals",
+    "summary": "Pending and recent approvals, with the recipients and the exact text of anything that would be sent",
     "operationId": "approvals_api_approvals_get",
     "responses": {
      "200": {

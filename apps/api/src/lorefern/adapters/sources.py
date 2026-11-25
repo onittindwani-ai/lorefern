@@ -126,8 +126,12 @@ class DriveSource:
         return out
 
     def healthcheck(self):
+        """One small request (a page of one file), never a read of the whole Drive."""
         try:
-            self.list_documents()
+            r = self._get("/drive/v3/files", q="trashed = false", fields="files(id)", pageSize=1)
+            if r.status_code in (401, 403):
+                raise AdapterError("Google Drive refused the access. Check the sign in details, and that the files are shared with the service account or the consenting person (docs/03).")
+            r.raise_for_status()
             return True, "Connected."
         except Exception as exc:
             return False, str(exc) if isinstance(exc, AdapterError) else f"Could not reach Drive: {type(exc).__name__}."
@@ -192,8 +196,12 @@ class NotionSource:
         return out
 
     def healthcheck(self):
+        """One small request (a search page of one page), never a read of every page."""
         try:
-            self.list_documents()
+            r = self.client.post("/v1/search", headers=self._h(), json={"filter": {"property": "object", "value": "page"}, "page_size": 1})
+            if r.status_code in (401, 403):
+                raise AdapterError("Notion refused the token. Share the pages with the integration first.")
+            r.raise_for_status()
             return True, "Connected."
         except Exception as exc:
             return False, str(exc) if isinstance(exc, AdapterError) else f"Could not reach Notion: {type(exc).__name__}."

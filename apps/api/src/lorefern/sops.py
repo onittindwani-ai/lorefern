@@ -47,6 +47,34 @@ def _grams(seq: list[str]) -> set[tuple[str, ...]]:
     return out
 
 
+_STEMS: dict[tuple[int, str], tuple[frozenset[str], frozenset[str]]] = {}  # (document id, content hash): stems of its title and of its text. Bounded, and never holds text.
+
+
+def _sop_stems(d: Document) -> tuple[frozenset[str], frozenset[str]]:
+    key = (d.id, d.content_hash)
+    if key not in _STEMS:
+        if len(_STEMS) > 2000:
+            _STEMS.clear()
+        _STEMS[key] = (frozenset(stems(d.title)), frozenset(stems(d.text)))
+    return _STEMS[key]
+
+
+def best_sop(process_stems: frozenset[str] | set[str], sops: list[Document]) -> Document | None:
+    """The SOP that covers a process: every stem of the process is in the SOP's text and at least all but one in its title. The best title match wins."""
+    sg = set(process_stems)
+    scored = [(len(sg & _sop_stems(d)[0]), d) for d in sops if sg <= _sop_stems(d)[1]]
+    scored = [x for x in scored if x[0] >= max(1, len(sg) - 1)]
+    return max(scored, key=lambda x: x[0])[1] if scored else None
+
+
+def coverage_of(match: Document | None, today: date, settings) -> str:
+    """`gap` with no SOP, `stale` when its review date has passed or it is older than the configured review days, else `covered`."""
+    if match is None:
+        return "gap"
+    overdue = bool(match.review_by and match.review_by < today) or bool(match.updated_on and (today - match.updated_on).days > settings.sop_review_days and not match.review_by)
+    return "stale" if overdue else "covered"
+
+
 def detect(session: Session, today: date, settings, wording=None) -> list[Process]:
     names = {p.lower() for o in session.scalars(select(Owner)) for p in re.findall(r"[A-Za-z]+", o.name)} | {"harbor", "dental", "elm", "street", "bakery", "brightside", "physio", "lantern", "books", "corner", "cycle", "pinegate"}
     srcs: list[tuple[str, int, str, date, str, str]] = []  # kind, id, title, day, tag, surface. A meeting counts once however many of its lines match.
@@ -82,19 +110,13 @@ def detect(session: Session, today: date, settings, wording=None) -> list[Proces
             have = {(i[0], i[1]) for i in home[1]}
             home[1] = home[1] + [i for i in items if (i[0], i[1]) not in have]
     sops = list(session.scalars(select(Document).where(Document.doc_type == "sop")))
-    sop_stems = {d.id: (set(stems(d.title)), set(stems(d.text))) for d in sops}
     session.query(Process).delete()
     out = []
     for g, items in sorted(kept, key=lambda k: -len(k[1])):
         g = tuple(g)
         sg = set(g)
-        scored = [(len(sg & sop_stems[d.id][0]), d) for d in sops if sg <= sop_stems[d.id][1]]
-        scored = [x for x in scored if x[0] >= max(1, len(sg) - 1)]
-        match = max(scored, key=lambda x: x[0])[1] if scored else None
-        cov = "gap"
-        if match:
-            overdue = bool(match.review_by and match.review_by < today) or bool(match.updated_on and (today - match.updated_on).days > settings.sop_review_days and not match.review_by)
-            cov = "stale" if overdue else "covered"
+        match = best_sop(sg, sops)
+        cov = coverage_of(match, today, settings)  # for everyone (the owner's view). What a person sees is worked out again from the SOPs that person may read: see visible()
         surface = max((i[5] for i in items), key=lambda x: sum(w in {stem(v) for v in re.findall(r"[A-Za-z']+", x)} for w in g)).lower()
         evidence = [{"kind": i[0], "id": i[1], "text": i[2], "tag": i[4], "on": i[3].isoformat()} for i in sorted(items, key=lambda x: x[3])]
         forms: dict[str, dict[str, int]] = {}
@@ -115,16 +137,17 @@ def detect(session: Session, today: date, settings, wording=None) -> list[Proces
     return out
 
 
-def visible(session: Session, audience: str) -> list[dict]:
-    """Processes as a person may see them: evidence rows above their tags are removed, and a process with none left is hidden."""
+def visible(session: Session, audience: str, today: date, settings) -> list[dict]:
+    """Processes as a person may see them: evidence rows above their tags are removed, and a process with none left is hidden. The coverage is worked out from the SOPs this person may
+    read only, so "covered" and "stale" never tell someone that a restricted SOP exists (the stored value is for everyone, and is not shown)."""
     tags = allowed_tags(audience)
+    mine = list(session.scalars(select(Document).where(Document.doc_type == "sop", Document.tag.in_(tags))))
     res = []
     for p in session.scalars(select(Process).order_by(Process.mentions.desc())):
         ev = [e for e in p.evidence if e["tag"] in tags]
         if len(ev) == 0:
             continue
-        sop = session.get(Document, p.sop_id) if p.sop_id else None
-        sop_ok = sop is not None and sop.tag in tags
-        res.append({"id": p.id, "key": p.key, "label": p.label, "mentions": len(ev), "coverage": p.coverage, "evidence": ev,
-                    "sop": {"id": sop.id, "title": sop.title, "owner": sop.owner, "review_by": sop.review_by.isoformat() if sop.review_by else ""} if sop_ok else None})
+        sop = best_sop(set(p.key.split("-")), mine)
+        res.append({"id": p.id, "key": p.key, "label": p.label, "mentions": len(ev), "coverage": coverage_of(sop, today, settings), "evidence": ev,
+                    "sop": {"id": sop.id, "title": sop.title, "owner": sop.owner, "review_by": sop.review_by.isoformat() if sop.review_by else ""} if sop else None})
     return res

@@ -13,7 +13,7 @@ Windows: use WSL 2 with Ubuntu and work inside it. PowerShell and cmd are not su
 
 ## Settings
 
-`cp .env.example .env`, then follow `04-ENVIRONMENT-VARIABLES.md`. The example has `DEMO_MODE=false`, so the API will not start until you set a real `SESSION_SECRET` (32 or more random characters) and an `OWNER_PASSWORD_HASH`; to look around with the made up company set `DEMO_MODE=true` instead and leave the hash empty. Run `make check-env` (it needs only Python) and then `python tools/doctor.py`. The first reads your file, the second tests the services. Neither prints a value.
+`cp .env.example .env`, then follow `04-ENVIRONMENT-VARIABLES.md`. The example has `DEMO_MODE=false`, so the API will not start until you set a real `SESSION_SECRET` (32 or more random characters) and an `OWNER_PASSWORD_HASH`; to look around with the made up company set `DEMO_MODE=true` instead and leave the hash empty. Run `make check-env` (it needs only Python) and then `.venv/bin/python tools/doctor.py`. The first reads your file, the second tests the services. Neither prints a value.
 
 ## Database
 
@@ -32,7 +32,7 @@ Open http://localhost:3000.
 
 ## Tests
 
-- Python: `.venv/bin/python -m pytest`. The last full run is in `data/counts.json`: <!--n:tests.passed-->279<!--/n--> passed, <!--n:tests.skipped-->1<!--/n--> skipped (one needs a Postgres, set `TEST_POSTGRES_URL`), coverage <!--n:tests.coverage_percent-->93.8<!--/n--> percent of the `lorefern` package.
+- Python: `.venv/bin/python -m pytest`. The last full run is in `data/counts.json`: <!--n:tests.passed-->359<!--/n--> passed, <!--n:tests.skipped-->1<!--/n--> skipped (one needs a Postgres, set `TEST_POSTGRES_URL`), coverage <!--n:tests.coverage_percent-->94.3<!--/n--> percent of the `lorefern` package.
 - Evaluations: `.venv/bin/python tools/eval_extraction.py` and `tools/eval_questions.py --set dev` (see `EXTRACTION-EVAL.md` and `ANSWER-EVAL.md`).
 - Browser tests: `pnpm e2e` (needs Google Chrome; it starts its own API and web server and a throwaway database). It tests the last build, so run `pnpm build` first. <!--n:e2e.tests-->30<!--/n--> tests.
 

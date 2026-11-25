@@ -1,11 +1,15 @@
-"""Make an argon2 hash for OWNER_PASSWORD_HASH. Run: python tools/hash_password.py   (the password is typed hidden and never shown)."""
+"""Make an argon2 hash for OWNER_PASSWORD_HASH. Run: .venv/bin/python tools/hash_password.py   (the password is typed hidden and never shown)."""
 
 from __future__ import annotations
 
 import getpass
 
-import _common  # noqa: F401
-from sendora_core.auth import hash_password
+import _common
+
+try:
+    from sendora_core.auth import hash_password
+except ImportError as exc:
+    raise _common.need_libraries(exc) from exc
 
 
 def main() -> None:

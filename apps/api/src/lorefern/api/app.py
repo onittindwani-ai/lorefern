@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from lorefern.api import routes_admin, routes_auth, routes_demo, routes_read, routes_write
+from lorefern.api.streams import StreamGuard
 from lorefern.config import Settings
 from lorefern.context import Ctx
 from lorefern.world import REPO_DATA
@@ -54,6 +55,7 @@ def create_app(settings: Settings | None = None, ctx: Ctx | None = None) -> Fast
     app.title, app.version = "Lorefern API", "1.0.1"
     app.state.ctx = ctx
     app.state.limiter = TokenBucket(capacity=600, refill_per_sec=20.0)
+    app.state.streams = StreamGuard()
     # Sign in attempts per address and email: a burst of LOGIN_BURST (default 5), then one more every 12 seconds.
     app.state.login_bucket = TokenBucket(capacity=ctx.settings.login_burst, refill_per_sec=1 / 12)
     # And a wider limit per address alone, so changing the email in every try does not give a fresh set of tries.
@@ -68,9 +70,16 @@ def create_app(settings: Settings | None = None, ctx: Ctx | None = None) -> Fast
         if p.startswith("/api/") and p not in PUBLIC and not p.startswith(PUBLIC_PREFIX):
             token = request.cookies.get(SESSION_COOKIE) or request.headers.get("x-session")
             data = read_session_token(ctx.settings.session_secret, token) if token else None
-            if data is None:
+            if data is None or app.state.streams.is_ended(token):  # a token that was signed out stops working here at once
                 return JSONResponse({"error": {"code": "http_401", "message": "Sign in to continue."}}, 401)
             request.state.user = data
+            if p == "/api/events/stream":  # the shared base serves it; this keeps one person from using every stream, and ends a stream with its session
+                if not app.state.streams.admit(data["user"]):
+                    return JSONResponse({"error": {"code": "http_429", "message": "You already have several live streams open. Close another tab and try again."}}, 429)
+                response = await call_next(request)
+                if response.status_code == 200:
+                    response.body_iterator = app.state.streams.wrap(data["user"], token, ctx.settings.session_secret, response.body_iterator)
+                return response
         return await call_next(request)
 
     for r in (routes_auth, routes_read, routes_write, routes_admin, routes_demo):

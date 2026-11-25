@@ -20,10 +20,22 @@ from sendora_core.models import Approval, AuditEntry
 router = APIRouter(prefix="/api", tags=["admin"])
 
 
-@router.get("/approvals", summary="Pending and recent approvals")
-def approvals(s: Session = Depends(db, scope="function"), aud: str = Depends(leaders)):
+def _payload_shown(s: Session, ctx: Ctx, a: Approval) -> dict:
+    """What an approval says it will do. A reminder send lists every recipient and the exact text; while it waits, the list is rebuilt from the database, and `changed` says when it
+    is no longer what was asked for (the approval would then be refused)."""
+    if a.action != "reminders.send":
+        return a.payload
+    ids = [int(x) for x in a.payload.get("ids", [])]
+    if a.status != "pending":
+        return a.payload
+    items = rem.preview(s, ctx.effective(s), ids)
+    return {"ids": ids, "items": items, "changed": a.payload.get("digest") != rem.digest(items)}
+
+
+@router.get("/approvals", summary="Pending and recent approvals, with the recipients and the exact text of anything that would be sent")
+def approvals(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), aud: str = Depends(leaders)):
     rows = [a for a in s.scalars(select(Approval).order_by(Approval.id.desc()).limit(100)) if approval_visible(s, a, aud)]
-    return [{"id": a.id, "action": a.action, "summary": a.summary, "risk": a.risk, "status": a.status, "requested_by": a.requested_by, "decided_by": a.decided_by, "note": a.decision_note, "created_at": iso(a.created_at), "payload": a.payload} for a in rows]
+    return [{"id": a.id, "action": a.action, "summary": a.summary, "risk": a.risk, "status": a.status, "requested_by": a.requested_by, "decided_by": a.decided_by, "note": a.decision_note, "created_at": iso(a.created_at), "payload": _payload_shown(s, ctx, a)} for a in rows]
 
 
 class DecideIn(BaseModel):
@@ -33,6 +45,13 @@ class DecideIn(BaseModel):
 
 @router.post("/approvals/{approval_id}/decide", summary="Approve or reject")
 def decide_approval(approval_id: int, body: DecideIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+    first = s.get(Approval, approval_id)
+    if first is None or not approval_visible(s, first, u["audience"]):  # an approval about work this person may not see answers exactly like one that does not exist
+        raise HTTPException(409, f"Approval {approval_id} does not exist.")
+    if first.action == "reminders.send" and body.approve and first.status == "pending":
+        shown = rem.preview(s, ctx.effective(s), [int(x) for x in first.payload.get("ids", [])])
+        if first.payload.get("digest") != rem.digest(shown):
+            raise HTTPException(409, "The reminders changed after this was asked for (a person, an address or a text is different). Reject this one and ask again.")
     try:
         a = decide(s, approval_id, body.approve, u["user"], u["role"], body.note or None)
     except ApprovalError as exc:
@@ -46,11 +65,12 @@ def decide_approval(approval_id: int, body: DecideIn, s: Session = Depends(db, s
 
 _HIDDEN_KINDS = {"task": Task, "meeting": Meeting, "decision": Decision, "document": Document}
 _SOURCE = "source"
+_APPROVAL = "approval"
 
 
 def _row_of(target: str | None) -> tuple[str, int] | None:
     kind, _, rid = (target or "").partition(":")
-    return (kind, int(rid)) if (kind in _HIDDEN_KINDS or kind == _SOURCE) and rid.isdigit() else None
+    return (kind, int(rid)) if (kind in _HIDDEN_KINDS or kind in {_SOURCE, _APPROVAL}) and rid.isdigit() else None
 
 
 def _visible_entries(s: Session, entries: list, audience: str) -> list:
@@ -65,6 +85,9 @@ def _visible_entries(s: Session, entries: list, audience: str) -> list:
     for kind, ids in wanted.items():
         if kind == _SOURCE:  # a sync, retag or add of a source the person cannot see would tell them its counts and tags
             hidden |= {(kind, i) for i in hidden_source_ids(s, ids, audience)}
+            continue
+        if kind == _APPROVAL:  # a request, a decision or a send about work this person may not see, and a decision note typed on it
+            hidden |= {(kind, a.id) for a in s.scalars(select(Approval).where(Approval.id.in_(ids))) if not approval_visible(s, a, audience)}
             continue
         model = _HIDDEN_KINDS[kind]
         seen = set(s.scalars(select(model.id).where(model.id.in_(ids), model.tag.in_(tags))))

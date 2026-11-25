@@ -5,25 +5,39 @@ from __future__ import annotations
 from pathlib import Path
 
 from lorefern.chunking import normalise_text, parse_front_matter
-from lorefern.visibility import declared_tag
+from lorefern.visibility import declared_tag, narrowest_tag
+
+MAX_DECLARATION_BYTES = 64 * 1024
 
 
-def folder_declared_tag(directory: Path, root: Path, cache: dict) -> str:
-    """The tag a folder declares for what is inside it: a `.visibility` file (one word) or the `visibility:` line of its README.md, combined with every folder above it up to the root
-    of the source. A nested folder can only narrow its parent, never widen it ("" when no folder says anything)."""
-    if directory in cache:
-        return cache[directory]
-    found = ""
+def _declared_in(directory: Path, problems: list[str] | None, root: Path) -> str:
+    """What the `.visibility` file or the README.md of this folder declares ("" when neither says anything). A file that is there but cannot be honoured (a link, larger than 64 KB, or
+    unreadable) could hold a restriction, so the folder takes the narrowest tag and the file is named in `problems`: it must never turn into 'no tag', which would open the folder."""
     for name in (".visibility", "README.md"):
         f = directory / name
         try:
-            if f.is_file() and not f.is_symlink() and f.stat().st_size <= 64 * 1024:
-                raw = normalise_text(f.read_text(errors="replace"))
-                found = (raw.strip().splitlines() or [""])[0].strip().lower() if name == ".visibility" else (parse_front_matter(raw)[0].get("visibility") or "").strip().lower()
+            if not (f.exists() or f.is_symlink()):
+                continue
+            if f.is_symlink() or not f.is_file() or f.stat().st_size > MAX_DECLARATION_BYTES:
+                raise OSError(name)
+            raw = normalise_text(f.read_text(errors="replace"))
         except OSError:
-            found = ""
+            if problems is not None:
+                problems.append(f.relative_to(root).as_posix() if root in f.parents else name)
+            return narrowest_tag()
+        found = (raw.strip().splitlines() or [""])[0].strip().lower() if name == ".visibility" else (parse_front_matter(raw)[0].get("visibility") or "").strip().lower()
         if found:
-            break
-    parent = folder_declared_tag(directory.parent, root, cache) if directory != root and root in directory.parents else ""
+            return found
+    return ""
+
+
+def folder_declared_tag(directory: Path, root: Path, cache: dict, problems: list[str] | None = None) -> str:
+    """The tag a folder declares for what is inside it: a `.visibility` file (one word) or the `visibility:` line of its README.md, combined with every folder above it up to the root
+    of the source. A nested folder can only narrow its parent, never widen it ("" when no folder says anything). A declaration that cannot be read counts as the narrowest tag
+    and is added to `problems` (once per folder)."""
+    if directory in cache:
+        return cache[directory]
+    found = _declared_in(directory, problems, root)
+    parent = folder_declared_tag(directory.parent, root, cache, problems) if directory != root and root in directory.parents else ""
     cache[directory] = declared_tag(found, parent)
     return cache[directory]

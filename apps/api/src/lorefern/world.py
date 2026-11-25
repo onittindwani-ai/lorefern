@@ -91,9 +91,12 @@ def remote_scope(src: Source) -> list[str] | None:
 
 def incomplete_note(counts: dict) -> str:
     """What the Sources page says after a read that stopped early (a limit, or a file that could not be read): nothing was removed from the index. Empty after a complete read."""
+    notes = []
     if counts.get("incomplete") or counts.get("truncated"):
-        return "The last read stopped before it saw everything, so nothing was removed from the index. Read it again, and see the limits in docs/13."
-    return ""
+        notes.append("The last read stopped before it saw everything, so nothing was removed from the index. Read it again, and see the limits in docs/13.")
+    if counts.get("unreadable_folder_tags"):
+        notes.append(f"A folder tag file could not be read ({', '.join(counts['unreadable_folder_tags'][:5])}), so the folders it belongs to are owner only until it is fixed. It must be a plain file of at most 64 KB, not a link.")
+    return " ".join(notes)
 
 
 def read_source(session: Session, ctx, src: Source) -> dict:

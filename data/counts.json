@@ -7,7 +7,7 @@
  "tool_groups": 8,
  "tools_scored": 28,
  "seed": {
-  "company_files": 59,
+  "company_files": 63,
   "meetings": 12,
   "planted_tasks": 35,
   "slack_files": 9,
@@ -95,9 +95,9 @@
   "files": 5
  },
  "tests": {
-  "passed": 279,
+  "passed": 359,
   "skipped": 1,
   "failed": 0,
-  "coverage_percent": 93.8
+  "coverage_percent": 94.3
  }
 }

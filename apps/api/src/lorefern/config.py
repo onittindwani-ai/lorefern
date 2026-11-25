@@ -60,6 +60,7 @@ class Settings(BaseAppSettings):
     smtp_password: str = Field(default="", repr=False)
     smtp_use_tls: bool = True
     email_from: str = "lorefern@example.test"  # the From address of task reminders. The default is a placeholder: set your own before MODE=live
+    allowed_email_domains: str = ""  # comma separated domains task reminders may be sent to and task owners may have. Empty: only the domains of the people who sign in (OWNER_EMAIL, APPROVER_EMAIL, MEMBERS_JSON)
 
     # What a language model may do when LLM_BACKEND is fixture or anthropic (with LLM_BACKEND=offline, the default, none of these call anything). Live use is UNVERIFIED.
     answer_writer: Literal["rules", "model"] = "model"  # ANSWER_WRITER=model writes the answer sentences with the model when a model backend is on; the groundedness check still runs on every sentence
@@ -100,6 +101,19 @@ class Settings(BaseAppSettings):
             if aud in ("leadership", "finance", "staff") and email != clean_email(self.owner_email):
                 base[email] = aud
         return base
+
+    def email_domains(self) -> set[str]:
+        """The domains an owner's address may be on: ALLOWED_EMAIL_DOMAINS when it is set, otherwise the domains of everyone who can sign in."""
+        named = {d.strip().lower().lstrip("@") for d in self.allowed_email_domains.split(",") if d.strip()}
+        return named or {e.rsplit("@", 1)[1] for e in self.members() if "@" in e}
+
+    def email_allowed(self, email: str) -> bool:
+        """True when the address is on one of the company's domains (or a sub domain of one). An address that is not a plain `name@domain` is never allowed."""
+        e = clean_email(email)
+        name, at, domain = e.rpartition("@")
+        if not (name and at and domain and "@" not in name and not any(c.isspace() for c in e) and len(e) <= 254):
+            return False
+        return any(domain == d or domain.endswith("." + d) for d in self.email_domains())
 
     def drive_credentials(self) -> bool:
         return bool(self.drive_service_account_json or self.drive_service_account_file or (self.drive_client_id and self.drive_client_secret and self.drive_refresh_token) or self.drive_token)

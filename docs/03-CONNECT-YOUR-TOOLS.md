@@ -13,7 +13,7 @@ Start with the company folder (doc 10). It needs no account and it is the best t
 | Otter, Meetily, any recorder | Export the transcript as text and paste it on the Meetings page, or drop it in a folder. | Text layout UNVERIFIED |
 | Email for reminders (SMTP) | `EMAIL_ADAPTER=smtp` and the `SMTP_` variables. Sending needs a second person's approval and is refused in draft mode. | Tested against a stand in only |
 
-Steps for each variable, with the vendor page to open, are in `04-ENVIRONMENT-VARIABLES.md`. The Integrations page has a Test button for each adapter, and `python3 tools/doctor.py --live` tests them from a terminal.
+Steps for each variable, with the vendor page to open, are in `04-ENVIRONMENT-VARIABLES.md`. The Integrations page has a Test button for each adapter (one small request to the service, never a read of all your files or transcripts), and `.venv/bin/python tools/doctor.py --live` tests them from a terminal.
 
 ## Google Drive: how the sign in works
 
@@ -24,7 +24,7 @@ Use this before any client's Drive is connected. An access token from Google las
 
 What the code does: it keeps the access token in memory, renews it two minutes before it expires, and if Drive answers 401 it renews once and tries once more. When Google refuses a renewal it says why in plain words (for example the key was disabled, or the person must consent again) and shows only Google's short error code, never a key or token. If the Google token service is down it says to try again and the next sync retries. Secrets come from environment variables only and are never printed or logged. A refresh token can stop working when the person revokes access or a company policy limits it, and then the consent must be repeated.
 
-Written from Google's public documentation read on 2026-11-23 and tested against a local fake token service and a fake Drive. It has never been run against Google (UNVERIFIED). Run `python3 tools/doctor.py --live` once with the real settings before you rely on it.
+Written from Google's public documentation read on 2026-11-23 and tested against a local fake token service and a fake Drive. It has never been run against Google (UNVERIFIED). Run `.venv/bin/python tools/doctor.py --live` once with the real settings before you rely on it.
 
 ## Read this before connecting Drive, Notion or Slack
 

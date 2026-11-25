@@ -178,7 +178,8 @@ class MeetingIn(BaseModel):
 def import_meeting(b: MeetingIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     if b.provider not in {"file", "otter", "meetily", "fireflies", "fathom"}:
         raise HTTPException(422, "Unknown provider name.")
-    wanted = (b.visibility or "").strip().lower() or narrowest_tag(u["audience"])
+    named = (b.visibility or "").strip().lower()
+    wanted = named or narrowest_tag(u["audience"])
     if wanted not in TAGS or wanted not in allowed_tags(u["audience"]):
         raise HTTPException(422, "Choose a visibility tag from the list that you may see.")
     src = s.scalar(select(Source).where(Source.kind == "meetings").order_by(Source.id))
@@ -188,14 +189,14 @@ def import_meeting(b: MeetingIn, s: Session = Depends(db, scope="function"), ctx
         s.flush()
     rm = meeting_from_file(f"{b.title}.txt", b.text, b.provider, b.held_on.isoformat(), b.title)
     digest = hashlib.sha1(f"{b.held_on.isoformat()}|{b.title}|{b.text}".encode()).hexdigest()[:12]  # the same transcript is the same meeting, in every process
-    rm.external_id = f"import-{b.held_on.isoformat()}-{digest}"
+    rm.external_id = f"{ingest.IMPORT_PREFIX}{b.held_on.isoformat()}-{digest}"
     if not rm.lines:
         raise HTTPException(422, "No 'Speaker: words' lines were found in the text.")
     existing = s.scalar(select(Meeting).where(Meeting.source_id == src.id, Meeting.external_id == rm.external_id))
     if existing is not None:
         if existing.tag not in allowed_tags(u["audience"]):
             raise HTTPException(409, "This transcript is already imported.")  # no title, date or tag: the caller cannot open that row
-        wanted = meet_tag(existing.tag, wanted)  # importing the same text again can keep or narrow the tag, never widen it
+        wanted = meet_tag(existing.tag, wanted) if named else existing.tag  # the same text again keeps its tag unless the caller names another, and can only narrow it, never widen it
     m, state = ingest.ingest_meeting(s, src, rm, ctx.today(s), wanted)
     if state == "same":
         raise HTTPException(409, f"This transcript is already imported as {m.title}, held on {m.held_on.isoformat()}.")
@@ -283,7 +284,7 @@ class SendIn(BaseModel):
 
 
 @router.post("/reminders/request-send", summary="Ask for approval to send drafted reminders. Another person must approve.")
-def request_send(b: SendIn, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
+def request_send(b: SendIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     seen = allowed_tags(u["audience"])
     rows = [r for r in s.scalars(select(Reminder).where(Reminder.id.in_(b.ids), Reminder.status == "drafted")) if (t := s.get(Task, r.task_id)) is not None and t.tag in seen]
     if not rows:
@@ -292,7 +293,10 @@ def request_send(b: SendIn, s: Session = Depends(db, scope="function"), u: dict 
     rows = [r for r in rows if r.id not in waiting]
     if not rows:
         raise HTTPException(409, "Those reminders are already waiting for a second person to approve them.")
-    a = request_approval(s, "reminders.send", f"Send {len(rows)} task reminders", {"ids": [r.id for r in rows]}, "low", u["user"])
+    items = reminders.preview(s, ctx.effective(s), [r.id for r in rows])  # who gets what: the person who approves reads it, and the approval is bound to it
+    who, outside = sorted({i["to"] for i in items if i["to"]}), sorted({i["to"] for i in items if i["outside"]})
+    summary = f"Send {len(rows)} task reminders to {', '.join(who) or 'nobody with an address'}" + (f". Outside the company's email domains: {', '.join(outside)}" if outside else "")
+    a = request_approval(s, "reminders.send", summary, {"ids": [r.id for r in rows], "items": items, "digest": reminders.digest(items)}, "high" if outside else "low", u["user"])
     return {"approval_id": a.id}
 
 
@@ -303,13 +307,16 @@ class NewOwner(BaseModel):
 
 
 @router.post("/owners", summary="Add a person who can own work. Task owners must come from this list.")
-def add_owner(b: NewOwner, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
+def add_owner(b: NewOwner, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     name = " ".join(b.name.split())
+    email = b.email.strip()
+    if email and not ctx.settings.email_allowed(email):  # reminders go to this address, so it must be one of the company's (ALLOWED_EMAIL_DOMAINS, else the domains people sign in with)
+        raise HTTPException(422, "That email address is not on one of the company's email domains. Use a company address, or ask the owner to list the domain in ALLOWED_EMAIL_DOMAINS.")
     if not any(ch.isalpha() for ch in name):
         raise HTTPException(422, "A name needs at least one letter.")
     if any(o.name.lower() == name.lower() for o in s.scalars(select(Owner))):
         raise HTTPException(409, "There is already a person with that name.")
-    o = Owner(name=name, role=b.role.strip(), email=b.email.strip(), aliases=[name.split()[0]])
+    o = Owner(name=name, role=b.role.strip(), email=email, aliases=[name.split()[0]])
     s.add(o)
     s.flush()
     record_audit(s, u["user"], "owner.add", f"owner:{o.id}", {"name": name})

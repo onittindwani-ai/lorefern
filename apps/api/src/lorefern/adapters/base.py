@@ -38,6 +38,15 @@ class RemoteDocs(list):
         self.complete = complete
 
 
+class RemoteMeetings(list):
+    """The meetings one read returned. `complete` is True only when the read is known to have seen every meeting there is: a folder that was read in full, or an API that was paged to its
+    end. A meeting that is not in an incomplete list may still be there, so the reader must not treat it as deleted. A plain list counts as incomplete."""
+
+    def __init__(self, items=(), complete: bool = False):
+        super().__init__(items)
+        self.complete = complete
+
+
 def safe_base_url(url: str, *, allow_http_local: bool = False) -> str:
     """Refuse base URLs that point at the local network or non web schemes (SSRF guard for URLs a user can set).
 

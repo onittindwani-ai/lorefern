@@ -20,11 +20,11 @@ All numbers come from `data/counts.json`, written by `tools/make_counts.py`.
 
 | What | Result |
 | --- | --- |
-| Python tests | <!--n:tests.passed-->279<!--/n--> passed, <!--n:tests.skipped-->1<!--/n--> skipped, <!--n:tests.coverage_percent-->93.8<!--/n--> percent coverage |
+| Python tests | <!--n:tests.passed-->359<!--/n--> passed, <!--n:tests.skipped-->1<!--/n--> skipped, <!--n:tests.coverage_percent-->94.3<!--/n--> percent coverage |
 | Browser tests | <!--n:e2e.tests-->30<!--/n--> tests (smoke, security, demo path, quality gates) |
 | Pages | <!--n:pages-->11<!--/n--> |
 | Screenshots | <!--n:screenshots-->39<!--/n--> at phone and desktop widths, in eight states |
-| Seed company | <!--n:seed.company_files-->59<!--/n--> document files, <!--n:seed.meetings-->12<!--/n--> meetings, <!--n:seed.planted_tasks-->35<!--/n--> planted tasks, <!--n:seed.people-->10<!--/n--> people |
+| Seed company | <!--n:seed.company_files-->63<!--/n--> document files, <!--n:seed.meetings-->12<!--/n--> meetings, <!--n:seed.planted_tasks-->35<!--/n--> planted tasks, <!--n:seed.people-->10<!--/n--> people |
 | Held out questions | <!--n:heldout_questions-->56<!--/n--> written before the code |
 | Held out meetings | <!--n:seed.heldout_transcripts-->8<!--/n--> in other styles |
 | Tools compared | <!--n:tools_scored-->28<!--/n--> in <!--n:tool_groups-->8<!--/n--> groups |

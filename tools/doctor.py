@@ -8,12 +8,16 @@ from __future__ import annotations
 
 import sys
 
-import _common  # noqa: F401
-from lorefern.config import Settings
-from lorefern.registry import CATEGORIES, build_adapters, build_registry, missing_settings
-from sendora_core.adapters import AdapterError
-from sendora_core.db import make_engine
-from sqlalchemy import text
+import _common
+
+try:
+    from lorefern.config import Settings
+    from lorefern.registry import CATEGORIES, build_adapters, build_registry, missing_settings
+    from sendora_core.adapters import AdapterError
+    from sendora_core.db import make_engine
+    from sqlalchemy import text
+except ImportError as exc:
+    raise _common.need_libraries(exc) from exc
 
 
 def main(argv: list[str]) -> int:

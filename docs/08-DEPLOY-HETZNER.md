@@ -10,13 +10,13 @@
 6. `cp .env.example .env` and fill it in (see `04`). The Docker path needs these four, or the API will not start:
    - `DEMO_MODE=false`
    - `SESSION_SECRET`: a random value of 32 or more characters, `python3 -c "import secrets; print(secrets.token_urlsafe(48))"`
-   - `OWNER_PASSWORD_HASH`: from `python3 tools/hash_password.py`, in single quotes
+   - `OWNER_PASSWORD_HASH`: made on the computer where you ran `make install` with `.venv/bin/python tools/hash_password.py` (the server has no Python environment and needs none: the tools are not in the Docker image), pasted in single quotes
    - `POSTGRES_PASSWORD`: letters and digits only, or percent encoded, because it sits inside the database address: `openssl rand -hex 24`
 
    Also set `COMPANY_NAME`, `EMAIL_FROM` and `TIMEZONE` before `MODE=live`. Put your DNS name in `deploy/hetzner/Caddyfile`.
 7. `docker compose up -d --build`. The API runs the database migrations itself when it starts; `docker compose exec api alembic upgrade head` is only needed to run them by hand.
 8. Copy the Caddyfile to `/etc/caddy/Caddyfile` and `sudo systemctl reload caddy`.
-9. Put the company folder in the `knowledge` volume, then open the web address, sign in and press Read again on the Sources page.
+9. Put the company folder in the `knowledge` volume, for example from the server's shell: `docker compose cp ./my-company-folder/. api:/data/knowledge/` (UNVERIFIED: Docker was not run for these steps). The worker uses the same volume. Then open the web address, sign in, add a folder source on the Sources page whose path is the folder's name (paths are relative to `/data/knowledge`), and press Read.
 
 ## Backups
 

@@ -1,10 +1,10 @@
 # 04 Environment variables
 
-Every variable, in plain words. Values are never printed by any tool in this repo. `python3 tools/doctor.py` checks them and `make check-env` compares your file with `.env.example`.
+Every variable, in plain words. Values are never printed by any tool in this repo. `.venv/bin/python tools/doctor.py` checks them and `make check-env` compares your file with `.env.example`.
 
 The API, the worker and `alembic upgrade head` all read the same settings: the environment, then the file named by `ENV_FILE` (default `.env`, relative to the folder you run the command in, so `ENV_FILE=../../.env` from `apps/api`). They always run on the same settings. Docker also needs `POSTGRES_PASSWORD` (below).
 
-Where to put them: **local** in a `.env` file at the repo root (copied from `.env.example`); **Vercel** in the project's Environment Variables (web variables only: `API_BASE_URL` and `SESSION_SECRET`); **Railway** in each service's Variables tab; **Hetzner** in the `.env` file next to `docker-compose.yml` on the server. Vendor steps were read from the vendor's own pages where a date is shown with VERIFIED. Steps marked UNVERIFIED come from general knowledge and must be checked against the vendor's current page before you rely on them.
+Where to put them: **local** in a `.env` file at the repo root (copied from `.env.example`); **Vercel** in the project's Environment Variables (web variables only: `API_BASE_URL`. The web app never reads `SESSION_SECRET`, so never put it on Vercel: it is the key that signs owner sessions and belongs on the API server only); **Railway** in each service's Variables tab; **Hetzner** in the `.env` file next to `docker-compose.yml` on the server. Vendor steps were read from the vendor's own pages where a date is shown with VERIFIED. Steps marked UNVERIFIED come from general knowledge and must be checked against the vendor's current page before you rely on them.
 
 
 ## SESSION_SECRET
@@ -17,7 +17,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   3. With `DEMO_MODE=false` the API and the worker refuse to start when it is shorter than 32 characters or still looks like an example (`change-me`, `example`, `dev-only` and similar). Anyone who has read the public code could otherwise sign in as the owner.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: A short or reused value makes sessions guessable. `make check-env` warns if it is left on the placeholder.
 
 ## DATABASE_URL
@@ -30,8 +30,8 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   3. Run `cd apps/api && ../../.venv/bin/alembic upgrade head` once, and again after every update. Alembic reads this value from the environment or from `.env` (or the file named by `ENV_FILE`) and stops with a message when it finds none. It never creates a stray SQLite file by mistake.
 - Cost: SQLite is free. Postgres is part of your hosting bill.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
-- If it is wrong: `python3 tools/doctor.py` prints `FAIL database` with the error type.
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
+- If it is wrong: `.venv/bin/python tools/doctor.py` prints `FAIL database` with the error type.
 
 ## MODE
 
@@ -42,7 +42,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   2. Change it to `live` on the server only. The app can never switch itself to live.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: In `live` with DEMO_MODE on, the doctor warns.
 
 ## DEMO_MODE
@@ -54,7 +54,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   2. Then set OWNER_PASSWORD_HASH.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: With demo off and no password hash the doctor says OWNER_PASSWORD_HASH is empty.
 
 ## KILL_SWITCH
@@ -65,7 +65,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Set `true` to pause from outside the app. The owner can also press Pause all in the app.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Nothing to get wrong. If the app seems read only, check this first.
 
 ## LLM_MODE
@@ -76,7 +76,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Leave `fixture`. A model writer is not wired into the answer path in this release.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Other values are accepted by the base but change nothing in Lorefern.
 
 ## LLM_BACKEND
@@ -88,7 +88,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   2. For `anthropic`, create a key in the Anthropic console and set `ANTHROPIC_API_KEY` in the host's secret settings only.
 - Cost: `offline` and `fixture` are free. `anthropic` is charged per use by the provider.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top. The web host does not need it.
-- Check it: `python3 tools/doctor.py` prints a PROBLEM line when `anthropic` has no key.
+- Check it: `.venv/bin/python tools/doctor.py` prints a PROBLEM line when `anthropic` has no key.
 - If it is wrong: The doctor names the missing key.
 
 ## ANSWER_WRITER
@@ -98,7 +98,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Not needed. Set `rules` to switch the model writer off while testing other model jobs.
 - Cost: Free with `rules`; per use with a live model.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top. The web host does not need it.
-- Check it: `python3 tools/doctor.py` prints the model jobs that are switched on.
+- Check it: `.venv/bin/python tools/doctor.py` prints the model jobs that are switched on.
 - If it is wrong: Answers say in their reason which writer wrote them.
 
 ## MEETING_EXTRACTOR
@@ -108,7 +108,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Set `model` only after you tested it on your own meetings.
 - Cost: Free with `rules`; per transcript with a live model.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: A model failure falls back to the rules reader and says so in the audit note of the extraction.
 
 ## PROCESS_WORDING
@@ -118,7 +118,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Optional polish.
 - Cost: Free with `rules`; a small call per process with a live model.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: The counted label stays.
 
 ## REVIEW_WRITER
@@ -128,7 +128,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Optional polish.
 - Cost: Free with `rules`; one small call per review with a live model.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: The plain sentence is used.
 
 ## LOGIN_BURST
@@ -138,7 +138,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Not needed.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top. The web host does not need it.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: Sign in answers "too many tries" sooner than expected.
 
 ## COMPANY_NAME
@@ -149,8 +149,8 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Type the company's name.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
-- If it is wrong: `python3 tools/doctor.py` lists the demo name as a problem.
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
+- If it is wrong: `.venv/bin/python tools/doctor.py` lists the demo name as a problem.
 
 ## KNOWLEDGE_DIR
 
@@ -162,7 +162,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   3. Set `KNOWLEDGE_DIR` to that folder and press Read again on the Sources page.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: If the folder is missing the Sources page shows an error that names the folder.
 
 ## SEED_DIR
@@ -173,7 +173,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Leave it empty. In demo mode the repo's `data` folder is used.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Wrong path in demo mode gives an empty demo.
 
 ## OWNER_EMAIL
@@ -184,7 +184,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Type the owner's email address.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: A typo means the owner cannot sign in. Fix it and restart the API.
 
 ## OWNER_PASSWORD_HASH
@@ -192,13 +192,13 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - Required: required when demo is off
 - What it does: A hash of the owner's password. The password itself is never stored.
 - How to get it:
-  1. Run `python3 tools/hash_password.py`.
+  1. Run `.venv/bin/python tools/hash_password.py` (a plain `python3` finds the shared code by itself, but it still needs the libraries that `make install` puts in `.venv`, and says which one is missing when they are not there). A server that has no virtual environment, such as the Hetzner one, does not need one: make the hash on the computer where you ran `make install` and paste it into the server's `.env`.
   2. Type the password when asked. Copy the hash it prints.
   3. Paste the hash as the value.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
-- If it is wrong: `python3 tools/doctor.py` says OWNER_PASSWORD_HASH is empty.
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
+- If it is wrong: `.venv/bin/python tools/doctor.py` says OWNER_PASSWORD_HASH is empty.
 
 ## APPROVER_EMAIL
 
@@ -208,7 +208,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Type the second person's email address.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Without it nothing that needs a second approver can be approved.
 
 ## APPROVER_PASSWORD_HASH
@@ -216,10 +216,10 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - Required: recommended
 - What it does: A hash of the second person's password.
 - How to get it:
-  1. Run `python3 tools/hash_password.py` for that person and paste the hash.
+  1. Run `.venv/bin/python tools/hash_password.py` for that person (on the computer where you ran `make install`) and paste the hash.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Same as the owner hash.
 
 ## MEMBERS_JSON
@@ -227,12 +227,12 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - Required: optional
 - What it does: Everyone besides the owner and the approver who may sign in, and as which audience (leadership, finance or staff).
 - How to get it:
-  1. For each person run `python3 tools/hash_password.py` and copy the hash.
+  1. For each person run `.venv/bin/python tools/hash_password.py` and copy the hash.
   2. Write one JSON object on one line, for example `{"lena@yourcompany.test": {"audience": "finance", "password_hash": "PASTE_HASH"}}`.
   3. A person with no password hash cannot sign in outside demo mode. A second owner cannot be added this way.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: A person who cannot sign in has a missing or wrong hash, or a typo in the email.
 
 ## KNOWLEDGE_ADAPTER
@@ -244,7 +244,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   2. For Drive or Notion set the value and the token below.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: The doctor says which token is missing.
 
 ## MEETINGS_ADAPTER
@@ -257,7 +257,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   3. For Fireflies or Fathom set the value and the token below.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: The doctor says which token is missing.
 
 ## EMAIL_ADAPTER
@@ -269,7 +269,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   2. For `smtp` fill the SMTP variables below.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: The doctor says SMTP_HOST or SMTP_USER is empty.
 
 ## WORKING_DAYS
@@ -280,7 +280,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Type the days, for example `Mon,Tue,Wed,Thu,Fri`.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Wrong days move a due date by a day or two.
 
 ## STUCK_NO_UPDATE_DAYS
@@ -291,7 +291,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Pick a number that matches how often your team really updates tasks.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Too low and everything looks stuck.
 
 ## STUCK_BLOCKED_DAYS
@@ -302,7 +302,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Pick a number.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Same as above.
 
 ## OVERLOAD_OPEN_TASKS
@@ -313,7 +313,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Pick a number.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Same as above.
 
 ## OVERLOAD_DUE_SOON
@@ -324,7 +324,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Pick a number.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Same as above.
 
 ## SOP_REVIEW_DAYS
@@ -335,7 +335,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Pick a number.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Too low and every procedure looks stale.
 
 ## WEEKLY_REVIEW_WEEKDAY
@@ -346,7 +346,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Pick 0 to 6.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Out of range values are ignored.
 
 ## DRIVE_SERVICE_ACCOUNT_JSON, DRIVE_SERVICE_ACCOUNT_FILE
@@ -360,7 +360,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   4. Put the file's text in `DRIVE_SERVICE_ACCOUNT_JSON` in the host's secret settings, or keep the file outside the repository and put its path in `DRIVE_SERVICE_ACCOUNT_FILE`. Never commit it and never send it by chat or email.
 - Cost: The API has no charge at normal use. Check Google's page yourself.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top. Only the API needs it; the web host does not.
-- Check it: `python3 tools/doctor.py --live`. A key that is not valid fails at start with plain words and never prints the key.
+- Check it: `.venv/bin/python tools/doctor.py --live`. A key that is not valid fails at start with plain words and never prints the key.
 - If it is wrong: "key is not valid" means a wrong or cut off file; "invalid_grant" means the key was disabled or deleted, or this server's clock is wrong; empty results mean the folders were not shared with the service account.
 
 ## DRIVE_CLIENT_ID, DRIVE_CLIENT_SECRET, DRIVE_REFRESH_TOKEN
@@ -373,7 +373,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   3. Put the three values in the host's secret settings.
 - Cost: Free at normal use.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top. Only the API needs it.
-- Check it: `python3 tools/doctor.py --live`.
+- Check it: `.venv/bin/python tools/doctor.py --live`.
 - If it is wrong: "invalid_grant" means the person revoked access or the token expired, and the consent must be repeated.
 
 ## DRIVE_TOKEN
@@ -383,7 +383,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Create one in Google's OAuth Playground or with your own consent flow, read only Drive scope.
 - Cost: Free at normal use.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top. Only the API needs it.
-- Check it: `python3 tools/doctor.py --live`.
+- Check it: `.venv/bin/python tools/doctor.py --live`.
 - If it is wrong: Drive answers "refused the access" once the hour is over. Switch to the service account.
 
 ## DRIVE_SUBJECT, DRIVE_SCOPE, DRIVE_TOKEN_URI
@@ -393,7 +393,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Leave all three alone unless you know you need delegation.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: Google answers "invalid_grant" or "unauthorized_client".
 
 ## NOTION_TOKEN
@@ -406,7 +406,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   3. Share the pages you want read with that integration. It sees only pages shared with it.
 - Cost: The integration is free. Plan prices are on Notion's own page.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: A page not shared with the integration is simply missing.
 
 ## FIREFLIES_TOKEN
@@ -419,7 +419,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   3. Paste it as the value. Plan limits on API use are on Fireflies' own page.
 - Cost: Depends on your Fireflies plan. Not read today, no figures quoted.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: An invalid key returns an error that Lorefern shows without the key.
 
 ## FATHOM_TOKEN
@@ -432,7 +432,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   3. Paste it as the value.
 - Cost: Depends on your Fathom plan. Not read today, no figures quoted.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: An invalid key returns an error that Lorefern shows without the key.
 
 ## SMTP_HOST
@@ -444,7 +444,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   2. Paste it as the value.
 - Cost: Included in most email plans.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: `FAIL email/smtp` in the doctor with the error type.
 
 ## SMTP_PORT
@@ -455,7 +455,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Use the port your provider names.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: A wrong port times out.
 
 ## SMTP_USER
@@ -466,7 +466,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Use a dedicated address such as reminders@yourcompany.test.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Login fails with an authentication error.
 
 ## SMTP_PASSWORD
@@ -478,7 +478,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   2. Paste it as the value. Never paste it in chat or in a file you commit.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Login fails with an authentication error.
 
 ## EMAIL_FROM
@@ -489,8 +489,20 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Use an address you control.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Mail may be rejected if the domain is not set up for sending.
+
+## ALLOWED_EMAIL_DOMAINS
+
+- Required: optional
+- What it does: The email domains a task owner's address may be on, and the only domains task reminders are sent to. Comma separated, for example `yourcompany.com,yourcompany.co.uk`. A sub domain of a listed domain counts. Empty (the default) means only the domains of the people who sign in (`OWNER_EMAIL`, `APPROVER_EMAIL` and `MEMBERS_JSON`). A person added with an address outside the list is refused, and a reminder to such an address is never sent, even if it was approved: this stops a mistyped or planted address from receiving company text.
+- How to get it:
+  1. Leave it empty if everyone who owns tasks has an address on the domain they sign in with.
+  2. Otherwise list your own domains, with no spaces needed.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top. The web host does not need it.
+- Check it: `POST /api/owners` with an outside address answers that the address is not on the company's domains.
+- If it is wrong: Reminders to a real colleague are skipped. List the domain.
 
 ## SMTP_USE_TLS
 
@@ -499,7 +511,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Leave it `true`.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py --live`.
+- Check it: `.venv/bin/python tools/doctor.py --live`.
 - If it is wrong: "The mail server's certificate could not be verified" means the server's certificate is not valid for the host name you gave. Use the host name on the certificate.
 
 ## TIMEZONE
@@ -510,7 +522,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   1. Use a zone name such as `Europe/Berlin` or `America/Chicago`.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` lists a name it does not know.
+- Check it: `.venv/bin/python tools/doctor.py` lists a name it does not know.
 - If it is wrong: A zone behind or ahead of yours moves "today" by a day for part of the day.
 
 ## APP_NAME
@@ -530,7 +542,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Leave it `false` on a real install.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: The API stops at start and says why.
 
 ## MAX_BODY_BYTES
@@ -571,7 +583,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Leave them unless you use `anthropic` and want another model.
 - Cost: Charged per use by the provider with `anthropic`.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top. The web host does not need them.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: The provider answers with an unknown model error, shown in plain words.
 
 ## ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_VERSION
@@ -583,7 +595,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
   2. Leave the address and the version alone.
 - Cost: Charged per use by the provider.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top. Only the API needs them.
-- Check it: `python3 tools/doctor.py` prints a PROBLEM line when `anthropic` has no key.
+- Check it: `.venv/bin/python tools/doctor.py` prints a PROBLEM line when `anthropic` has no key.
 - If it is wrong: The doctor names what is missing.
 
 ## LLM_TIMEOUT, LLM_MAX_TOKENS, LLM_MAX_RETRIES, LLM_THINKING
@@ -593,7 +605,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Leave them.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: Model jobs time out or run short.
 
 ## LLM_CALL_BUDGET, LLM_BUDGET_USD
@@ -603,7 +615,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Set a number if you use `anthropic` and want a ceiling.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: The limit is reached sooner than you expect.
 
 ## LLM_FIXTURES_DIR, LLM_RECORD, LLM_REDACT, LLM_LOG_PROMPTS
@@ -613,7 +625,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Used by developers. Leave them alone on a real install.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` says when `LLM_FIXTURES_DIR` is empty while it is needed.
+- Check it: `.venv/bin/python tools/doctor.py` says when `LLM_FIXTURES_DIR` is empty while it is needed.
 - If it is wrong: The doctor names the setting.
 
 ## DRIVE_BASE_URL, NOTION_BASE_URL, FIREFLIES_BASE_URL, FATHOM_BASE_URL
@@ -623,7 +635,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it: Leave them.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py`.
+- Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: The source says the address is refused.
 
 ## Which Drive folders or Notion pages a source reads
@@ -639,7 +651,7 @@ This is not a setting. On the Sources page the path of a Drive source is the Dri
   2. Hosted: your API address with no trailing slash, for example `https://api.example.com`.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: The web app shows a clear error when it cannot reach the API.
 
 ## INSECURE_COOKIES
@@ -650,7 +662,7 @@ This is not a setting. On the Sources page the path of a Drive source is the Dri
   1. Set `1` only for local demos and the browser tests.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: On a real site a cookie without the secure flag is a risk.
 
 ## NEXT_PUBLIC_DEMO_HINT
@@ -661,5 +673,5 @@ This is not a setting. On the Sources page the path of a Drive source is the Dri
   1. Set `1` at build time, only for local demos.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
-- Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
+- Check it: `.venv/bin/python tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Leave it unset on a real site.

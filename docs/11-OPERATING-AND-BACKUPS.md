@@ -17,7 +17,7 @@
 
 - The worker is running (the Sources page shows the last read time).
 - The kill switch is off, and the banner shows the mode you expect.
-- `python3 tools/doctor.py` prints no FAIL.
+- `.venv/bin/python tools/doctor.py` prints no FAIL.
 
 ## Logs
 

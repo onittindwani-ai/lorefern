@@ -18,4 +18,4 @@
 | Everything is read only | Kill switch is on, and changes answer "The kill switch is on" | Turn it off from the banner, the top bar or Cmd K (owner) |
 | Postgres: "relation does not exist" | Migrations not run | `cd apps/api && alembic upgrade head` |
 
-If nothing here helps: run `python3 tools/doctor.py` and read every FAIL line.
+If nothing here helps: run `.venv/bin/python tools/doctor.py` and read every FAIL line.
