@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from lorefern import folder_tool, qa, review, sops, stuck, untagged, world
 from lorefern.api.deps import db, get_ctx, real_audience, user, viewer
+from lorefern.api.guards import approval_visible
 from lorefern.api.serializers import decision_dict, doc_dict, iso, task_dict
 from lorefern.context import Ctx
 from lorefern.models import Decision, Document, Meeting, Owner, Question, Reminder, Source, Task
@@ -32,7 +33,7 @@ def overview(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), aud: str = D
     return {"audience": aud, "open_tasks": count(Task, Task.status.in_(("open", "in_progress", "blocked")), Task.tag.in_(tags)), "proposed": count(Task, Task.status == "proposed", Task.tag.in_(tags)),
             "stuck": len({x.task_id for x in st if x.task_id}), "documents": count(Document, Document.tag.in_(tags)), "meetings": count(Meeting, Meeting.tag.in_(tags)),
             "decisions": count(Decision, Decision.status == "confirmed", Decision.tag.in_(tags)), "proposed_decisions": count(Decision, Decision.status == "proposed", Decision.tag.in_(tags)),
-            "pending_approvals": count(Approval, Approval.status == "pending"), "processes_gap": sum(1 for p in sops.visible(s, aud) if p["coverage"] != "covered"),
+            "pending_approvals": sum(1 for a in s.scalars(select(Approval).where(Approval.status == "pending")) if aud in {"owner", "leadership"} and approval_visible(s, a, aud)), "processes_gap": sum(1 for p in sops.visible(s, aud) if p["coverage"] != "covered"),
             "today": ctx.today(s).isoformat(), "company": ctx.settings.company_name}
 
 
@@ -56,10 +57,13 @@ def questions(s: Session = Depends(db), u: dict = Depends(user), aud: str = Depe
 
 @router.get("/documents", summary="Documents the viewer may see")
 def documents(s: Session = Depends(db), aud: str = Depends(viewer), q: str = "", tag: str = "", limit: int = Query(500, ge=1, le=5000)):
-    stmt = select(Document).where(Document.tag.in_(allowed_tags(aud))).order_by(Document.external_id).limit(limit)
+    stmt = select(Document).where(Document.tag.in_(allowed_tags(aud)))
     if tag:
         stmt = stmt.where(Document.tag == tag)
-    rows = [d for d in s.scalars(stmt) if not q or q.lower() in d.title.lower() or q.lower() in d.external_id.lower()]
+    if q:  # the filter is part of the query, so the limit counts matches and not every document
+        needle = q.lower()
+        stmt = stmt.where(func.lower(Document.title).contains(needle, autoescape=True) | func.lower(Document.external_id).contains(needle, autoescape=True))
+    rows = list(s.scalars(stmt.order_by(Document.external_id).limit(limit)))
     return [doc_dict(d) for d in rows]
 
 
@@ -103,7 +107,7 @@ def task(task_id: int, s: Session = Depends(db), aud: str = Depends(viewer)):
         raise HTTPException(404, "No such task.")
     out = task_dict(t, _names(s))
     out["events"] = [{"id": e.id, "kind": e.kind, "note": e.note, "actor": e.actor, "at": iso(e.at)} for e in t.events]
-    out["meeting_title"] = t.meeting.title if t.meeting else ""
+    out["meeting_title"] = t.meeting.title if t.meeting and t.meeting.tag in allowed_tags(aud) else ""  # the title of a meeting this person may not open is not theirs to read
     return out
 
 
@@ -129,13 +133,14 @@ def meetings(s: Session = Depends(db), aud: str = Depends(viewer)):
 
 @router.get("/meetings/{mid}", summary="A meeting with its transcript, the action items found in it and lines that were not acted on")
 def meeting(mid: int, s: Session = Depends(db), aud: str = Depends(viewer)):
+    tags = allowed_tags(aud)
     m = s.get(Meeting, mid)
-    if m is None or m.tag not in allowed_tags(aud):
+    if m is None or m.tag not in tags:
         raise HTTPException(404, "No such meeting.")
     names = _names(s)
     return {"id": m.id, "title": m.title, "held_on": iso(m.held_on), "provider": m.provider, "tag": m.tag, "attendees": m.attendees, "document_id": m.document_id, "transcript": m.transcript.text if m.transcript else "",
-            "flagged_lines": m.flagged_lines or [], "tasks": [task_dict(t, names) for t in s.scalars(select(Task).where(Task.meeting_id == m.id).order_by(Task.quote_start))],
-            "decisions": [decision_dict(d) for d in s.scalars(select(Decision).where(Decision.meeting_id == m.id).order_by(Decision.quote_start))]}
+            "flagged_lines": m.flagged_lines or [], "tasks": [task_dict(t, names) for t in s.scalars(select(Task).where(Task.meeting_id == m.id, Task.tag.in_(tags)).order_by(Task.quote_start))],
+            "decisions": [decision_dict(d) for d in s.scalars(select(Decision).where(Decision.meeting_id == m.id, Decision.tag.in_(tags)).order_by(Decision.quote_start))]}
 
 
 @router.get("/decisions", summary="The decision log")
@@ -144,7 +149,7 @@ def decisions(s: Session = Depends(db), aud: str = Depends(viewer), status: str 
     if status:
         stmt = stmt.where(Decision.status.in_(status.split(",")))
     rows = list(s.scalars(stmt))
-    titles = {m.id: m.title for m in s.scalars(select(Meeting).where(Meeting.id.in_([d.meeting_id for d in rows if d.meeting_id] or [0])))}
+    titles = {m.id: m.title for m in s.scalars(select(Meeting).where(Meeting.id.in_([d.meeting_id for d in rows if d.meeting_id] or [0]), Meeting.tag.in_(allowed_tags(aud))))}
     return [{**decision_dict(d), "meeting_title": titles.get(d.meeting_id, "")} for d in rows]
 
 
@@ -190,8 +195,11 @@ def company_folder(ctx: Ctx = Depends(get_ctx), aud: str = Depends(real_audience
 
     src = s.scalar(select(Source).where(Source.kind == "folder").order_by(Source.id))
     try:
-        root = Path(ctx.settings.knowledge_dir) if ctx.settings.knowledge_dir else world.seed_dir(ctx) / "company"
-    except FileNotFoundError:
+        if src is not None and ctx.settings.knowledge_dir:
+            root = world.source_root(ctx, src)  # the folder this source really reads, so the paths below match the paths the index stored
+        else:
+            root = Path(ctx.settings.knowledge_dir) if ctx.settings.knowledge_dir else world.seed_dir(ctx) / "company"
+    except (FileNotFoundError, world.SourceError):
         root = None
     if root is None or not root.exists():
         raise HTTPException(404, "The company folder is not on this machine. Set KNOWLEDGE_DIR.")
@@ -203,7 +211,8 @@ def company_folder(ctx: Ctx = Depends(get_ctx), aud: str = Depends(real_audience
     show = lambda path: path not in tag_of or tag_of[path] in tags  # noqa: E731  (a folder or the index is not a document)
     rep.findings = [f for f in rep.findings if show(f.path)]
     rep.tree = [{**t, "documents": [{**d, "visibility": tag_of.get(d["path"], narrowest_tag())} for d in t["documents"] if show(d["path"])]} for t in rep.tree]
-    return {"name": src.name if src else root.name, "documents": len(tag_of), "documents_visible": sum(1 for p in tag_of if show(p)), "ok": rep.ok, "errors": sum(f.severity == "error" for f in rep.findings), "warnings": sum(f.severity == "warning" for f in rep.findings),
+    visible_n = sum(1 for p in tag_of if show(p))  # both counts are what this person may see, never the size of the whole folder
+    return {"name": src.name if src else root.name, "documents": visible_n, "documents_visible": visible_n, "ok": rep.ok, "errors": sum(f.severity == "error" for f in rep.findings), "warnings": sum(f.severity == "warning" for f in rep.findings),
             "findings": [f.__dict__ for f in rep.findings], "tree": rep.tree}
 
 

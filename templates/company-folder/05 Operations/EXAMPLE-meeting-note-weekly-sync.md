@@ -2,7 +2,7 @@
 owner: Example owner
 updated: 2026-01-12
 review_by: 2027-11-23
-visibility: company
+visibility: inherit
 type: meeting_note
 status: example
 ---

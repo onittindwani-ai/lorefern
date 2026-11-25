@@ -2,7 +2,7 @@
 
 ## Built in
 
-- **Visibility:** every document, passage, meeting, task, decision and review has one tag. The filter runs inside every query. A restricted item answers "not found" exactly like a missing one. A source with a stricter tag fixes the tag of everything in it, and a missing or unknown tag becomes `people` (owner only), never `company`. A document's own tag, its folder's tag and the source's tag are combined and the narrowest wins. Deleted or unshared documents leave the index on the next read.
+- **Visibility:** every document, passage, meeting, task, decision and review has one tag. The filter runs inside every query. A restricted item answers "not found" exactly like a missing one. A source with a stricter tag fixes the tag of everything in it, and a missing or unknown tag becomes `people` (owner only), never `company`. A document's own tag, the tags of its folders and the source's tag are combined and the narrowest wins (a document can narrow its folder, never widen it; `visibility: inherit` takes the folder's tag). Deleted or unshared documents leave the index on the next read that finishes: a read that stopped early, or could not read a file, removes nothing. A meeting's tasks and decisions carry the meeting's tag, and narrowing a meeting clears the weekly reviews, process evidence and stored answers built before.
 - **A preview can narrow, never widen,** and cannot change anything.
 - **Content is data.** Instruction like lines in a transcript or a document are flagged and never become tasks, decisions or answer text.
 - **Proposals need a person.** Nothing becomes a task without an owner or leadership approval.
@@ -27,7 +27,8 @@ Tests cover the visibility boundary for four audiences (search, lists, counts, e
 - CI builds the Docker images and starts the compose stack on GitHub. The deploy files were not run on a real host.
 - Rate limits are per process. Behind several processes they are not shared.
 - The injection detector is a list of patterns. Safety does not rest on it alone, because nothing can become a task or decision without a person.
-- If you connect a language model later, document text and questions go to that vendor.
+- If you connect a language model (`LLM_BACKEND`), document passages the person may see, questions and, for the optional jobs, transcripts and company wide process lines go to that vendor. The default sends nothing.
+- Search ranking uses statistics of the passages a person may see, and compares at most the newest 20,000 visible passages by word vector per question.
 
 ## Report a problem
 

@@ -13,6 +13,7 @@ import json
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
+from lorefern import search
 from lorefern.context import get_state, set_state
 from lorefern.models import Decision, Document, Meeting, Process, Question, Task, WeeklyReview
 from lorefern.visibility import AUDIENCES, audiences_of, meet_tag
@@ -49,6 +50,7 @@ def restrict(s: Session, source_id: int, tag: str) -> int:
     set_state(s, _key(source_id), json.dumps(saved))
     if changed:
         scrub_derived(s, tag)
+    search.clear_cache()
     s.flush()
     return changed
 
@@ -77,5 +79,6 @@ def restore(s: Session, source_id: int) -> int:
                     for c in r.chunks:
                         c.tag = old
     set_state(s, _key(source_id), "")
+    search.clear_cache()
     s.flush()
     return changed

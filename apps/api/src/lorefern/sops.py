@@ -104,8 +104,9 @@ def detect(session: Session, today: date, settings, wording=None) -> list[Proces
                     forms.setdefault(stem(v), {}).setdefault(v.lower(), 0)
                     forms[stem(v)][v.lower()] += 1
         label = " ".join(max(forms[w], key=forms[w].get) if w in forms else w for w in g)  # show real words, not stems
-        if wording is not None and len(out) < 12:  # the model only names what code counted, for the twelve biggest
-            label = wording(label, [e["text"] for e in evidence]) or label
+        shareable = [e["text"] for e in evidence if e["tag"] == "company"]  # the name is shown to everyone who sees any of the evidence, and the text goes to a model outside this system: only company wide lines are sent
+        if wording is not None and len(out) < 12 and shareable:  # the model only names what code counted, for the twelve biggest
+            label = wording(label, shareable) or label
         p = Process(key="-".join(g), label=label, area="", mentions=len(items), evidence=evidence, sop_id=match.id if match else None, coverage=cov,
                     tag=max((e["tag"] for e in evidence), key=ORDER.index))
         session.add(p)

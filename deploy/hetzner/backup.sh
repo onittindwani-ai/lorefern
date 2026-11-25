@@ -3,6 +3,7 @@
 #   BACKUP_DIR       where the files go (default /var/backups/lorefern)
 #   BACKUP_COPY_TO   optional rsync target on ANOTHER machine, for example user@host:/backups/lorefern/ (a copy on the same disk is not a backup)
 set -eu
+umask 077  # the dump holds every document and task: only the user who runs the backup may read it
 cd "$(dirname "$0")/../.."
 OUT="${BACKUP_DIR:-/var/backups/lorefern}"
 mkdir -p "$OUT"

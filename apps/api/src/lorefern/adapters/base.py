@@ -29,6 +29,15 @@ class RemoteDoc:
     updated_on: str = ""
 
 
+class RemoteDocs(list):
+    """The documents one read returned. `complete` is False when the read stopped before it saw everything (a page limit, a folder limit, a request that failed): a document that is not in
+    the list may still be there, so the reader must not treat it as deleted."""
+
+    def __init__(self, items=(), complete: bool = True):
+        super().__init__(items)
+        self.complete = complete
+
+
 def safe_base_url(url: str, *, allow_http_local: bool = False) -> str:
     """Refuse base URLs that point at the local network or non web schemes (SSRF guard for URLs a user can set).
 

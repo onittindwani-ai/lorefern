@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from lorefern import reminders as rem
 from lorefern.api.deps import db, get_ctx, leaders, owner, real_audience, writer
+from lorefern.api.guards import approval_visible, hidden_source_ids
 from lorefern.api.serializers import iso
 from lorefern.context import Ctx, set_state
 from lorefern.models import Decision, Document, Meeting, Reminder, Task
@@ -20,8 +21,8 @@ router = APIRouter(prefix="/api", tags=["admin"])
 
 
 @router.get("/approvals", summary="Pending and recent approvals")
-def approvals(s: Session = Depends(db), _: str = Depends(leaders)):
-    rows = list(s.scalars(select(Approval).order_by(Approval.id.desc()).limit(100)))
+def approvals(s: Session = Depends(db), aud: str = Depends(leaders)):
+    rows = [a for a in s.scalars(select(Approval).order_by(Approval.id.desc()).limit(100)) if approval_visible(s, a, aud)]
     return [{"id": a.id, "action": a.action, "summary": a.summary, "risk": a.risk, "status": a.status, "requested_by": a.requested_by, "decided_by": a.decided_by, "note": a.decision_note, "created_at": iso(a.created_at), "payload": a.payload} for a in rows]
 
 
@@ -44,15 +45,16 @@ def decide_approval(approval_id: int, body: DecideIn, s: Session = Depends(db), 
 
 
 _HIDDEN_KINDS = {"task": Task, "meeting": Meeting, "decision": Decision, "document": Document}
+_SOURCE = "source"
 
 
 def _row_of(target: str | None) -> tuple[str, int] | None:
     kind, _, rid = (target or "").partition(":")
-    return (kind, int(rid)) if kind in _HIDDEN_KINDS and rid.isdigit() else None
+    return (kind, int(rid)) if (kind in _HIDDEN_KINDS or kind == _SOURCE) and rid.isdigit() else None
 
 
 def _visible_entries(s: Session, entries: list, audience: str) -> list:
-    """Drop entries about a task, meeting, decision or document this person may not see: the log must not tell leadership that a people row exists, or what was typed on it."""
+    """Drop entries about a task, meeting, decision, document or source this person may not see: the log must not tell leadership that a people row exists, or what was typed on it."""
     tags = allowed_tags(audience)
     wanted: dict[str, set[int]] = {}
     for e in entries:
@@ -61,6 +63,9 @@ def _visible_entries(s: Session, entries: list, audience: str) -> list:
             wanted.setdefault(row[0], set()).add(row[1])
     hidden: set[tuple[str, int]] = set()
     for kind, ids in wanted.items():
+        if kind == _SOURCE:  # a sync, retag or add of a source the person cannot see would tell them its counts and tags
+            hidden |= {(kind, i) for i in hidden_source_ids(s, ids, audience)}
+            continue
         model = _HIDDEN_KINDS[kind]
         seen = set(s.scalars(select(model.id).where(model.id.in_(ids), model.tag.in_(tags))))
         hidden |= {(kind, i) for i in ids if i not in seen}

@@ -3,8 +3,8 @@
  "correct": 32,
  "accuracy": 0.571,
  "leaks": 0,
- "citations_checked": 51,
- "citations_valid": 51,
+ "citations_checked": 50,
+ "citations_valid": 50,
  "per_class": {
   "conflict": {
    "n": 3,
@@ -230,7 +230,7 @@
    "question": "Did anyone make an offer to buy the company?",
    "audience": "staff",
    "why": "outcome answer, wanted not_found",
-   "answer": "Any expense above $500 needs written approval from Aisha Khan before you buy."
+   "answer": "Expenses of $500 or less can be bought on the company card and filed in the expenses sheet by Friday."
   },
   {
    "id": "h55",

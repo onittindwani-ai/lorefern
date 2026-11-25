@@ -4,7 +4,7 @@
 
 1. Make a server (Ubuntu LTS is fine). Add your SSH key while creating it.
 2. Add a firewall that allows only ports 22, 80 and 443.
-3. Point two DNS names at the server: one for the web app and one for the API.
+3. Point one DNS name at the server, for the web app. The API is not published: the web app reaches it inside the compose network. (Only if the web app runs on Vercel, `06`, the API needs a name of its own: uncomment the second block in the Caddyfile.)
 4. Optional: paste `deploy/hetzner/cloud-init.yaml` into the cloud config box. It installs Docker and Caddy and holds no secrets. Do not add any.
 5. Log in with SSH and clone your repository to `/opt/lorefern`.
 6. `cp .env.example .env` and fill it in (see `04`). The Docker path needs these four, or the API will not start:
@@ -13,7 +13,7 @@
    - `OWNER_PASSWORD_HASH`: from `python3 tools/hash_password.py`, in single quotes
    - `POSTGRES_PASSWORD`: letters and digits only, or percent encoded, because it sits inside the database address: `openssl rand -hex 24`
 
-   Also set `COMPANY_NAME`, `EMAIL_FROM` and `TIMEZONE` before `MODE=live`. Put your two DNS names in `deploy/hetzner/Caddyfile`.
+   Also set `COMPANY_NAME`, `EMAIL_FROM` and `TIMEZONE` before `MODE=live`. Put your DNS name in `deploy/hetzner/Caddyfile`.
 7. `docker compose up -d --build`. The API runs the database migrations itself when it starts; `docker compose exec api alembic upgrade head` is only needed to run them by hand.
 8. Copy the Caddyfile to `/etc/caddy/Caddyfile` and `sudo systemctl reload caddy`.
 9. Put the company folder in the `knowledge` volume, then open the web address, sign in and press Read again on the Sources page.

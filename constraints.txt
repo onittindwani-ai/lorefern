@@ -1,6 +1,6 @@
 # Exact versions of every third party Python package the tests ran against.
 # Used by `make install`, the Docker image and CI (pip install -c constraints.txt ...).
-# Refresh after a deliberate upgrade: make constraints
+# Refresh after a deliberate upgrade with tools/make_constraints.py from the hub repository (see docs/12).
 alembic==1.20.1
 annotated-doc==0.0.7
 annotated-types==0.8.0

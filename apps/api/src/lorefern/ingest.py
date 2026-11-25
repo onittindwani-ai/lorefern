@@ -1,8 +1,9 @@
 """Bring documents, Slack days and meeting transcripts into the index, each with a visibility tag.
 
-Tag rule (fail closed): a source with a default tag other than `company` fixes the tag of everything in it. A `company` source lets a single document say its own tag
-(front matter or transcript header `visibility:`, a Slack channel map, a PDF property) and otherwise gives it the tag of its folder (a `.visibility` file or the folder README).
-A document with no tag at all gets the tag the owner chose for that source's unlabelled items (see untagged.py), and when there is none, the NARROWEST tag.
+Tag rule (fail closed, the narrowest wins): a source with a default tag other than `company` fixes the tag of everything in it. In a `company` source a document gets the NARROWEST
+of its own tag (front matter or transcript header `visibility:`, a Slack channel map, a PDF property) and the tags of every folder above it (a `.visibility` file or the folder README,
+each nested folder narrowing its parent, never widening it). A document may only narrow what its folder says; `visibility: inherit` means "no opinion". A document with no tag
+at all, in a folder with none, gets the tag the owner chose for that source's unlabelled items (see untagged.py), and when there is none, the NARROWEST tag.
 A tag nobody recognises becomes the narrowest tag too, never a wider one.
 """
 
@@ -15,13 +16,14 @@ from pathlib import Path
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from lorefern import search, untagged
+from lorefern import search, source_tags, untagged
 from lorefern.adapters.base import RemoteDoc, RemoteMeeting
-from lorefern.chunking import ParsedDoc, chunk_document, content_hash, normalise_text, parse_front_matter, parse_pdf, parse_text, stems_for_index
+from lorefern.chunking import ParsedDoc, chunk_document, content_hash, normalise_text, parse_pdf, parse_text, stems_for_index
+from lorefern.foldertag import folder_declared_tag
 from lorefern.injection import is_injection
-from lorefern.models import TAGS, Chunk, Decision, Document, Meeting, Process, Source, Transcript
+from lorefern.models import TAGS, Chunk, Decision, Document, Meeting, Process, Source, Task, Transcript
 from lorefern.textproc import split_sentences, stems
-from lorefern.visibility import audiences_of, meet_tag, narrowest_tag
+from lorefern.visibility import audiences_of, declared_tag, meet_tag, narrowest_tag
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
 MAX_FILES = 5000  # most files one read looks at
@@ -36,18 +38,15 @@ def _narrowest() -> str:
 
 
 def resolve_tag(source: Source, wanted: str = "", inherited: str = "", unlabelled: str = "") -> str:
-    """The tag of one item. `wanted` is what the item says about itself, `inherited` what its folder says, `unlabelled` what the owner chose for unlabelled items of this source.
-    A restricted source fixes the tag, and an item may only narrow it further (never widen it): its own recognised tag is combined with the source's. An open (`company`) source
-    uses the item's own tag, then its folder's, then the owner's choice, and the narrowest tag when there is none of them."""
+    """The tag of one item. `wanted` is what the item says about itself, `inherited` what its folders say (already the narrowest of them), `unlabelled` what the owner chose for unlabelled
+    items of this source. The narrowest of everything that was written wins: a restricted source fixes the tag and an item may only narrow it further, and in an open (`company`)
+    source the item's own tag and its folder's tag are combined the same way, so a document can never be wider than the folder it sits in. When nothing was written the owner's
+    choice for this source applies, and when there is none the narrowest tag."""
     if source.default_tag != "company":
         base = source.default_tag if source.default_tag in TAGS else _narrowest()
-        own = (wanted or inherited or "").strip().lower()
-        return meet_tag(base, own) if own in TAGS else base
-    for candidate in (wanted, inherited, unlabelled):
-        c = (candidate or "").strip().lower()
-        if c:
-            return c if c in TAGS else _narrowest()
-    return _narrowest()
+        own = [c for c in (wanted, inherited) if (c or "").strip().lower() in TAGS]
+        return meet_tag(base, declared_tag(*own)) if own else base
+    return declared_tag(wanted, inherited) or declared_tag(unlabelled) or _narrowest()
 
 
 def _date(v: str | None) -> date | None:
@@ -184,27 +183,6 @@ def remove_missing(session: Session, source: Source, seen: set[str]) -> int:
     return remove_documents(session, gone)
 
 
-def _folder_declared_tag(directory: Path, root: Path, cache: dict) -> str:
-    """The tag a folder declares for what is inside it: a `.visibility` file (one word) or the `visibility:` line of its README.md, nearest folder first, up to the root of the source."""
-    if directory in cache:
-        return cache[directory]
-    found = ""
-    for name in (".visibility", "README.md"):
-        f = directory / name
-        try:
-            if f.is_file() and not f.is_symlink() and f.stat().st_size <= 64 * 1024:
-                raw = normalise_text(f.read_text(errors="replace"))
-                found = (raw.strip().splitlines() or [""])[0].strip().lower() if name == ".visibility" else (parse_front_matter(raw)[0].get("visibility") or "").strip().lower()
-        except OSError:
-            found = ""
-        if found:
-            break
-    if not found and directory != root and root in directory.parents:
-        found = _folder_declared_tag(directory.parent, root, cache)
-    cache[directory] = found
-    return found
-
-
 def ingest_folder(session: Session, source: Source, folder: Path, today: date | None = None, exclude: tuple[Path, ...] = ()) -> dict:
     """Read a folder of markdown, text and PDF files. `exclude` lists sub folders that belong to another source (a stricter one), which this read leaves alone."""
     counts = {"new": 0, "changed": 0, "same": 0, "skipped": 0, "removed": 0}
@@ -256,7 +234,7 @@ def ingest_folder(session: Session, source: Source, folder: Path, today: date | 
         except Exception:  # a damaged PDF must not stop the run
             counts["skipped"] += 1
             continue
-        doc, state = store_safely(session, counts, source, rel, parsed, today, rel=rel, inherited=_folder_declared_tag(p.parent, root, cache))
+        doc, state = store_safely(session, counts, source, rel, parsed, today, rel=rel, inherited=folder_declared_tag(p.parent, root, cache))
         if doc is None:
             continue
         pairs.append((doc, parsed.meta or {}))
@@ -278,9 +256,11 @@ def held_elsewhere(session: Session, source: Source) -> set[str]:
 
 
 def ingest_remote(session: Session, source: Source, docs: list[RemoteDoc], today: date | None = None) -> dict:
-    """Store what a Drive or Notion read returned. A file the read no longer returns (deleted, trashed, unshared, moved out of the chosen folders) is removed from the index.
+    """Store what a Drive or Notion read returned. A file the read no longer returns (deleted, trashed, unshared, moved out of the chosen folders) is removed from the index, but only when the read
+    says it saw everything (`docs.complete`): a read that hit a limit or could not read a file removes nothing.
     A source that names its own folders or pages takes its files from every other source of the same kind, and one that names none leaves those files to them."""
     counts = {"new": 0, "changed": 0, "same": 0, "removed": 0}
+    complete = getattr(docs, "complete", True)  # read before the list is filtered below
     if not source.uri:
         taken = held_elsewhere(session, source)
         docs = [d for d in docs if d.external_id not in taken]
@@ -293,7 +273,10 @@ def ingest_remote(session: Session, source: Source, docs: list[RemoteDoc], today
         doc, state = store_safely(session, counts, source, d.external_id, parsed, today, rel=d.title)
         if doc is not None:
             counts[state] += 1
-    counts["removed"] = remove_missing(session, source, seen)
+    if complete:
+        counts["removed"] = remove_missing(session, source, seen)
+    else:
+        counts["incomplete"] = 1  # the read did not see everything, so a file it did not return is not known to be gone: nothing is removed
     if source.uri:
         mine = [x for x in session.scalars(select(Document).where(Document.external_id.in_(seen), Document.source_id != source.id)) if x.source.kind == source.kind]
         counts["removed"] += remove_documents(session, mine)
@@ -335,6 +318,7 @@ def ingest_meeting(session: Session, source: Source, m: RemoteMeeting, today: da
     tag = resolve_tag(source, tag_hint, "", untagged.get(session, source.id))
     mt = session.scalar(select(Meeting).where(Meeting.source_id == source.id, Meeting.external_id == m.external_id))
     state = "new" if mt is None else "changed"
+    was = None if mt is None else mt.tag
     if mt is None:
         mt = Meeting(source_id=source.id, external_id=m.external_id, title=m.title[:300], held_on=held, provider=m.provider)
         session.add(mt)
@@ -347,6 +331,8 @@ def ingest_meeting(session: Session, source: Source, m: RemoteMeeting, today: da
     mt.tag, mt.attendees = tag, sorted({w for w, _ in m.lines})
     mt.flagged_lines = [f"{w}: {t}" for w, t in m.lines if is_injection(t)]
     session.flush()
+    if was is not None and was != tag:
+        retag_meeting_rows(session, mt, was, tag)
     slug = f"meeting-{held.isoformat()}-{re.sub(r'[^a-z0-9]+', '-', m.title.lower()).strip('-')[:50]}"
     parsed = ParsedDoc(f"{m.title} ({held.isoformat()})", f"# {m.title}\n\n{text}\n", "transcript", held, slug, {})
     doc, _ = store_document(session, source, f"meeting:{m.external_id}", parsed, today, tag_hint=tag, rel="meeting")
@@ -354,6 +340,16 @@ def ingest_meeting(session: Session, source: Source, m: RemoteMeeting, today: da
     mt.document_id = doc.id
     session.flush()
     return mt, state
+
+
+def retag_meeting_rows(session: Session, meeting: Meeting, was: str, now: str) -> None:
+    """The tasks and decisions found in a meeting always carry the meeting's tag. When the tag changes they follow it. When it narrows (some audience can no longer see the meeting),
+    text built earlier that may quote it (weekly reviews, process evidence, stored answers) is cleared, so the next job builds it again without the meeting."""
+    session.execute(update(Task).where(Task.meeting_id == meeting.id).values(tag=now))
+    session.execute(update(Decision).where(Decision.meeting_id == meeting.id).values(tag=now))
+    if not audiences_of(was) <= audiences_of(now):
+        source_tags.scrub_derived(session, now)
+    search.clear_cache()
 
 
 def sync_meetings(session: Session, ctx, today: date | None = None) -> dict:

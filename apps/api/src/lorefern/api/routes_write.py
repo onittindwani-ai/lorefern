@@ -18,7 +18,7 @@ from lorefern.api.deps import db, get_ctx, owner_write, writer
 from lorefern.api.guards import visible_or_404
 from lorefern.context import Ctx
 from lorefern.models import Decision, Meeting, Owner, Reminder, Source, Task
-from lorefern.visibility import TAGS, allowed_tags, narrowest_tag
+from lorefern.visibility import TAGS, allowed_tags, meet_tag, narrowest_tag
 from sendora_core.adapters import AdapterError
 from sendora_core.approvals import request_approval
 from sendora_core.audit import record_audit
@@ -191,6 +191,11 @@ def import_meeting(b: MeetingIn, s: Session = Depends(db), ctx: Ctx = Depends(ge
     rm.external_id = f"import-{b.held_on.isoformat()}-{digest}"
     if not rm.lines:
         raise HTTPException(422, "No 'Speaker: words' lines were found in the text.")
+    existing = s.scalar(select(Meeting).where(Meeting.source_id == src.id, Meeting.external_id == rm.external_id))
+    if existing is not None:
+        if existing.tag not in allowed_tags(u["audience"]):
+            raise HTTPException(409, "This transcript is already imported.")  # no title, date or tag: the caller cannot open that row
+        wanted = meet_tag(existing.tag, wanted)  # importing the same text again can keep or narrow the tag, never widen it
     m, state = ingest.ingest_meeting(s, src, rm, ctx.today(s), wanted)
     if state == "same":
         raise HTTPException(409, f"This transcript is already imported as {m.title}, held on {m.held_on.isoformat()}.")
@@ -246,7 +251,8 @@ def sync_source(sid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx),
         res = world.read_source(s, ctx, src)
     except (world.SourceError, AdapterError, FileNotFoundError) as exc:
         raise _read_error(exc) from exc
-    src.last_synced_at, src.status, src.error = ctx.now(s), "ready", ""
+    src.last_synced_at, src.status = ctx.now(s), "ready"
+    src.error = world.incomplete_note(res)
     record_audit(s, u["user"], "source.sync", f"source:{sid}", res)
     return res
 

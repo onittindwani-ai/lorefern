@@ -656,9 +656,9 @@ This is not a setting. On the Sources page the path of a Drive source is the Dri
 ## NEXT_PUBLIC_DEMO_HINT
 
 - Required: demo only
-- What it does: `1` shows the demo password hint on the sign in page.
+- What it does: `1` shows the demo password hint on the sign in page. Next.js copies this value into the page when the web app is built, so it only works when it is set for `pnpm build` (`NEXT_PUBLIC_DEMO_HINT=1 pnpm build`). Setting it only when the web app starts has no effect.
 - How to get it:
-  1. Set `1` only for local demos.
+  1. Set `1` at build time, only for local demos.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
 - Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).

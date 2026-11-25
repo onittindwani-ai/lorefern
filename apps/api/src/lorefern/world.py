@@ -89,6 +89,13 @@ def remote_scope(src: Source) -> list[str] | None:
     return ids or None
 
 
+def incomplete_note(counts: dict) -> str:
+    """What the Sources page says after a read that stopped early (a limit, or a file that could not be read): nothing was removed from the index. Empty after a complete read."""
+    if counts.get("incomplete") or counts.get("truncated"):
+        return "The last read stopped before it saw everything, so nothing was removed from the index. Read it again, and see the limits in docs/13."
+    return ""
+
+
 def read_source(session: Session, ctx, src: Source) -> dict:
     """Read one source again, by kind, and return the counts. The Sources page and the worker both call this, so they cannot disagree about what a source contains."""
     if src.kind == "folder":
@@ -186,8 +193,8 @@ def _sync_sources(session: Session, ctx, every_s: int = 3600) -> None:
         try:
             if src.kind == "folder" and not ctx.settings.knowledge_dir:
                 continue
-            read_source(session, ctx, src)
-            src.last_synced_at, src.status, src.error = now, "ready", ""
+            res = read_source(session, ctx, src)
+            src.last_synced_at, src.status, src.error = now, "ready", incomplete_note(res)
         except SourceError as exc:
             src.status, src.error = "error", str(exc)
         except Exception as exc:  # a broken source must not stop the other jobs

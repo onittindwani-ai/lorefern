@@ -14,6 +14,7 @@ WORKDIR /app/apps/api
 # Only these addresses may say who the visitor is (uvicorn reads FORWARDED_ALLOW_IPS). Compose widens it to the private network that holds the web container.
 ENV FORWARDED_ALLOW_IPS=127.0.0.1
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=5s CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health')"
-# Migrations run on start for Postgres. SQLite creates its own tables.
-CMD ["sh", "-c", "case \"$DATABASE_URL\" in postgres*) alembic upgrade head;; esac; exec python -m uvicorn lorefern.api.app:app_from_env --factory --host 0.0.0.0 --port 8000 --proxy-headers"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/ready')"
+# The healthcheck asks /ready, which reads the database, so an API that cannot reach it is not called healthy.
+# Migrations run on start for Postgres, and a failed migration stops the start (set -e) instead of serving a broken schema. SQLite creates its own tables.
+CMD ["sh", "-c", "set -e; case \"$DATABASE_URL\" in postgres*) alembic upgrade head;; esac; exec python -m uvicorn lorefern.api.app:app_from_env --factory --host 0.0.0.0 --port 8000 --proxy-headers"]

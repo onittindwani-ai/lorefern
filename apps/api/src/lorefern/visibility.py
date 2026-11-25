@@ -57,6 +57,22 @@ def meet_tag(a: str, b: str) -> str:
     return next((t for t in TAGS if audiences_of(t) == both), narrowest_tag())
 
 
+INHERIT = "inherit"  # what a document writes when it has no opinion of its own: it takes the tag of its folder
+
+
+def declared_tag(*written: str) -> str:
+    """The narrowest of the tags people wrote down (a document's own line, its folders' lines), or "" when none of them wrote one. A blank value and `inherit` mean "no opinion".
+    A tag nobody recognises counts as the narrowest tag, never as a wider one. A document, its folder and its source can only ever narrow one another."""
+    out = ""
+    for w in written:
+        c = (w or "").strip().lower()
+        if not c or c == INHERIT:
+            continue
+        c = c if c in TAGS else narrowest_tag()
+        out = c if not out else meet_tag(out, c)
+    return out
+
+
 # The base session role for each audience. The read only audiences use the base `viewer` role, which the base refuses on every change.
 SESSION_ROLE = {"owner": "owner", "leadership": "approver", "finance": "viewer", "staff": "viewer"}
 

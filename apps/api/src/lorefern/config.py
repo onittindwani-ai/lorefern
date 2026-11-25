@@ -15,14 +15,17 @@ def _is_local(host: str) -> bool:
     return host.strip().lower() in {"localhost", "127.0.0.1", "::1"}
 
 
+ACTOR_MAX = 80  # the width of the actor columns of the shared audit log and approvals tables
+
+
 class Settings(BaseAppSettings):
     app_name: str = "lorefern"
     database_url: str = "sqlite:///./lorefern.sqlite3"
 
     owner_email: str = "owner@example.test"
-    owner_password_hash: str | None = None
+    owner_password_hash: str | None = Field(default=None, repr=False)  # hashes and the members list never show in a printed settings object or a log
     approver_email: str | None = None
-    approver_password_hash: str | None = None
+    approver_password_hash: str | None = Field(default=None, repr=False)
     login_burst: int = Field(default=5, ge=1, le=1000)  # sign in tries in a row before a short wait; the browser tests raise it
 
     company_name: str = "Pinegate Works"  # shown at the top of every page. The default is the fictional demo company: set your own before MODE=live
@@ -34,7 +37,7 @@ class Settings(BaseAppSettings):
     seed_dir: str = ""
 
     # Who may sign in as which audience. JSON object of email to audience. Nobody is added by default outside demo mode: the implementer lists the client's people.
-    members_json: str = ""
+    members_json: str = Field(default="", repr=False)
     drive_token: str = Field(default="", repr=False)  # one short lived access token, for a first try only
     drive_service_account_json: str = Field(default="", repr=False)  # the text of a service account key file
     drive_service_account_file: str = ""  # or the path to that file
@@ -117,6 +120,8 @@ class Settings(BaseAppSettings):
         out = list(super().runtime_errors())
         if self.mode is Mode.LIVE and not self.demo_mode:
             out += self.placeholder_problems()
+        if any(len(e) > ACTOR_MAX for e in self.members()):
+            out.append(f"A sign in email is longer than {ACTOR_MAX} characters. The audit log and approval columns of the shared base hold {ACTOR_MAX}, so every change that person made would fail on Postgres. Use a shorter address.")
         if self.demo_shortcuts and self.knowledge_dir:
             out.append("KNOWLEDGE_DIR is set while the public demo password is on. Real documents would sit behind a login anyone can read in the repository. Set OWNER_PASSWORD_HASH (and DEMO_MODE=false), or leave KNOWLEDGE_DIR empty.")
         return list(dict.fromkeys(out))

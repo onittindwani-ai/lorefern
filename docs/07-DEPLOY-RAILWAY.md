@@ -8,7 +8,7 @@
 4. Add a **volume** and mount it at `/data/knowledge`. Set `KNOWLEDGE_DIR=/data/knowledge`. Put the company folder there.
 5. Add a second service from the same repository for the **worker**, with the start command `python -m lorefern.worker` and the same variables.
 6. Run the migrations once from a shell on the API service: `alembic upgrade head`.
-7. Set the health check path to `/health` (already in `railway.json`).
+7. Set the health check path to `/ready`, which also reads the database (already in `railway.json`).
 8. Put the web app on Vercel (doc 06) or run `apps/web/Dockerfile` as a third service, with `API_BASE_URL` set to the API's internal or public address.
 
 Cost depends on your plan. Read Railway's price page yourself, none is quoted here.
