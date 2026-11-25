@@ -7,12 +7,19 @@ import ssl
 from email.message import EmailMessage
 from email.utils import make_msgid
 
-from lorefern.util import clean_header
+from lorefern.util import clean_header, is_valid_email
 from sendora_core.adapters import AdapterError
 from sendora_core.safety import write_action
 
 
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
+NOT_IN_AN_ADDRESS = set(",;<>()[]\"'\\:")
+
+
+def one_address(value: str) -> bool:
+    """Exactly one plain address. A list, a name with angle brackets, a space or a line break would become several recipients or an extra header."""
+    v = (value or "").strip()
+    return bool(v) and is_valid_email(v) and not any(c in NOT_IN_AN_ADDRESS or c.isspace() or ord(c) < 32 for c in v)
 
 
 class SmtpEmail:
@@ -34,6 +41,8 @@ class SmtpEmail:
     def send(self, *, to: str, subject: str, body: str) -> str:
         if not self.settings.smtp_host:
             raise AdapterError("SMTP_HOST is empty.")
+        if not one_address(to):
+            raise AdapterError("The recipient is not exactly one email address, so nothing was sent.")
         m = EmailMessage()
         m["From"], m["To"], m["Subject"] = clean_header(self.settings.email_from), clean_header(to), clean_header(subject)
         m["Message-ID"] = make_msgid(domain=self.settings.email_from.rsplit("@", 1)[-1] or "localhost")

@@ -17,6 +17,7 @@ export default function SourcesPage() {
   const owner = realOwner && !preview;
   const q = useQuery({ queryKey: ["sources"], queryFn: () => get<SourceRow[]>("/sources") });
   const sync = useMutation({ mutationFn: (id: number) => post<Record<string, number>>(`/sources/${id}/sync`), onSuccess: (r) => { qc.invalidateQueries(); notify.success(`Read again: ${Object.entries(r).map(([k, v]) => `${v} ${k.replace(/_/g, " ")}`).join(", ") || "nothing to read"}.`); }, onError: (e: Error) => notify.error("Could not read the source", e.message) });
+  const confirmRemoval = useMutation({ mutationFn: (id: number) => post<Record<string, number>>(`/sources/${id}/sync?confirm_removals=true`), onSuccess: (r) => { qc.invalidateQueries(); notify.success(`${r.removed ?? 0} ${r.removed === 1 ? "meeting was" : "meetings were"} removed.`); }, onError: (e: Error) => notify.error("Could not remove them", e.message) });
   const retag = useMutation({ mutationFn: ({ id, tag }: { id: number; tag: string }) => api<{ changed: number }>(`/sources/${id}`, { method: "PATCH", json: { default_tag: tag } }), onSuccess: (r) => { qc.invalidateQueries(); notify.success(r.changed ? `Visibility changed. ${r.changed} ${r.changed === 1 ? "item was" : "items were"} re tagged.` : "Visibility saved. Nothing needed re tagging."); }, onError: (e: Error) => notify.error("Could not change visibility", e.message) });
   const untag = useMutation({ mutationFn: ({ id, tag }: { id: number; tag: string }) => api<{ untagged_tag: string }>(`/sources/${id}`, { method: "PATCH", json: { untagged_tag: tag } }), onSuccess: () => { qc.invalidateQueries(); notify.success("Saved. It applies the next time this source is read."); }, onError: (e: Error) => notify.error("Could not save", e.message) });
   const people = useQuery({ queryKey: ["owners"], queryFn: () => get<Owner[]>("/owners") });
@@ -47,11 +48,13 @@ export default function SourcesPage() {
               <p className="cx-mini">{s.documents} documents · last read {s.last_synced_at?.slice(0, 10) ?? "never"} · visible to {WHO[s.default_tag] ?? ""}</p>
               {s.default_tag === "company" ? <p className="cx-mini">A document with no tag of its own or on its folder is visible to: {WHO[s.untagged_tag] ?? s.untagged_tag}</p> : null}
               {s.error ? <p role="alert">{s.error}</p> : null}
+              {s.error_detail ? <p className="cx-mini">{s.error_detail}</p> : null}
               {owner ? (
                 <div className="cx-toolbar">
                   {s.default_tag === "company" ? <select className="cx-select" aria-label={`Tag for documents with no tag in ${s.name}`} value={s.untagged_tag} onChange={(e) => untag.mutate({ id: s.id, tag: e.target.value })}>{TAGS.map((t) => <option key={t} value={t}>no tag means {t}</option>)}</select> : null}
                   <select className="cx-select" aria-label={`Visibility of ${s.name}`} value={s.default_tag} onChange={(e) => retag.mutate({ id: s.id, tag: e.target.value })}>{TAGS.map((t) => <option key={t} value={t}>{t}</option>)}</select>
                   <Button onClick={async () => { await sync.mutateAsync(s.id); }}>Read again</Button>
+                  {(s.removals_held ?? 0) > 0 ? <Button variant="primary" onClick={async () => { await confirmRemoval.mutateAsync(s.id); }}>Confirm removal of {s.removals_held} meetings</Button> : null}
                 </div>
               ) : null}
             </div>

@@ -29,7 +29,7 @@ def write_tree(root: Path, files: dict[str, str]) -> Path:
 def real_settings(tmp_path: Path, knowledge: Path | None = None, **kw) -> Settings:
     members = {PEOPLE[a]: {"audience": a, "password_hash": _HASH} for a in ("leadership", "finance", "staff")}
     base = dict(database_url=f"sqlite:///{tmp_path / 'real.sqlite3'}", demo_mode=False, mode="draft", session_secret=REAL_SECRET, owner_email=PEOPLE["owner"], owner_password_hash=_HASH,
-                members_json=json.dumps(members), knowledge_dir=str(knowledge or ""), company_name="Acme Ltd", email_from="lorefern@acme.test", login_burst=1000)
+                members_json=json.dumps(members), knowledge_dir=str(knowledge or ""), company_name="Acme Ltd", email_from="lorefern@acme.test", allowed_email_domains="acme.test", login_burst=1000)
     base.update(kw)
     return Settings(_env_file=None, **base)
 

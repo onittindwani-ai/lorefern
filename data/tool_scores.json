@@ -1169,7 +1169,7 @@
       },
       "integration": {
        "score": 75,
-       "evidence": "Needs API_BASE_URL and SESSION_SECRET. Not deployed."
+       "evidence": "Needs only API_BASE_URL on the web host; the signing key stays on the API server. Not deployed."
       }
      }
     },

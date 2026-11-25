@@ -131,6 +131,16 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - Check it: `.venv/bin/python tools/doctor.py`.
 - If it is wrong: The plain sentence is used.
 
+## MEETINGS_MAX_REMOVALS
+
+- Required: optional
+- What it does: The most meetings one read may remove from the app (default 5). A meeting is removed when the recorder or the transcript folder no longer returns it, and removing it also removes its transcript, its indexed text and the decisions and tasks that are only proposals. A drop of more than this number in one read is held back: nothing is removed, the Sources page says how many are waiting, and the owner presses **Confirm removal** (or sends `POST /api/sources/{id}/sync?confirm_removals=true`) when it is real. A read that returns no meeting at all while meetings exist is also held until the next read says the same, whatever this number is.
+- How to get it: Leave it at 5 for a normal company. Raise it only if you really delete many transcripts at once.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top. The web host does not need it.
+- Check it: Delete more than this many transcript files from the meetings folder, read the Sources page, and the confirm button appears.
+- If it is wrong: Too low and an honest clean up waits for the owner. Too high and a recorder that lost its key could empty the app before anyone looks.
+
 ## LOGIN_BURST
 
 - Required: optional
@@ -494,14 +504,13 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 
 ## ALLOWED_EMAIL_DOMAINS
 
-- Required: optional
-- What it does: The email domains a task owner's address may be on, and the only domains task reminders are sent to. Comma separated, for example `yourcompany.com,yourcompany.co.uk`. A sub domain of a listed domain counts. Empty (the default) means only the domains of the people who sign in (`OWNER_EMAIL`, `APPROVER_EMAIL` and `MEMBERS_JSON`). A person added with an address outside the list is refused, and a reminder to such an address is never sent, even if it was approved: this stops a mistyped or planted address from receiving company text.
+- Required: yes, outside demo mode (empty is listed as a problem by `tools/doctor.py` and the settings page)
+- What it does: The email domains a task owner's address may be on, and the only domains task reminders are sent to. Comma separated, for example `yourcompany.com,yourcompany.co.uk`. A sub domain of a listed domain counts. While it is empty, no reminder is sent and no task owner can be given an address: the domains people sign in with are not used as a guess, because an owner who signs in with a free mail address would then allow every address at that provider. Do not list a free mail provider (gmail.com, outlook.com): the settings list it as a problem. Each address must be exactly one plain address: `a,b@company.com`, a name with angle brackets, a space or a line break inside it is refused, and the mail sender refuses it again before it connects. A person added with an address outside the list is refused, and a reminder to such an address is never sent, even if it was approved.
 - How to get it:
-  1. Leave it empty if everyone who owns tasks has an address on the domain they sign in with.
-  2. Otherwise list your own domains, with no spaces needed.
+  1. List your own company domains, with no spaces needed.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top. The web host does not need it.
-- Check it: `POST /api/owners` with an outside address answers that the address is not on the company's domains.
+- Check it: `POST /api/owners` with an outside address answers that the address is not on the company's domains, and with the setting empty it says the setting is not set.
 - If it is wrong: Reminders to a real colleague are skipped. List the domain.
 
 ## SMTP_USE_TLS

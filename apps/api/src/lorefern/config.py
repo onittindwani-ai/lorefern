@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Literal
 
 from pydantic import Field
@@ -15,6 +16,8 @@ def _is_local(host: str) -> bool:
     return host.strip().lower() in {"localhost", "127.0.0.1", "::1"}
 
 
+DOMAIN_RE = re.compile(r"[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?)+")
+ADDRESS_BAD_CHARS = frozenset(",;<>()[]\"'\\:")
 ACTOR_MAX = 80  # the width of the actor columns of the shared audit log and approvals tables
 
 
@@ -26,6 +29,7 @@ class Settings(BaseAppSettings):
     owner_password_hash: str | None = Field(default=None, repr=False)  # hashes and the members list never show in a printed settings object or a log
     approver_email: str | None = None
     approver_password_hash: str | None = Field(default=None, repr=False)
+    meetings_max_removals: int = Field(default=5, ge=1, le=1000)  # most meetings one read may remove from the app. A bigger drop waits until the owner confirms it on the Sources page
     login_burst: int = Field(default=5, ge=1, le=1000)  # sign in tries in a row before a short wait; the browser tests raise it
 
     company_name: str = "Pinegate Works"  # shown at the top of every page. The default is the fictional demo company: set your own before MODE=live
@@ -60,7 +64,7 @@ class Settings(BaseAppSettings):
     smtp_password: str = Field(default="", repr=False)
     smtp_use_tls: bool = True
     email_from: str = "lorefern@example.test"  # the From address of task reminders. The default is a placeholder: set your own before MODE=live
-    allowed_email_domains: str = ""  # comma separated domains task reminders may be sent to and task owners may have. Empty: only the domains of the people who sign in (OWNER_EMAIL, APPROVER_EMAIL, MEMBERS_JSON)
+    allowed_email_domains: str = ""  # comma separated domains task reminders may be sent to and task owners may have. Required outside demo mode: empty means nobody has an address and nothing is sent
 
     # What a language model may do when LLM_BACKEND is fixture or anthropic (with LLM_BACKEND=offline, the default, none of these call anything). Live use is UNVERIFIED.
     answer_writer: Literal["rules", "model"] = "model"  # ANSWER_WRITER=model writes the answer sentences with the model when a model backend is on; the groundedness check still runs on every sentence
@@ -102,17 +106,29 @@ class Settings(BaseAppSettings):
                 base[email] = aud
         return base
 
+    def _domain_entries(self) -> list[str]:
+        return [d for d in (x.strip().lower().lstrip("@") for x in self.allowed_email_domains.split(",")) if d]
+
+    def named_email_domains(self) -> set[str]:
+        """The domains written in ALLOWED_EMAIL_DOMAINS that look like a domain name (an entry with a space, a comma or an at sign inside is not one)."""
+        return {d for d in self._domain_entries() if DOMAIN_RE.fullmatch(d)}
+
     def email_domains(self) -> set[str]:
-        """The domains an owner's address may be on: ALLOWED_EMAIL_DOMAINS when it is set, otherwise the domains of everyone who can sign in."""
-        named = {d.strip().lower().lstrip("@") for d in self.allowed_email_domains.split(",") if d.strip()}
-        return named or {e.rsplit("@", 1)[1] for e in self.members() if "@" in e}
+        """The domains an address may be on. A real install must name them (ALLOWED_EMAIL_DOMAINS): nothing is guessed from the sign in addresses, because an owner who signs in with a
+        free mail address would then allow the whole of that provider. In demo mode only, the domains people sign in with are used, free mail providers left out."""
+        named = self.named_email_domains()
+        if named or not self.demo_mode:
+            return named
+        return {e.rsplit("@", 1)[1] for e in self.members() if "@" in e} - util.FREE_MAIL_DOMAINS
 
     def email_allowed(self, email: str) -> bool:
-        """True when the address is on one of the company's domains (or a sub domain of one). An address that is not a plain `name@domain` is never allowed."""
-        e = clean_email(email)
-        name, at, domain = e.rpartition("@")
-        if not (name and at and domain and "@" not in name and not any(c.isspace() for c in e) and len(e) <= 254):
+        """True when the text is exactly one valid address on one of the company's domains (or a sub domain of one). A list of addresses, a name with angle brackets, a comma, a
+        semicolon, a space or a line break inside it, or a domain that is not listed, is never allowed: the To header of a mail would split it into several recipients."""
+        raw = (email or "").strip()
+        e = clean_email(raw)
+        if not e or len(raw) > 254 or any(c in ADDRESS_BAD_CHARS or c.isspace() or ord(c) < 32 for c in e) or e.count("@") != 1 or not util.is_valid_email(e):
             return False
+        domain = e.rpartition("@")[2]
         return any(domain == d or domain.endswith("." + d) for d in self.email_domains())
 
     def drive_credentials(self) -> bool:
@@ -148,6 +164,11 @@ class Settings(BaseAppSettings):
             out.append("DEMO_MODE is on although OWNER_PASSWORD_HASH is set. The public demo logins are off, but the clock, the demo bar and the offline adapters are still demo. Set DEMO_MODE=false.")
         if not self.demo_mode:
             out += self.placeholder_problems()
+            if not self.named_email_domains():
+                out.append("ALLOWED_EMAIL_DOMAINS is empty, so no task reminder is sent and no task owner can have an email address. List your company's domains, for example yourcompany.com.")
+        out += [f"ALLOWED_EMAIL_DOMAINS lists {d}, a free mail provider, so every address there would be allowed. List your own company domain instead." for d in sorted(self.named_email_domains() & util.FREE_MAIL_DOMAINS)]
+        if any(not DOMAIN_RE.fullmatch(d) for d in self._domain_entries()):
+            out.append("ALLOWED_EMAIL_DOMAINS has an entry that is not a domain name (such as yourcompany.com), so it is ignored.")
         if self.smtp_host and not self.smtp_use_tls and not _is_local(self.smtp_host):
             out.append("SMTP_USE_TLS is off for a mail server that is not on this machine. The password would travel in plain text. Turn it on.")
         need = {"drive": (self.drive_credentials(), "DRIVE_SERVICE_ACCOUNT_JSON, DRIVE_SERVICE_ACCOUNT_FILE, DRIVE_CLIENT_ID with DRIVE_CLIENT_SECRET and DRIVE_REFRESH_TOKEN, or DRIVE_TOKEN"), "notion": (self.notion_token, "NOTION_TOKEN")}

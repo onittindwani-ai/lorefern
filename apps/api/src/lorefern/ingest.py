@@ -9,6 +9,7 @@ A tag nobody recognises becomes the narrowest tag too, never a wider one.
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import date
 from pathlib import Path
@@ -17,13 +18,13 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from lorefern import search, source_tags, untagged
-from lorefern.adapters.base import RemoteDoc, RemoteMeeting
+from lorefern.adapters.base import RemoteDoc, RemoteMeeting, RemoteMeetings
 from lorefern.chunking import ParsedDoc, chunk_document, content_hash, normalise_text, parse_pdf, parse_text, stems_for_index
 from lorefern.foldertag import folder_declared_tag
 from lorefern.injection import is_injection
 from lorefern.models import TAGS, Chunk, Decision, Document, Meeting, Process, Reminder, Source, Task, Transcript
 from lorefern.textproc import split_sentences, stems
-from lorefern.visibility import audiences_of, declared_tag, meet_tag, narrowest_tag
+from lorefern.visibility import INHERIT, audiences_of, declared_tag, meet_tag, narrowest_tag
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
 MAX_FILES = 5000  # most files one read looks at
@@ -50,9 +51,14 @@ def resolve_tag(source: Source, wanted: str = "", inherited: str = "", unlabelle
     choice for this source applies, and when there is none the narrowest tag."""
     if source.default_tag != "company":
         base = source.default_tag if source.default_tag in TAGS else _narrowest()
-        own = [c for c in (wanted, inherited) if (c or "").strip().lower() in TAGS]
-        return meet_tag(base, declared_tag(*own)) if own else base
+        written = declared_tag(wanted, inherited)  # a tag nobody recognises (a typo) counts as the narrowest tag, so it can never leave the source's own tag in place
+        return meet_tag(base, written) if written else base
     return own_tag(wanted, inherited, unlabelled)
+
+
+def unrecognised_tag(*written: str) -> bool:
+    """True when a document wrote a tag nobody recognises (a typo such as `peple`). It is treated as the narrowest tag, and the read counts it so the owner can fix the file."""
+    return any((w or "").strip() and (w or "").strip().lower() not in TAGS and (w or "").strip().lower() != INHERIT for w in written)
 
 
 def _date(v: str | None) -> date | None:
@@ -141,11 +147,13 @@ def guess_type(rel: str, meta: dict, title: str) -> str:
 
 
 def store_document(session: Session, source: Source, external_id: str, parsed: ParsedDoc, today: date | None = None, tag_hint: str = "", rel: str = "", inherited: str = "",
-                   own_log: dict[int, str] | None = None) -> tuple[Document, str]:
+                   own_log: dict[int, str] | None = None, unknown: list[str] | None = None) -> tuple[Document, str]:
     """Insert or update one document and rebuild its chunks. Returns (document, 'new' | 'changed' | 'same').
-    `own_log` collects, for a restricted source, the tag each document would have in an open one (see source_tags.note_own)."""
+    `own_log` collects, for a restricted source, the tag each document would have in an open one (see source_tags.note_own). `unknown` collects the documents that wrote a tag nobody recognises."""
     meta = parsed.meta or {}
     wanted, unlabelled = tag_hint or meta.get("visibility", ""), untagged.get(session, source.id)
+    if unknown is not None and unrecognised_tag(wanted):
+        unknown.append(external_id)
     tag = resolve_tag(source, wanted, inherited, unlabelled)
     h = content_hash(parsed.text + "|" + tag)
     doc = session.scalar(select(Document).where(Document.source_id == source.id, Document.external_id == external_id))
@@ -185,13 +193,18 @@ def note_reads(session: Session, source: Source, own_log: dict[int, str]) -> Non
 
 
 def store_safely(session: Session, counts: dict, *args, **kwargs) -> tuple[Document | None, str]:
-    """store_document inside its own savepoint: one file the database refuses is counted as failed and the rest of the read goes on."""
+    """store_document inside its own savepoint: one file the database refuses is counted as failed and the rest of the read goes on. A document that wrote a tag nobody recognises
+    is stored with the narrowest tag and counted in `unknown_tags`."""
+    unknown: list[str] = []
     try:
         with session.begin_nested():
-            return store_document(session, *args, **kwargs)
+            out = store_document(session, *args, unknown=unknown, **kwargs)
     except Exception:  # a bad file must not stop the read. The failure is counted, and the old copy of that document (if any) stays as it was
         counts["failed"] = counts.get("failed", 0) + 1
         return None, "failed"
+    if unknown:
+        counts["unknown_tags"] = counts.get("unknown_tags", 0) + 1
+    return out
 
 
 def remove_documents(session: Session, docs: list[Document]) -> int:
@@ -212,8 +225,9 @@ def remove_documents(session: Session, docs: list[Document]) -> int:
 
 
 def remove_meetings(session: Session, meetings: list[Meeting]) -> int:
-    """Take meetings out of the app: the transcript, its indexed document and passages, the decisions found in it, and the tasks that are still only proposals or were rejected.
-    A task a person already approved is work someone may be doing, so it stays, but it no longer quotes the transcript or points at it (its title and history stay). Weekly reviews,
+    """Take meetings out of the app: the transcript, its indexed document and passages, the decisions that are still only proposals or were rejected, and the tasks that are still only
+    proposals or were rejected. A task a person already approved is work someone may be doing, and a decision a person confirmed is the company's record, so both stay, but neither
+    quotes the transcript or points at it any more (a decision then shows its source as gone; a renamed file is therefore a new meeting). Weekly reviews,
     process evidence and stored answers that may quote the meeting are cleared. Returns how many meetings were removed."""
     if not meetings:
         return 0
@@ -227,7 +241,12 @@ def remove_meetings(session: Session, meetings: list[Meeting]) -> int:
         session.execute(delete(Reminder).where(Reminder.task_id.in_([t.id for t in gone])))
         for t in gone:
             session.delete(t)
-    session.execute(delete(Decision).where(Decision.meeting_id.in_(ids)))
+    for dec in session.scalars(select(Decision).where(Decision.meeting_id.in_(ids))):
+        if dec.status == "confirmed":  # a person confirmed it: it is the company's record. It stays with its title, date and tag, no longer quotes the transcript, and shows its source as gone
+            dec.meeting_id, dec.quote, dec.quote_start, dec.why = None, "", -1, ""
+        else:
+            session.delete(dec)
+    session.flush()
     docs = [d for d in (session.get(Document, m.document_id) for m in meetings if m.document_id) if d is not None]
     tags = {m.tag for m in meetings}
     for m in meetings:
@@ -245,13 +264,15 @@ def remove_missing(session: Session, source: Source, seen: set[str]) -> int:
     return remove_documents(session, gone)
 
 
-def ingest_folder(session: Session, source: Source, folder: Path, today: date | None = None, exclude: tuple[Path, ...] = ()) -> dict:
-    """Read a folder of markdown, text and PDF files. `exclude` lists sub folders that belong to another source (a stricter one), which this read leaves alone."""
+def ingest_folder(session: Session, source: Source, folder: Path, today: date | None = None, exclude: tuple[Path, ...] = (), tag_root: Path | None = None) -> dict:
+    """Read a folder of markdown, text and PDF files. `exclude` lists sub folders that belong to another source (a stricter one), which this read leaves alone. `tag_root` is the
+    top of the folder tree whose `.visibility` files and READMEs count (the knowledge folder): a source that points at a sub folder still obeys every folder above it."""
     counts = {"new": 0, "changed": 0, "same": 0, "skipped": 0, "removed": 0}
     pairs: list[tuple[Document, dict]] = []
     root = folder.resolve()
     if not root.is_dir():
         raise FileNotFoundError("The folder is not there, so nothing was read and nothing was removed.")
+    top = tag_root.resolve() if tag_root is not None and (tag_root.resolve() == root or tag_root.resolve() in root.parents) else root
     skip_roots = tuple(p.resolve() for p in exclude)
     seen: set[str] = set()
     cache: dict = {}
@@ -298,7 +319,7 @@ def ingest_folder(session: Session, source: Source, folder: Path, today: date | 
         except Exception:  # a damaged PDF must not stop the run
             counts["skipped"] += 1
             continue
-        doc, state = store_safely(session, counts, source, rel, parsed, today, rel=rel, inherited=folder_declared_tag(p.parent, root, cache, unreadable), own_log=own)
+        doc, state = store_safely(session, counts, source, rel, parsed, today, rel=rel, inherited=folder_declared_tag(p.parent, top, cache, unreadable), own_log=own)
         if doc is None:
             continue
         pairs.append((doc, parsed.meta or {}))
@@ -353,7 +374,8 @@ def ingest_remote(session: Session, source: Source, docs: list[RemoteDoc], today
     return counts
 
 
-def ingest_slack(session: Session, source: Source, days, channel_tags: dict[str, str] | None = None, today: date | None = None) -> dict:
+def ingest_slack(session: Session, source: Source, days, channel_tags: dict[str, str] | None = None, today: date | None = None, inherited: str = "") -> dict:
+    """Store the days of a Slack export. `inherited` is the tag the folders above the export declare: a channel tag or the source's tag can only narrow it."""
     counts = {"new": 0, "changed": 0, "same": 0, "removed": 0}
     seen: set[str] = set()
     own: dict[int, str] = {}
@@ -368,7 +390,7 @@ def ingest_slack(session: Session, source: Source, days, channel_tags: dict[str,
             counts["failed"] = counts.get("failed", 0) + 1
             continue
         parsed = ParsedDoc(f"#{d.channel} on {d.day}", body, "slack", day, slug, {})
-        doc, st = store_safely(session, counts, source, slug, parsed, today, tag_hint=(channel_tags or {}).get(d.channel, ""), rel="slack", own_log=own)
+        doc, st = store_safely(session, counts, source, slug, parsed, today, tag_hint=(channel_tags or {}).get(d.channel, ""), rel="slack", inherited=inherited, own_log=own)
         if doc is None:
             continue
         doc.doc_type = "slack"
@@ -441,13 +463,91 @@ def retag_meeting_rows(session: Session, meeting: Meeting, was: str, now: str) -
     search.clear_cache()
 
 
-def sync_meetings(session: Session, ctx, today: date | None = None) -> dict:
-    """Read the selected meetings adapter (a recorder or a folder of transcripts) into the database. Extraction happens later, and only proposes."""
+def held_note(count: int, cap: int) -> str:
+    return (f"{count} meetings are no longer in the recorder or the transcript folder, but removing more than {cap} at once needs the owner. "
+            "If that is right, the owner presses Confirm removal on this page. If not, check the recorder key and the folder first.")
+
+
+def incomplete_note(counts: dict) -> str:
+    """What the Sources page says to everyone after a read that stopped early (a limit, or a file that could not be read) or held something back. It names no folder and no file: a path can
+    be a restricted folder's name, so the paths are in `incomplete_detail`, for the people who may see the narrowest tag. Empty after a complete read."""
+    notes = []
+    if counts.get("incomplete") or counts.get("truncated"):
+        notes.append("The last read stopped before it saw everything, so nothing was removed from the index. Read it again, and see the limits in docs/13.")
+    n = len(counts.get("unreadable_folder_tags") or [])
+    if n:
+        notes.append(f"{n} folder tag file{'s' if n != 1 else ''} could not be read or holds a tag nobody recognises, so the folders {'they belong' if n != 1 else 'it belongs'} to {'are' if n != 1 else 'is'} owner only until "
+                     "that is fixed. The owner can see which on this page.")
+    if counts.get("unknown_tags"):
+        k = counts["unknown_tags"]
+        notes.append(f"{k} document{'s' if k != 1 else ''} wrote a visibility tag nobody recognises and {'are' if k != 1 else 'is'} owner only until it is fixed.")
+    if counts.get("removal_held"):
+        notes.append(held_note(counts["removal_held"], counts.get("removal_cap", 5)))
+    return " ".join(notes)
+
+
+def incomplete_detail(counts: dict) -> str:
+    """The paths behind `incomplete_note`, for the people who may see the narrowest tag only."""
+    paths = counts.get("unreadable_folder_tags") or []
+    if not paths:
+        return ""
+    return "Folder tag files that could not be read, or hold a tag nobody recognises (each must be a plain file of at most 64 KB, not a link, with one of the five tags): " + ", ".join(paths[:10]) + "."
+
+
+def record_read(session: Session, src: Source, counts: dict) -> None:
+    """Write what a read says about itself onto its source: the note everyone may see, and the detail only the owner may see."""
+    from lorefern.context import set_state
+
+    src.error = incomplete_note(counts)
+    set_state(session, f"source_detail:{src.id}", incomplete_detail(counts))
+
+
+def _reset_removal_waits(session: Session, src: Source) -> None:
+    """A read that did not see everything ends any streak of empty reads and any held drop: what was true on the last complete read is not known to be true now."""
+    from lorefern.context import set_state
+
+    set_state(session, f"meetings_empty_read:{src.id}", "[]")
+    set_state(session, f"meetings_removals_held:{src.id}", "0")
+
+
+def _decide_removals(session: Session, ctx, src: Source, gone: list[Meeting], empty: bool, confirm: bool, counts: dict) -> list[Meeting]:
+    """Which of the meetings a finished read no longer returns may be removed now. Three safeguards, because a wrong answer here deletes transcripts, decisions and the answers built on them:
+    an empty reply while meetings exist is believed only when the next read says the same (a wrong key or a failing recorder can look like an empty account), a drop of more than
+    MEETINGS_MAX_REMOVALS meetings in one read waits for the owner (`confirm`), and the owner's confirmation removes whatever is gone."""
+    from lorefern.context import get_state, set_state
+
+    wait_key, held_key = f"meetings_empty_read:{src.id}", f"meetings_removals_held:{src.id}"
+    ids = sorted(m.external_id for m in gone)
+    waiting = set(json.loads(get_state(session, wait_key, "[]") or "[]"))
+    set_state(session, wait_key, json.dumps(ids if empty and gone else []))
+    set_state(session, held_key, "0")
+    if not gone:
+        return []
+    if confirm:
+        return gone
+    cap = ctx.settings.meetings_max_removals
+    if len(gone) > cap:
+        counts["removal_held"], counts["removal_cap"] = len(gone), cap
+        set_state(session, held_key, str(len(gone)))
+        return []
+    if empty and not set(ids) <= waiting:
+        counts["removal_pending"] = len(gone)  # the first empty read: the next one decides
+        return []
+    return gone
+
+
+def sync_meetings(session: Session, ctx, today: date | None = None, confirm_removals: bool = False) -> dict:
+    """Read the selected meetings adapter (a recorder or a folder of transcripts) into the database. Extraction happens later, and only proposes. A meeting is removed only after a
+    read that saw everything, and only as `_decide_removals` allows. `confirm_removals` is the owner saying that a large drop is real."""
     counts = {"new": 0, "changed": 0, "same": 0, "removed": 0}
     found = ctx.adapters.meetings.list_meetings()
     complete = bool(getattr(found, "complete", False))  # only a read that says it saw everything can say a meeting is gone
     src = session.scalar(select(Source).where(Source.kind == "meetings"))
     if not found and not (complete and src is not None):
+        if isinstance(found, RemoteMeetings) and not complete and src is not None:  # the folder or recorder could not be read in full: say so on the source
+            counts["incomplete"] = 1
+            _reset_removal_waits(session, src)
+            record_read(session, src, counts)
         return counts  # nothing came back, and nothing is known to be gone
     if src is None:
         src = Source(kind="meetings", name="Meeting transcripts", uri=ctx.settings.meetings_adapter, default_tag="company", reliability="A", owner="", status="ready")
@@ -464,9 +564,11 @@ def sync_meetings(session: Session, ctx, today: date | None = None) -> dict:
     if complete:
         seen = {m.external_id for m in found}
         gone = [x for x in session.scalars(select(Meeting).where(Meeting.source_id == src.id)) if x.external_id not in seen and not x.external_id.startswith(IMPORT_PREFIX)]
-        counts["removed"] = remove_meetings(session, gone)
+        counts["removed"] = remove_meetings(session, _decide_removals(session, ctx, src, gone, not found, confirm_removals, counts))
     else:
         counts["incomplete"] = 1  # the read did not see every meeting, so one it did not return is not known to be gone: nothing is removed
-    src.last_synced_at, src.status, src.error = ctx.now(session), "ready", ""
+        _reset_removal_waits(session, src)
+    src.last_synced_at, src.status = ctx.now(session), "ready"
+    record_read(session, src, counts)
     search.rebuild(session)
     return counts

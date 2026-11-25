@@ -14,7 +14,8 @@ def task_dict(t, names: dict[int, str]) -> dict:
 
 
 def decision_dict(d) -> dict:
-    return {"id": d.id, "title": d.title, "decided_on": iso(d.decided_on), "decided_by": d.decided_by, "why": d.why, "quote": d.quote, "quote_start": d.quote_start, "meeting_id": d.meeting_id, "status": d.status, "tag": d.tag}
+    return {"id": d.id, "title": d.title, "decided_on": iso(d.decided_on), "decided_by": d.decided_by, "why": d.why, "quote": d.quote, "quote_start": d.quote_start, "meeting_id": d.meeting_id, "status": d.status, "tag": d.tag,
+            "source_gone": d.meeting_id is None}  # decisions are only ever found in meetings, so one with no meeting lost it (the transcript was removed or renamed) and keeps the person's confirmation
 
 
 def doc_dict(d, full: bool = False) -> dict:

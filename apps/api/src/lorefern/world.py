@@ -3,16 +3,23 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from lorefern import ingest, search, tasks
 from lorefern.adapters.meetings import load_transcript_file, visibility_of
 from lorefern.adapters.slack import read_export
+from lorefern.foldertag import folder_declared_tag
+from lorefern.ingest import incomplete_note  # noqa: F401  (the Sources page and the worker call it as world.incomplete_note)
 from lorefern.models import Meeting, Owner, Source, Task, TaskEvent
+from sendora_core.adapters import AdapterError
+
+log = logging.getLogger("lorefern.world")
 
 PROCESSED = 11  # meetings m01 to m11 are already worked through, m12 is left for the live demo
 
@@ -89,21 +96,12 @@ def remote_scope(src: Source) -> list[str] | None:
     return ids or None
 
 
-def incomplete_note(counts: dict) -> str:
-    """What the Sources page says after a read that stopped early (a limit, or a file that could not be read): nothing was removed from the index. Empty after a complete read."""
-    notes = []
-    if counts.get("incomplete") or counts.get("truncated"):
-        notes.append("The last read stopped before it saw everything, so nothing was removed from the index. Read it again, and see the limits in docs/13.")
-    if counts.get("unreadable_folder_tags"):
-        notes.append(f"A folder tag file could not be read ({', '.join(counts['unreadable_folder_tags'][:5])}), so the folders it belongs to are owner only until it is fixed. It must be a plain file of at most 64 KB, not a link.")
-    return " ".join(notes)
-
-
-def read_source(session: Session, ctx, src: Source) -> dict:
-    """Read one source again, by kind, and return the counts. The Sources page and the worker both call this, so they cannot disagree about what a source contains."""
+def read_source(session: Session, ctx, src: Source, confirm_removals: bool = False) -> dict:
+    """Read one source again, by kind, and return the counts. The Sources page and the worker both call this, so they cannot disagree about what a source contains.
+    `confirm_removals` is only for a meetings source: the owner says that a large drop in the number of meetings is real."""
     if src.kind == "folder":
         root = source_root(ctx, src)
-        return ingest.ingest_folder(session, src, root, ctx.today(session), exclude=nested_roots(session, ctx, src, root))
+        return ingest.ingest_folder(session, src, root, ctx.today(session), exclude=nested_roots(session, ctx, src, root), tag_root=knowledge_base(ctx))
     if src.kind in {"drive", "notion"}:
         if ctx.settings.knowledge_adapter != src.kind:
             raise SourceError(f"KNOWLEDGE_ADAPTER is {ctx.settings.knowledge_adapter}, so this {src.kind} source cannot be read. Set KNOWLEDGE_ADAPTER={src.kind}.")
@@ -113,8 +111,13 @@ def read_source(session: Session, ctx, src: Source) -> dict:
         base = knowledge_base(ctx)
         mapping = next((m for m in (target / "slack_channels.json", base / "slack_channels.json") if m.is_file()), None)
         tags = json.loads(mapping.read_text()) if mapping else {}
-        return ingest.ingest_slack(session, src, read_export(target), tags, ctx.today(session))
-    return ingest.sync_meetings(session, ctx, ctx.today(session))
+        unreadable: list[str] = []
+        above = folder_declared_tag(target if target.is_dir() else target.parent, base, {}, unreadable)  # the folders above the export count, as they do for a folder source
+        res = ingest.ingest_slack(session, src, read_export(target), tags, ctx.today(session), inherited=above)
+        if unreadable:
+            res["unreadable_folder_tags"] = sorted(set(unreadable))
+        return res
+    return ingest.sync_meetings(session, ctx, ctx.today(session), confirm_removals=confirm_removals)
 
 
 def load_world(session: Session, ctx) -> dict:
@@ -173,7 +176,7 @@ def process_new(session: Session, ctx) -> dict:
     now = ctx.now(session)
     proposed = decisions = 0
     if not ctx.settings.demo_mode:
-        ingest.sync_meetings(session, ctx, ctx.today(session))
+        _sync_meetings(session, ctx)
         _sync_sources(session, ctx)
     proposer = ctx.proposer(session)
     for m in session.scalars(select(Meeting).where(Meeting.extracted.is_(False))):
@@ -183,6 +186,18 @@ def process_new(session: Session, ctx) -> dict:
     procs = len(sops.detect(session, ctx.today(session), ctx.settings, wording=ctx.wording(session)))
     drafted = reminders.plan(session, ctx.today(session), ctx.settings)
     return {"proposed_tasks": proposed, "proposed_decisions": decisions, "processes": procs, "reminders": drafted}
+
+
+def _sync_meetings(session: Session, ctx) -> None:
+    """The hourly job's read of the recorder or the transcript folder. A recorder that answers badly (a rate limit, a wrong key, a page that is not JSON) stops nothing else: the source
+    says so, the meetings stay as they were, and the next read tries again."""
+    try:
+        ingest.sync_meetings(session, ctx, ctx.today(session))
+    except (AdapterError, httpx.HTTPError, OSError, ValueError) as exc:
+        src = session.scalar(select(Source).where(Source.kind == "meetings"))
+        log.warning("meetings read failed: %s", type(exc).__name__)
+        if src is not None:
+            src.status, src.error = "error", str(exc) if isinstance(exc, AdapterError) else f"{type(exc).__name__}: could not read this source."
 
 
 def _sync_sources(session: Session, ctx, every_s: int = 3600) -> None:
@@ -197,7 +212,8 @@ def _sync_sources(session: Session, ctx, every_s: int = 3600) -> None:
             if src.kind == "folder" and not ctx.settings.knowledge_dir:
                 continue
             res = read_source(session, ctx, src)
-            src.last_synced_at, src.status, src.error = now, "ready", incomplete_note(res)
+            src.last_synced_at, src.status = now, "ready"
+            ingest.record_read(session, src, res)
         except SourceError as exc:
             src.status, src.error = "error", str(exc)
         except Exception as exc:  # a broken source must not stop the other jobs

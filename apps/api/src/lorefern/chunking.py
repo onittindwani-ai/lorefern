@@ -42,9 +42,9 @@ HEADER_KEYS = {"title", "date", "provider", "visibility", "owner", "updated", "t
 
 
 def normalise_text(raw: str) -> str:
-    """One line ending style, no byte order mark and no NUL bytes, so a header written on Windows or exported from Google Docs reads the same as one written on a Mac,
+    """One line ending style, no byte order mark or zero width character at the start (which would hide the `---` that opens a header) and no NUL bytes, so a header written on Windows or exported from Google Docs reads the same as one written on a Mac,
     and a stray NUL byte cannot make the database refuse the document."""
-    return raw.replace("\x00", "").lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+    return raw.replace("\x00", "").lstrip("\ufeff\u200b\u200c\u200d\u2060").replace("\r\n", "\n").replace("\r", "\n")
 
 
 def _pairs(lines: list[str]) -> dict:

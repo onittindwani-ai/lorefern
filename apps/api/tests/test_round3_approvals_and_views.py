@@ -212,9 +212,10 @@ def test_a_folder_tag_file_that_cannot_be_read_closes_the_folder_and_is_reported
         readme.write_text("---\nvisibility: company\n---\n# Team\n\n" + "x" * 70_000, encoding="utf-8")
     sid = i.add_source("KB", "kb", untagged_tag="company")
     res = i.sync(sid)
-    assert res["unreadable_folder_tags"] == ["team/README.md"]
+    assert res["unreadable_folder_tags"] == ["kb/team/README.md"]  # round 4: named from the knowledge folder, because the folders above the source count too
     assert set(i.docs("staff")) == {"open.md"} and i.docs()["team/plan.md"]["tag"] == "people"  # closed, not opened
-    assert "team/README.md" in next(s for s in i.get("owner", "/api/sources").json() if s["id"] == sid)["error"]
+    row = next(s for s in i.get("owner", "/api/sources").json() if s["id"] == sid)
+    assert "kb/team/README.md" in row["error_detail"] and "team/README.md" not in row["error"]  # round 4: the path is the owner's to read, the note everyone sees only counts
 
 
 def _slack_day(msg: str) -> str:

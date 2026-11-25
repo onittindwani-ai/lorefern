@@ -5,7 +5,8 @@
 3. `make install`, or `.venv/bin/pip install -c constraints.txt -e packages/core-py -e "apps/api[dev]"` and `pnpm install`. If your environment was made with uv, use `uv pip install --python .venv/bin/python -c constraints.txt -e packages/core-py -e "apps/api[dev]"` instead of pip.
 4. Postgres: `cd apps/api && ../../.venv/bin/alembic upgrade head`. SQLite creates missing tables by itself.
 5. `pnpm build`, restart the API, worker and web app.
-6. Run `.venv/bin/python tools/doctor.py`, open the Sources page, and run `python3 tools/check_company_folder.py <folder>`.
+6. Run `.venv/bin/python tools/doctor.py`, open the Sources page, and run `python3 tools/check_company_folder.py <folder>`. The doctor reads the same settings file as the API and the worker: the environment, then the file named by `ENV_FILE` (default `.env`), so set `ENV_FILE` the same way for all of them.
+7. Version 1.0.1 added settings: `MEETINGS_MAX_REMOVALS` (optional) and a required `ALLOWED_EMAIL_DOMAINS` outside demo mode (until it is set, no reminder is sent). `make check-env` shows what your file is missing.
 
 ## Docker (the Hetzner or Railway way)
 

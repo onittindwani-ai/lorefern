@@ -406,7 +406,7 @@ What Lorefern has for each: Railway: Config written, not deployed (not run); Ver
 - Reliability and upkeep (85): Managed platform. This is a judgement, not a measurement.
 - Cost (65): Free and paid tiers. Not read today.
 - Data control (55): Vendor hosted. This is a judgement, not a measurement.
-- Integration depth (75): Needs API_BASE_URL and SESSION_SECRET. Not deployed.
+- Integration depth (75): Needs only API_BASE_URL on the web host; the signing key stays on the API server. Not deployed.
 - Sources: https://vercel.com/docs/monorepos (checked 2026-11-23 (root directory setting for a monorepo))
 
 **Evidence, Hetzner VPS with Docker Compose**

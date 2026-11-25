@@ -32,7 +32,7 @@ Open http://localhost:3000.
 
 ## Tests
 
-- Python: `.venv/bin/python -m pytest`. The last full run is in `data/counts.json`: <!--n:tests.passed-->359<!--/n--> passed, <!--n:tests.skipped-->1<!--/n--> skipped (one needs a Postgres, set `TEST_POSTGRES_URL`), coverage <!--n:tests.coverage_percent-->94.3<!--/n--> percent of the `lorefern` package.
+- Python: `.venv/bin/python -m pytest`. The last full run is in `data/counts.json`: <!--n:tests.passed-->416<!--/n--> passed, <!--n:tests.skipped-->1<!--/n--> skipped (one needs a Postgres, set `TEST_POSTGRES_URL`), coverage <!--n:tests.coverage_percent-->94.6<!--/n--> percent of the `lorefern` package.
 - Evaluations: `.venv/bin/python tools/eval_extraction.py` and `tools/eval_questions.py --set dev` (see `EXTRACTION-EVAL.md` and `ANSWER-EVAL.md`).
 - Browser tests: `pnpm e2e` (needs Google Chrome; it starts its own API and web server and a throwaway database). It tests the last build, so run `pnpm build` first. <!--n:e2e.tests-->30<!--/n--> tests.
 

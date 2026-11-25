@@ -7,7 +7,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -244,17 +244,18 @@ def _read_error(exc: Exception) -> HTTPException:
 
 
 @router.post("/sources/{sid}/sync", summary="Read the source again. Folder and Slack sources read from this machine.")
-def sync_source(sid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner_write)):
+def sync_source(sid: int, confirm_removals: bool = Query(False, description="Meetings sources only: the owner confirms that a large drop in the number of meetings is real, so they are removed."),
+                s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner_write)):
     src = s.get(Source, sid)
     if src is None:
         raise HTTPException(404, "No such source.")
     try:
-        res = world.read_source(s, ctx, src)
+        res = world.read_source(s, ctx, src, confirm_removals=confirm_removals)
     except (world.SourceError, AdapterError, FileNotFoundError) as exc:
         raise _read_error(exc) from exc
     src.last_synced_at, src.status = ctx.now(s), "ready"
-    src.error = world.incomplete_note(res)
-    record_audit(s, u["user"], "source.sync", f"source:{sid}", res)
+    ingest.record_read(s, src, res)
+    record_audit(s, u["user"], "source.sync", f"source:{sid}", {**res, **({"confirmed_removals": True} if confirm_removals else {})})
     return res
 
 
@@ -310,8 +311,10 @@ class NewOwner(BaseModel):
 def add_owner(b: NewOwner, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     name = " ".join(b.name.split())
     email = b.email.strip()
-    if email and not ctx.settings.email_allowed(email):  # reminders go to this address, so it must be one of the company's (ALLOWED_EMAIL_DOMAINS, else the domains people sign in with)
-        raise HTTPException(422, "That email address is not on one of the company's email domains. Use a company address, or ask the owner to list the domain in ALLOWED_EMAIL_DOMAINS.")
+    if email and not ctx.settings.email_allowed(email):  # reminders go to this address, so it must be one address on one of the company's domains (ALLOWED_EMAIL_DOMAINS)
+        if not ctx.settings.email_domains():
+            raise HTTPException(422, "ALLOWED_EMAIL_DOMAINS is not set, so no task owner can have an email address yet. The owner lists the company's domains in the settings file.")
+        raise HTTPException(422, "That is not one email address on one of the company's email domains. Use a company address, or ask the owner to list the domain in ALLOWED_EMAIL_DOMAINS.")
     if not any(ch.isalpha() for ch in name):
         raise HTTPException(422, "A name needs at least one letter.")
     if any(o.name.lower() == name.lower() for o in s.scalars(select(Owner))):

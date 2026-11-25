@@ -217,6 +217,7 @@ def test_deleting_every_transcript_removes_them_all(tmp_path):
     i = make_hr_install(tmp_path)
     for f in ("hr.txt", "other.txt"):
         (i.kd / "meetings" / f).unlink()
+    assert read_meetings(i)["removed"] == 0  # an empty read is believed only when the next read says the same (round 4)
     assert read_meetings(i)["removed"] == 2
     assert titles(i) == set()
 
@@ -273,6 +274,7 @@ def test_a_meeting_a_person_pasted_in_is_not_removed_by_a_read_of_the_recorder(t
     assert r.status_code == 200, r.text
     for f in ("hr.txt", "other.txt"):
         (i.kd / "meetings" / f).unlink()
+    assert read_meetings(i)["removed"] == 0  # the first empty read waits for the second (round 4)
     assert read_meetings(i)["removed"] == 2
     assert titles(i) == {"Pasted"}
 

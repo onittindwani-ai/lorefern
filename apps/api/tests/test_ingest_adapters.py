@@ -36,7 +36,7 @@ def test_tag_rule_is_fail_closed(ctx, tmp_path):
         tags = {d.title: d.tag for d in s.scalars(select(Document).where(Document.source_id == open_src.id))}
         assert tags == {"A": "company", "B": "people", "C": "finance"}  # an unknown tag becomes the narrowest: `people`, which only the owner sees (it was `leadership`, which leadership also sees)
         ingest.ingest_folder(s, locked, tmp_path)
-        assert {d.tag for d in s.scalars(select(Document).where(Document.source_id == locked.id))} == {"finance"}  # a document cannot widen a restricted source
+        assert {d.title: d.tag for d in s.scalars(select(Document).where(Document.source_id == locked.id))} == {"A": "finance", "B": "people", "C": "finance"}  # a document cannot widen a restricted source, and a tag nobody recognises (round 4: it used to be ignored) is the narrowest tag there too
         assert {c.tag for c in s.scalars(select(Chunk))} <= {"company", "people", "finance"}
 
 

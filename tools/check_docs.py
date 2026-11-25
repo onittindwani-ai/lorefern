@@ -27,6 +27,16 @@ MARK = re.compile(r"<!--n:([\w.]+)-->(.*?)<!--/n-->")
 LINK = re.compile(r"\]\(([^)#\s]+)(?:#[^)]*)?\)")
 
 
+WEB_CONTEXT = re.compile(r"vercel|API_BASE_URL|web app|web host|web variable", re.I)
+NEGATED = re.compile(r"\b(never|nothing else|do not|must not|stays on|belongs on)\b", re.I)
+
+
+def session_secret_on_web(text: str) -> list[str]:
+    """Lines that put SESSION_SECRET in a Vercel or web variable list. The web app never reads it: it signs owner sessions and belongs on the API server only, so a line that mentions
+    it next to Vercel, API_BASE_URL or the web app must say it is NOT to be set there."""
+    return [ln.strip()[:120] for ln in text.splitlines() if "SESSION_SECRET" in ln and WEB_CONTEXT.search(ln) and not NEGATED.search(ln)]
+
+
 def lookup(counts: dict, path: str):
     cur = counts
     for part in path.split("."):
@@ -73,6 +83,9 @@ def main(argv: list[str]) -> int:
                 continue
             if not (f.parent / unquote(target)).resolve().exists():
                 bad.append(f"{rel}: broken link {target}")
+    for f in [*FILES, ROOT / "data" / "tool_scores.json"]:
+        for ln in session_secret_on_web(f.read_text(encoding="utf-8")):
+            bad.append(f"{f.relative_to(ROOT)}: SESSION_SECRET in a Vercel or web variable list: {ln}")
     if bad:
         print("\n".join("PROBLEM " + b for b in bad))
         return 1

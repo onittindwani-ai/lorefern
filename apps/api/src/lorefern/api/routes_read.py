@@ -12,7 +12,7 @@ from lorefern import folder_tool, qa, review, sops, stuck, untagged, world
 from lorefern.api.deps import db, get_ctx, real_audience, user, viewer
 from lorefern.api.guards import approval_visible
 from lorefern.api.serializers import decision_dict, doc_dict, iso, task_dict
-from lorefern.context import Ctx
+from lorefern.context import Ctx, get_state
 from lorefern.models import Decision, Document, Meeting, Owner, Question, Reminder, Source, Task
 from lorefern.visibility import AUDIENCE_TAGS, allowed_tags, narrowest_tag
 
@@ -78,6 +78,7 @@ def document(doc_id: int, s: Session = Depends(db, scope="function"), aud: str =
 @router.get("/sources", summary="Sources whose tag the viewer may see, with index status")
 def sources(s: Session = Depends(db, scope="function"), aud: str = Depends(viewer)):
     tags = allowed_tags(aud)
+    sees_paths = narrowest_tag() in tags  # the paths behind a read note can be a restricted folder's name: only the audience that may see the narrowest tag reads them
     out = []
     for src in s.scalars(select(Source).order_by(Source.id)):
         per = dict(s.execute(select(Document.tag, func.count()).where(Document.source_id == src.id, Document.tag.in_(tags)).group_by(Document.tag)).all())
@@ -85,7 +86,8 @@ def sources(s: Session = Depends(db, scope="function"), aud: str = Depends(viewe
             continue
         out.append({"id": src.id, "kind": src.kind, "name": src.name, "uri": src.uri, "default_tag": src.default_tag, "reliability": src.reliability, "owner": src.owner, "status": src.status,
                     "last_synced_at": iso(src.last_synced_at), "error": src.error, "documents": sum(per.values()), "by_tag": per,
-                    "untagged_tag": untagged.get(s, src.id) or narrowest_tag()})
+                    "untagged_tag": untagged.get(s, src.id) or narrowest_tag(), "error_detail": get_state(s, f"source_detail:{src.id}") if sees_paths else "",
+                    "removals_held": int(get_state(s, f"meetings_removals_held:{src.id}", "0") or 0) if sees_paths and src.kind == "meetings" else 0})
     return out
 
 

@@ -1444,6 +1444,18 @@
        "type": "integer",
        "title": "Sid"
       }
+     },
+     {
+      "name": "confirm_removals",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "description": "Meetings sources only: the owner confirms that a large drop in the number of meetings is real, so they are removed.",
+       "default": false,
+       "title": "Confirm Removals"
+      },
+      "description": "Meetings sources only: the owner confirms that a large drop in the number of meetings is real, so they are removed."
      }
     ],
     "responses": {
