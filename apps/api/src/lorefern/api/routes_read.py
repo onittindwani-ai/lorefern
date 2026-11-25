@@ -24,7 +24,7 @@ def _names(s: Session) -> dict[int, str]:
 
 
 @router.get("/overview", summary="Numbers for the top of every page, counted only over what the viewer may see")
-def overview(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), aud: str = Depends(viewer)):
+def overview(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), aud: str = Depends(viewer)):
     tags = allowed_tags(aud)
     count = lambda col, *w: s.scalar(select(func.count()).select_from(col).where(*w)) or 0  # noqa: E731
     st = stuck.detect(s, ctx.today(s), ctx.settings, tags)
@@ -42,7 +42,7 @@ class AskIn(BaseModel):
 
 
 @router.post("/ask", summary="Ask a question. The answer cites the passages it relies on and refuses what it cannot ground.")
-def ask(b: AskIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(user), aud: str = Depends(viewer)):
+def ask(b: AskIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(user), aud: str = Depends(viewer)):
     a = qa.ask(s, ctx, b.question, aud)
     d = a.as_dict()
     s.add(Question(text=b.question, asker=u["user"], audience=aud, outcome=a.outcome, answer=d, asked_at=ctx.now(s)))
@@ -50,13 +50,13 @@ def ask(b: AskIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict
 
 
 @router.get("/questions", summary="The viewer's own recent questions")
-def questions(s: Session = Depends(db), u: dict = Depends(user), aud: str = Depends(viewer), limit: int = Query(30, ge=1, le=200)):
+def questions(s: Session = Depends(db, scope="function"), u: dict = Depends(user), aud: str = Depends(viewer), limit: int = Query(30, ge=1, le=200)):
     rows = s.scalars(select(Question).where(Question.asker == u["user"], Question.audience == aud).order_by(Question.id.desc()).limit(limit))
     return [{"id": q.id, "text": q.text, "outcome": q.outcome, "asked_at": iso(q.asked_at)} for q in rows]
 
 
 @router.get("/documents", summary="Documents the viewer may see")
-def documents(s: Session = Depends(db), aud: str = Depends(viewer), q: str = "", tag: str = "", limit: int = Query(500, ge=1, le=5000)):
+def documents(s: Session = Depends(db, scope="function"), aud: str = Depends(viewer), q: str = "", tag: str = "", limit: int = Query(500, ge=1, le=5000)):
     stmt = select(Document).where(Document.tag.in_(allowed_tags(aud)))
     if tag:
         stmt = stmt.where(Document.tag == tag)
@@ -68,7 +68,7 @@ def documents(s: Session = Depends(db), aud: str = Depends(viewer), q: str = "",
 
 
 @router.get("/documents/{doc_id}", summary="One document with its full text, for the source viewer")
-def document(doc_id: int, s: Session = Depends(db), aud: str = Depends(viewer)):
+def document(doc_id: int, s: Session = Depends(db, scope="function"), aud: str = Depends(viewer)):
     d = s.get(Document, doc_id)
     if d is None or d.tag not in allowed_tags(aud):
         raise HTTPException(404, "No such document.")
@@ -76,7 +76,7 @@ def document(doc_id: int, s: Session = Depends(db), aud: str = Depends(viewer)):
 
 
 @router.get("/sources", summary="Sources whose tag the viewer may see, with index status")
-def sources(s: Session = Depends(db), aud: str = Depends(viewer)):
+def sources(s: Session = Depends(db, scope="function"), aud: str = Depends(viewer)):
     tags = allowed_tags(aud)
     out = []
     for src in s.scalars(select(Source).order_by(Source.id)):
@@ -90,7 +90,7 @@ def sources(s: Session = Depends(db), aud: str = Depends(viewer)):
 
 
 @router.get("/tasks", summary="Tasks the viewer may see")
-def tasks(s: Session = Depends(db), aud: str = Depends(viewer), status: str = "", owner_id: int | None = None, limit: int = Query(2000, ge=1, le=10000)):
+def tasks(s: Session = Depends(db, scope="function"), aud: str = Depends(viewer), status: str = "", owner_id: int | None = None, limit: int = Query(2000, ge=1, le=10000)):
     stmt = select(Task).where(Task.tag.in_(allowed_tags(aud))).order_by(Task.due_on.is_(None), Task.due_on, Task.id).limit(limit)
     if status:
         stmt = stmt.where(Task.status.in_(status.split(",")))
@@ -101,7 +101,7 @@ def tasks(s: Session = Depends(db), aud: str = Depends(viewer), status: str = ""
 
 
 @router.get("/tasks/{task_id}", summary="One task with its history")
-def task(task_id: int, s: Session = Depends(db), aud: str = Depends(viewer)):
+def task(task_id: int, s: Session = Depends(db, scope="function"), aud: str = Depends(viewer)):
     t = s.get(Task, task_id)
     if t is None or t.tag not in allowed_tags(aud):
         raise HTTPException(404, "No such task.")
@@ -112,17 +112,17 @@ def task(task_id: int, s: Session = Depends(db), aud: str = Depends(viewer)):
 
 
 @router.get("/owners", summary="People who can own work")
-def owners(s: Session = Depends(db), _: dict = Depends(user)):
+def owners(s: Session = Depends(db, scope="function"), _: dict = Depends(user)):
     return [{"id": o.id, "name": o.name, "role": o.role} for o in s.scalars(select(Owner).order_by(Owner.name))]
 
 
 @router.get("/stuck", summary="Stuck work with the evidence for each item")
-def stuck_work(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), aud: str = Depends(viewer)):
+def stuck_work(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), aud: str = Depends(viewer)):
     return [{"kind": x.kind, "task_id": x.task_id, "owner": x.owner, "days": x.days, "evidence": x.evidence, "task_ids": x.task_ids} for x in stuck.detect(s, ctx.today(s), ctx.settings, allowed_tags(aud))]
 
 
 @router.get("/meetings", summary="Meetings the viewer may see")
-def meetings(s: Session = Depends(db), aud: str = Depends(viewer)):
+def meetings(s: Session = Depends(db, scope="function"), aud: str = Depends(viewer)):
     out = []
     for m in s.scalars(select(Meeting).where(Meeting.tag.in_(allowed_tags(aud))).order_by(Meeting.held_on.desc(), Meeting.id.desc())):
         n = s.scalar(select(func.count()).select_from(Task).where(Task.meeting_id == m.id)) or 0
@@ -132,7 +132,7 @@ def meetings(s: Session = Depends(db), aud: str = Depends(viewer)):
 
 
 @router.get("/meetings/{mid}", summary="A meeting with its transcript, the action items found in it and lines that were not acted on")
-def meeting(mid: int, s: Session = Depends(db), aud: str = Depends(viewer)):
+def meeting(mid: int, s: Session = Depends(db, scope="function"), aud: str = Depends(viewer)):
     tags = allowed_tags(aud)
     m = s.get(Meeting, mid)
     if m is None or m.tag not in tags:
@@ -144,7 +144,7 @@ def meeting(mid: int, s: Session = Depends(db), aud: str = Depends(viewer)):
 
 
 @router.get("/decisions", summary="The decision log")
-def decisions(s: Session = Depends(db), aud: str = Depends(viewer), status: str = ""):
+def decisions(s: Session = Depends(db, scope="function"), aud: str = Depends(viewer), status: str = ""):
     stmt = select(Decision).where(Decision.tag.in_(allowed_tags(aud))).order_by(Decision.decided_on.desc(), Decision.id.desc())
     if status:
         stmt = stmt.where(Decision.status.in_(status.split(",")))
@@ -154,7 +154,7 @@ def decisions(s: Session = Depends(db), aud: str = Depends(viewer), status: str 
 
 
 @router.get("/sops", summary="The SOP coverage map")
-def sop_map(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), aud: str = Depends(viewer)):
+def sop_map(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), aud: str = Depends(viewer)):
     procs = sops.visible(s, aud)
     tags = allowed_tags(aud)
     sop_docs = [d for d in s.scalars(select(Document).where(Document.doc_type == "sop", Document.tag.in_(tags)))]
@@ -163,12 +163,12 @@ def sop_map(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), aud: str = De
 
 
 @router.get("/reviews", summary="Weekly operating reviews the viewer may read")
-def reviews(s: Session = Depends(db), aud: str = Depends(viewer)):
+def reviews(s: Session = Depends(db, scope="function"), aud: str = Depends(viewer)):
     return [{"id": r.id, "week_start": iso(r.week_start), "scope": r.scope_tag, "title": r.title, "claims": r.claims, "linked": r.linked, "generated_at": iso(r.generated_at)} for r in review.visible_reviews(s, aud)]
 
 
 @router.get("/reviews/{rid}", summary="One review as a document")
-def review_one(rid: int, s: Session = Depends(db), aud: str = Depends(viewer)):
+def review_one(rid: int, s: Session = Depends(db, scope="function"), aud: str = Depends(viewer)):
     r = next((x for x in review.visible_reviews(s, aud) if x.id == rid), None)
     if r is None:
         raise HTTPException(404, "No such review.")
@@ -176,7 +176,7 @@ def review_one(rid: int, s: Session = Depends(db), aud: str = Depends(viewer)):
 
 
 @router.get("/reminders", summary="Drafted and sent task reminders")
-def reminders(s: Session = Depends(db), aud: str = Depends(viewer)):
+def reminders(s: Session = Depends(db, scope="function"), aud: str = Depends(viewer)):
     tags = allowed_tags(aud)
     names = _names(s)
     out = []
@@ -188,7 +188,7 @@ def reminders(s: Session = Depends(db), aud: str = Depends(viewer)):
 
 
 @router.get("/company-folder", summary="Check results and tree of the company folder template in use (owner and leadership)")
-def company_folder(ctx: Ctx = Depends(get_ctx), aud: str = Depends(real_audience), viewer_aud: str = Depends(viewer), s: Session = Depends(db)):
+def company_folder(ctx: Ctx = Depends(get_ctx), aud: str = Depends(real_audience), viewer_aud: str = Depends(viewer), s: Session = Depends(db, scope="function")):
     if aud not in {"owner", "leadership"}:
         raise HTTPException(403, "Only the owner and leadership can see the folder check.")
     from pathlib import Path

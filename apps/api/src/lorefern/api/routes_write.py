@@ -46,7 +46,7 @@ class ApproveIn(BaseModel):
 
 
 @router.post("/tasks/{tid}/approve", summary="Approve a proposed task. Only a person can turn a proposal into a task.")
-def approve(tid: int, b: ApproveIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def approve(tid: int, b: ApproveIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     t = _wrap(tasks.approve, s, _task(s, tid, u), u["user"], ctx.now(s), b.owner_id, b.due_on, b.title)
     return {"id": t.id, "status": t.status}
 
@@ -56,7 +56,7 @@ class BulkIn(BaseModel):
 
 
 @router.post("/tasks/bulk-approve", summary="Approve several proposals at once, each one still checked on its own")
-def bulk_approve(b: BulkIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def bulk_approve(b: BulkIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     done, skipped = [], []
     seen = allowed_tags(u["audience"])
     for tid in b.ids:
@@ -76,7 +76,7 @@ class RejectIn(BaseModel):
 
 
 @router.post("/tasks/{tid}/reject", summary="Reject a proposed task")
-def reject(tid: int, b: RejectIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def reject(tid: int, b: RejectIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     t = _wrap(tasks.reject, s, _task(s, tid, u), u["user"], ctx.now(s), b.reason)
     return {"id": t.id, "status": t.status}
 
@@ -87,7 +87,7 @@ class StatusIn(BaseModel):
 
 
 @router.post("/tasks/{tid}/status", summary="Move a task: in progress, blocked (with a reason), done, or open again")
-def status(tid: int, b: StatusIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def status(tid: int, b: StatusIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     if b.status == "blocked" and not b.note.strip():
         raise HTTPException(422, "Say what the task is blocked by.")
     t = _wrap(tasks.set_status, s, _task(s, tid, u), b.status, u["user"], ctx.now(s), b.note)
@@ -99,7 +99,7 @@ class NoteIn(BaseModel):
 
 
 @router.post("/tasks/{tid}/update", summary="Add a progress update")
-def update(tid: int, b: NoteIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def update(tid: int, b: NoteIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     _wrap(tasks.add_update, s, _task(s, tid, u), u["user"], ctx.now(s), b.note)
     return {"ok": True}
 
@@ -109,13 +109,13 @@ class ReassignIn(BaseModel):
 
 
 @router.post("/tasks/{tid}/reassign", summary="Change the owner")
-def reassign(tid: int, b: ReassignIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def reassign(tid: int, b: ReassignIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     t = _wrap(tasks.reassign, s, _task(s, tid, u), b.owner_id, u["user"], ctx.now(s))
     return {"id": t.id, "owner_id": t.owner_id}
 
 
 @router.post("/tasks/{tid}/undo", summary="Undo the last approve, reject, done, blocked or reopen on this task")
-def undo(tid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def undo(tid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     t = _wrap(tasks.undo_last, s, _task(s, tid, u), u["user"], ctx.now(s))
     return {"id": t.id, "status": t.status}
 
@@ -128,7 +128,7 @@ class NewTask(BaseModel):
 
 
 @router.post("/tasks", summary="Add a task by hand (it starts open, because a person wrote it)")
-def create_task(b: NewTask, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def create_task(b: NewTask, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     if b.tag not in TAGS:
         raise HTTPException(422, "Unknown visibility tag.")
     if b.tag not in allowed_tags(u["audience"]):
@@ -147,7 +147,7 @@ def _decision(s: Session, did: int, u: dict) -> Decision:
 
 
 @router.post("/decisions/{did}/confirm", summary="Confirm a proposed decision so it enters the decision log")
-def confirm(did: int, s: Session = Depends(db), u: dict = Depends(writer)):
+def confirm(did: int, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
     d = _decision(s, did, u)
     if d.status != "proposed":
         raise HTTPException(409, "Only a proposed decision can be confirmed.")
@@ -157,7 +157,7 @@ def confirm(did: int, s: Session = Depends(db), u: dict = Depends(writer)):
 
 
 @router.post("/decisions/{did}/reject", summary="Reject a proposed decision")
-def reject_decision(did: int, s: Session = Depends(db), u: dict = Depends(writer)):
+def reject_decision(did: int, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
     d = _decision(s, did, u)
     if d.status != "proposed":
         raise HTTPException(409, "Only a proposed decision can be rejected.")
@@ -175,7 +175,7 @@ class MeetingIn(BaseModel):
 
 
 @router.post("/meetings", summary="Import a pasted transcript. It is stored as data and read for proposals, nothing more.")
-def import_meeting(b: MeetingIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def import_meeting(b: MeetingIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     if b.provider not in {"file", "otter", "meetily", "fireflies", "fathom"}:
         raise HTTPException(422, "Unknown provider name.")
     wanted = (b.visibility or "").strip().lower() or narrowest_tag(u["audience"])
@@ -206,7 +206,7 @@ def import_meeting(b: MeetingIn, s: Session = Depends(db), ctx: Ctx = Depends(ge
 
 
 @router.post("/meetings/{mid}/extract", summary="Read the transcript again and add proposals (nothing is approved)")
-def extract(mid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def extract(mid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     m = visible_or_404(s, Meeting, mid, u["audience"], "meeting")
     out = tasks.propose_from_meeting(s, m, ctx.now(s), proposer=ctx.proposer(s))
     record_audit(s, u["user"], "meeting.extract", f"meeting:{m.id}", out)
@@ -218,7 +218,7 @@ class ReviewIn(BaseModel):
 
 
 @router.post("/reviews/generate", summary="Build the weekly operating review now, for last week")
-def generate_review(b: ReviewIn, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def generate_review(b: ReviewIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     if b.scope not in review.SCOPES or (b.scope == "leadership" and u["audience"] not in {"owner", "leadership"}):
         raise HTTPException(422, "Unknown scope.")
     r = review.generate(s, ctx, review.week_start_of(ctx.today(s)), b.scope)
@@ -227,7 +227,7 @@ def generate_review(b: ReviewIn, s: Session = Depends(db), ctx: Ctx = Depends(ge
 
 
 @router.post("/sops/refresh", summary="Find recurring processes again and match them to SOPs")
-def sops_refresh(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def sops_refresh(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     n = len(sops.detect(s, ctx.today(s), ctx.settings, wording=ctx.wording(s)))
     record_audit(s, u["user"], "sops.refresh", None, {"processes": n})
     return {"processes": n}
@@ -243,7 +243,7 @@ def _read_error(exc: Exception) -> HTTPException:
 
 
 @router.post("/sources/{sid}/sync", summary="Read the source again. Folder and Slack sources read from this machine.")
-def sync_source(sid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner_write)):
+def sync_source(sid: int, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner_write)):
     src = s.get(Source, sid)
     if src is None:
         raise HTTPException(404, "No such source.")
@@ -258,7 +258,7 @@ def sync_source(sid: int, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx),
 
 
 @router.patch("/sources/{sid}", summary="Change a source's default visibility tag (owner only). Everything made from it is re tagged, and setting it back to company restores the tags it had.")
-def retag(sid: int, b: SyncIn, s: Session = Depends(db), u: dict = Depends(owner_write)):
+def retag(sid: int, b: SyncIn, s: Session = Depends(db, scope="function"), u: dict = Depends(owner_write)):
     src = s.get(Source, sid)
     if src is None or (b.default_tag is not None and b.default_tag not in TAGS) or (b.untagged_tag not in (None, "") and b.untagged_tag not in TAGS):
         raise HTTPException(422, "Unknown source or tag.")
@@ -274,7 +274,7 @@ def retag(sid: int, b: SyncIn, s: Session = Depends(db), u: dict = Depends(owner
 
 
 @router.post("/reminders/plan", summary="Draft reminders for today. Nothing is sent.")
-def plan_reminders(s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
+def plan_reminders(s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(writer)):
     return {"drafted": reminders.plan(s, ctx.today(s), ctx.settings)}
 
 
@@ -283,7 +283,7 @@ class SendIn(BaseModel):
 
 
 @router.post("/reminders/request-send", summary="Ask for approval to send drafted reminders. Another person must approve.")
-def request_send(b: SendIn, s: Session = Depends(db), u: dict = Depends(writer)):
+def request_send(b: SendIn, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
     seen = allowed_tags(u["audience"])
     rows = [r for r in s.scalars(select(Reminder).where(Reminder.id.in_(b.ids), Reminder.status == "drafted")) if (t := s.get(Task, r.task_id)) is not None and t.tag in seen]
     if not rows:
@@ -303,7 +303,7 @@ class NewOwner(BaseModel):
 
 
 @router.post("/owners", summary="Add a person who can own work. Task owners must come from this list.")
-def add_owner(b: NewOwner, s: Session = Depends(db), u: dict = Depends(writer)):
+def add_owner(b: NewOwner, s: Session = Depends(db, scope="function"), u: dict = Depends(writer)):
     name = " ".join(b.name.split())
     if not any(ch.isalpha() for ch in name):
         raise HTTPException(422, "A name needs at least one letter.")
@@ -325,7 +325,7 @@ class NewSource(BaseModel):
 
 
 @router.post("/sources", summary="Add a source. A folder or Slack export path is relative to KNOWLEDGE_DIR. Owner only.")
-def add_source(b: NewSource, s: Session = Depends(db), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner_write)):
+def add_source(b: NewSource, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner_write)):
     if b.kind not in {"folder", "slack", "drive", "notion"} or b.default_tag not in TAGS or (b.untagged_tag and b.untagged_tag not in TAGS):
         raise HTTPException(422, "Unknown kind or tag.")
     if b.kind in {"folder", "slack"} and (b.uri.startswith("/") or ".." in Path(b.uri).parts):
