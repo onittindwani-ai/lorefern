@@ -12,7 +12,7 @@ The Root Directory steps were read from https://vercel.com/docs/monorepos on 202
 6. Set `API_BASE_URL` to your API address with no trailing slash, and `SESSION_SECRET` to the same value the API uses.
 7. Do not set `INSECURE_COOKIES` or `NEXT_PUBLIC_DEMO_HINT`.
 8. Deploy, open the address, sign in.
-9. On the API server run uvicorn with `--proxy-headers` and `--forwarded-allow-ips` set to your proxy, so rate limits see the real visitor.
+9. On the API server set `FORWARDED_ALLOW_IPS` to the address of your proxy (the Docker image reads it; by hand, pass `--proxy-headers --forwarded-allow-ips` to uvicorn), so rate limits see the real visitor.
 
 ## If the build fails
 

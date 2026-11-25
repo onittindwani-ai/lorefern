@@ -33,6 +33,30 @@ def can_see(audience: str, tag: str) -> bool:
     return tag in allowed_tags(audience)
 
 
+def audiences_of(tag: str) -> frozenset[str]:
+    """The audiences that may see a tag. An unknown tag is seen by nobody."""
+    return frozenset(a for a, tags in AUDIENCE_TAGS.items() if tag in tags)
+
+
+def narrowest_tag(audience: str | None = None) -> str:
+    """The tag the fewest audiences may see, read from the map above (so it follows a map the implementer has changed). With the default map this is `people`, which only the owner sees.
+    It is the tag of anything whose tag is missing or not recognised: a document nobody labelled is never visible to more people than the owner.
+    With an audience, the narrowest of the tags that audience may itself see (a person cannot create something they could not open afterwards)."""
+    pool = allowed_tags(audience) if audience else TAGS
+    return min(pool, key=lambda t: (len(audiences_of(t)), -TAGS.index(t)))
+
+
+def widens(old: str, new: str) -> bool:
+    """True when moving a row from tag `old` to tag `new` lets an audience see it that could not before."""
+    return not audiences_of(new) <= audiences_of(old)
+
+
+def meet_tag(a: str, b: str) -> str:
+    """The tag that is no wider than either `a` or `b`: the one seen by exactly the audiences that see both, or the narrowest tag when there is none."""
+    both = audiences_of(a) & audiences_of(b)
+    return next((t for t in TAGS if audiences_of(t) == both), narrowest_tag())
+
+
 # The base session role for each audience. The read only audiences use the base `viewer` role, which the base refuses on every change.
 SESSION_ROLE = {"owner": "owner", "leadership": "approver", "finance": "viewer", "staff": "viewer"}
 
@@ -48,5 +72,6 @@ def can_write(audience: str) -> bool:
 
 def audience_of(settings, email: str) -> str:
     """Map a signed in email to an audience. Unknown emails are staff."""
-    e = (email or "").strip().lower()
-    return settings.members().get(e, "staff")
+    from sendora_core.auth import clean_email
+
+    return settings.members().get(clean_email(email), "staff")

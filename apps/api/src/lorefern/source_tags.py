@@ -1,19 +1,21 @@
 """Changing a source's visibility, and changing it back.
 
 A restricted source fixes the tag of everything in it, and everything made from it: documents, their passages, meetings, and the tasks and decisions found in those meetings.
-The tag each row had before is saved in the state table, so setting the source back to `company` puts every row back exactly as it was, and no restricted row is left behind
-in a more open source.
+A row that already has a narrower tag keeps it: a retag never lets an audience see a row it could not see before. The tag each row had before is saved in the state table, so
+setting the source back to `company` puts every row back exactly as it was. Text that was built from the rows earlier (weekly reviews, process evidence, stored answers) is
+cleared, because it may quote what is now restricted.
 """
 
 from __future__ import annotations
 
 import json
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from lorefern.context import get_state, set_state
-from lorefern.models import Decision, Document, Meeting, Task
+from lorefern.models import Decision, Document, Meeting, Process, Question, Task, WeeklyReview
+from lorefern.visibility import AUDIENCES, audiences_of, meet_tag
 
 
 def _key(source_id: int) -> str:
@@ -30,22 +32,35 @@ def _rows(s: Session, source_id: int):
 
 
 def restrict(s: Session, source_id: int, tag: str) -> int:
-    """Give every row of the source this tag. The first time a row is restricted its own tag is saved. Returns how many rows were changed."""
+    """Give every row of the source this tag, or a narrower one it already has. The first time a row is restricted its own tag is saved. Returns how many rows were changed."""
     saved: dict[str, dict[str, str]] = json.loads(get_state(s, _key(source_id), "") or "{}")
     changed = 0
     for kind, rows in _rows(s, source_id).items():
         keep = saved.setdefault(kind, {})
         for r in rows:
             keep.setdefault(str(r.id), r.tag)
-            if r.tag != tag:
-                r.tag, changed = tag, changed + 1
+            new = meet_tag(r.tag, tag)
+            if r.tag != new:
+                r.tag, changed = new, changed + 1
             if kind == "d":
                 r.content_hash = f"retagged:{tag}"  # the next read sees a change and applies the source's tag rule again
                 for c in r.chunks:
-                    c.tag = tag
+                    c.tag = r.tag
     set_state(s, _key(source_id), json.dumps(saved))
+    if changed:
+        scrub_derived(s, tag)
     s.flush()
     return changed
+
+
+def scrub_derived(s: Session, tag: str) -> None:
+    """Text built earlier from the rows may quote what is now restricted: weekly reviews and process evidence are rebuilt by the next job, and answers stored for audiences
+    that can no longer see this tag are emptied (the answer list a person sees never shows them, but they stay in the database)."""
+    s.execute(delete(WeeklyReview))
+    s.execute(delete(Process))
+    blocked = [a for a in AUDIENCES if a not in audiences_of(tag)]
+    if blocked:
+        s.execute(update(Question).where(Question.audience.in_(blocked)).values(answer={}))
 
 
 def restore(s: Session, source_id: int) -> int:

@@ -8,12 +8,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from lorefern import folder_tool, qa, review, sops, stuck
+from lorefern import folder_tool, qa, review, sops, stuck, untagged, world
 from lorefern.api.deps import db, get_ctx, real_audience, user, viewer
 from lorefern.api.serializers import decision_dict, doc_dict, iso, task_dict
 from lorefern.context import Ctx
 from lorefern.models import Decision, Document, Meeting, Owner, Question, Reminder, Source, Task
-from lorefern.visibility import AUDIENCE_TAGS, allowed_tags
+from lorefern.visibility import AUDIENCE_TAGS, allowed_tags, narrowest_tag
 
 router = APIRouter(prefix="/api", tags=["read"])
 
@@ -80,7 +80,8 @@ def sources(s: Session = Depends(db), aud: str = Depends(viewer)):
         if src.default_tag not in tags and not per:
             continue
         out.append({"id": src.id, "kind": src.kind, "name": src.name, "uri": src.uri, "default_tag": src.default_tag, "reliability": src.reliability, "owner": src.owner, "status": src.status,
-                    "last_synced_at": iso(src.last_synced_at), "error": src.error, "documents": sum(per.values()), "by_tag": per})
+                    "last_synced_at": iso(src.last_synced_at), "error": src.error, "documents": sum(per.values()), "by_tag": per,
+                    "untagged_tag": untagged.get(s, src.id) or narrowest_tag()})
     return out
 
 
@@ -188,15 +189,20 @@ def company_folder(ctx: Ctx = Depends(get_ctx), aud: str = Depends(real_audience
     from pathlib import Path
 
     src = s.scalar(select(Source).where(Source.kind == "folder").order_by(Source.id))
-    root = Path(ctx.settings.knowledge_dir) if ctx.settings.knowledge_dir else Path(ctx.settings.seed_dir or "data") / ("seed/company" if (Path(ctx.settings.seed_dir or "data") / "seed/company").exists() else "company")
-    if not root.exists():
+    try:
+        root = Path(ctx.settings.knowledge_dir) if ctx.settings.knowledge_dir else world.seed_dir(ctx) / "company"
+    except FileNotFoundError:
+        root = None
+    if root is None or not root.exists():
         raise HTTPException(404, "The company folder is not on this machine. Set KNOWLEDGE_DIR.")
     rep = folder_tool.check(root, ctx.today(s))
     tags = allowed_tags(viewer_aud)
-    tag_of = {p.relative_to(root.resolve()).as_posix(): (folder_tool.doc_meta(p).get("visibility") or "company") for p in folder_tool.iter_docs(root.resolve())}
-    show = lambda path: tag_of.get(path, "company") in tags  # noqa: E731
+    # The tag shown for a path is the tag stored for the indexed document, not the line in the file: after a retag or a folder tag the file alone would say something else.
+    stored = {d.external_id: d.tag for d in s.scalars(select(Document).where(Document.source_id == src.id))} if src is not None else {}
+    tag_of = {p.relative_to(root.resolve()).as_posix(): stored.get(p.relative_to(root.resolve()).as_posix()) or narrowest_tag() for p in folder_tool.iter_docs(root.resolve())}
+    show = lambda path: path not in tag_of or tag_of[path] in tags  # noqa: E731  (a folder or the index is not a document)
     rep.findings = [f for f in rep.findings if show(f.path)]
-    rep.tree = [{**t, "documents": [d for d in t["documents"] if show(d["path"])]} for t in rep.tree]
+    rep.tree = [{**t, "documents": [{**d, "visibility": tag_of.get(d["path"], narrowest_tag())} for d in t["documents"] if show(d["path"])]} for t in rep.tree]
     return {"name": src.name if src else root.name, "documents": len(tag_of), "documents_visible": sum(1 for p in tag_of if show(p)), "ok": rep.ok, "errors": sum(f.severity == "error" for f in rep.findings), "warnings": sum(f.severity == "warning" for f in rep.findings),
             "findings": [f.__dict__ for f in rep.findings], "tree": rep.tree}
 

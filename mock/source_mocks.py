@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 from urllib.parse import parse_qs
 
 from cryptography.exceptions import InvalidSignature
@@ -87,16 +88,18 @@ class GoogleTokenMock:
 class DriveMock:
     def __init__(self, token="dr-mock-token", issuer: GoogleTokenMock | None = None, page_size: int = 100):
         self.token, self.issuer, self.page_size = token, issuer, page_size
-        self.files = {}  # id -> {"name","mimeType","text"}
+        self.files = {}  # id -> {"name","mimeType","text"}, and optionally "parents": [folder ids] and "trashed": True
         self.hits: list[str] = []
+        self.queries: list[str] = []
         self.app = FastAPI()
 
         @self.app.get("/drive/v3/files")
-        def lst(fields: str = "", pageToken: str = "", authorization: str | None = Header(default=None)):
+        def lst(fields: str = "", pageToken: str = "", q: str = "", authorization: str | None = Header(default=None)):
             self.hits.append("list")
+            self.queries.append(q)
             if not self._ok(authorization):
                 return JSONResponse({"error": {"code": 401}}, 401)
-            ids = list(self.files)
+            ids = [i for i, f in self.files.items() if self._matches(f, q)]
             start = int(pageToken) if pageToken else 0
             page = ids[start : start + self.page_size]
             body = {"files": [{"id": i, "name": self.files[i]["name"], "mimeType": self.files[i]["mimeType"], "modifiedTime": "2026-11-01T00:00:00Z"} for i in page]}
@@ -118,6 +121,14 @@ class DriveMock:
                 return JSONResponse({"error": {"code": 401}}, 401)
             return PlainTextResponse(self.files[fid]["text"]) if fid in self.files and alt == "media" else JSONResponse({"error": {"code": 404}}, 404)
 
+    @staticmethod
+    def _matches(f: dict, q: str) -> bool:
+        """The two query parts Lorefern sends: `'<folder id>' in parents` and `trashed = false` (a real Drive lists trashed files unless asked not to)."""
+        parent = re.search(r"'([^']+)' in parents", q)
+        if parent and parent.group(1) not in f.get("parents", []):
+            return False
+        return not ("trashed = false" in q and f.get("trashed"))
+
     def _ok(self, authorization: str | None) -> bool:
         return self.issuer.valid(authorization) if self.issuer else authorization == f"Bearer {self.token}"
 
@@ -131,7 +142,7 @@ class NotionMock:
         def search(authorization: str | None = Header(default=None)):
             if authorization != f"Bearer {self.token}":
                 return JSONResponse({"object": "error", "status": 401}, 401)
-            return {"results": [{"object": "page", "id": i, "last_edited_time": "2026-11-01T00:00:00Z", "properties": {"title": {"title": [{"plain_text": p["title"]}]}}} for i, p in self.pages.items()], "has_more": False}
+            return {"results": [{"object": "page", "id": i, "last_edited_time": "2026-11-01T00:00:00Z", "parent": {"type": "page_id", "page_id": p["parent"]} if p.get("parent") else {"type": "workspace"}, "properties": {"title": {"title": [{"plain_text": p["title"]}]}}} for i, p in self.pages.items()], "has_more": False}
 
         @self.app.get("/v1/blocks/{pid}/children")
         def children(pid: str, authorization: str | None = Header(default=None)):

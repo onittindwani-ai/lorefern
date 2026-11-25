@@ -1,6 +1,6 @@
 [project]
 name = "lorefern"
-version = "1.0.0"
+version = "1.0.1"
 description = "Lorefern: company brain with cited answers, meetings turned into approved tasks and a weekly review"
 requires-python = ">=3.12"
 license = { text = "MIT" }

@@ -9,6 +9,10 @@ from sendora_core.db import Base
 
 
 def reset(session: Session, ctx, process: bool = True) -> dict:
+    """Erase every table and load the demo data. It exists only for a demo with no owner password: with a real owner it refuses, whatever route called it."""
+    if not ctx.settings.demo_shortcuts:
+        raise PermissionError("The demo reset is only available in demo mode with no owner password set.")
+    world.check_seed(ctx)  # read the data folder BEFORE anything is erased: a missing folder must not leave an empty database
     engine = session.get_bind()
     session.rollback()
     session.close()
@@ -28,3 +32,15 @@ def reset(session: Session, ctx, process: bool = True) -> dict:
                 review.generate(s, ctx, ws, scope)
         s.commit()
         return {"seed": info, "processed": out}
+
+
+DEMO_SOURCES = {("folder", "company"), ("slack", "slack"), ("meetings", "meetings")}
+
+
+def real_sources(session: Session) -> list[str]:
+    """Names of sources that are not the three the demo creates. A demo reset erases every table, so it refuses when someone has connected something of their own."""
+    from sqlalchemy import select
+
+    from lorefern.models import Source
+
+    return [x.name for x in session.scalars(select(Source)) if (x.kind, x.uri) not in DEMO_SOURCES]

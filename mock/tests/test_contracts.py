@@ -167,13 +167,13 @@ def test_the_slack_export_reader_handles_the_documented_message_record(tmp_path)
 
 # ---- mail
 def test_a_reminder_message_has_the_rfc_5322_header_fields(monkeypatch):
-    sent = []
+    sent, started = [], []
 
     class FakeSmtp:
         def __init__(self, *a, **k): pass
         def __enter__(self): return self
         def __exit__(self, *a): return False
-        def starttls(self): pass
+        def starttls(self, context=None): started.append(context)
         def login(self, *a): pass
         def send_message(self, m): sent.append(m)
 
@@ -182,3 +182,4 @@ def test_a_reminder_message_has_the_rfc_5322_header_fields(monkeypatch):
     mid = SmtpEmail(s).send(to="dev@example.test", subject="Reminder", body="Hello")
     m = sent[0]
     assert m["From"] and m["To"] == "dev@example.test" and m["Subject"] == "Reminder" and m["Message-ID"] == mid and m["Message-ID"].startswith("<")
+    assert started and started[0].verify_mode.name == "CERT_REQUIRED" and started[0].check_hostname  # the server's certificate and host name are checked

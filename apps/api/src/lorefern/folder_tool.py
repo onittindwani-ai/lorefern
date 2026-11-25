@@ -30,6 +30,7 @@ FOLDERS = [
 ]
 CADENCE = {7: "weekly", 30: "monthly", 90: "quarterly", 180: "every 6 months", 365: "yearly"}
 SKIP_DIRS = {".git", "node_modules"}
+MAX_DOC_BYTES = 10 * 1024 * 1024  # the same limit the reader of the index uses
 LINK = re.compile(r"\[[^\]]*\]\(([^)#]+?)(?:#[^)]*)?\)")
 
 
@@ -261,14 +262,26 @@ def instantiate(template: Path, target: Path, company: str, owner: str, today: d
     return done
 
 
+def _inside(root: Path, p: Path) -> bool:
+    try:
+        p.resolve().relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
+
+
 def iter_docs(root: Path):
+    """The documents of the folder, with the same guards as the reader of the index: nothing hidden, nothing that is a link out of the folder, nothing over the size limit."""
     for p in sorted(root.rglob("*")):
         if p.is_file() and p.suffix.lower() in {".md", ".pdf", ".txt"} and not any(part in SKIP_DIRS or part.startswith(".") for part in p.relative_to(root).parts) and p.name != "INDEX.md":
-            yield p
+            if _inside(root, p) and p.stat().st_size <= MAX_DOC_BYTES:
+                yield p
 
 
 def doc_meta(p: Path) -> dict:
     if p.suffix.lower() != ".md":
+        return {}
+    if p.stat().st_size > MAX_DOC_BYTES:
         return {}
     meta, _ = parse_front_matter(p.read_text(encoding="utf-8", errors="replace"))
     return meta
@@ -327,7 +340,9 @@ def check(root: Path, today: date | None = None) -> FolderReport:
         if not m.get("owner"):
             add("error", "owner_missing", rel, "No owner in the header.")
         if m.get("visibility") and m["visibility"] not in TAGS:
-            add("error", "bad_tag", rel, f"Unknown visibility tag '{m['visibility']}'.")
+            add("error", "bad_tag", rel, f"Unknown visibility tag '{m['visibility']}'. Until it is fixed the document is visible to the owner only.")
+        elif not m.get("visibility"):
+            add("error", "visibility_missing", rel, "No visibility tag in the header. A document with none takes the tag of its folder, and with no folder tag it is visible to the owner only.")
         rb = m.get("review_by", "")
         if not rb:
             add("warning", "review_missing", rel, "No review date. A document without one counts as overdue.")
@@ -340,7 +355,8 @@ def check(root: Path, today: date | None = None) -> FolderReport:
         for target in LINK.findall(body):
             if re.match(r"^(https?:|mailto:)", target):
                 continue
-            if not (p.parent / target.replace("%20", " ")).resolve().exists():
+            dest = (p.parent / target.replace("%20", " ")).resolve()
+            if not _inside(root, dest) or not dest.exists():  # a link that leaves the folder is reported like a missing one, so the check cannot be used to find out which files exist elsewhere
                 add("error", "broken_link", rel, f"The link to {target} does not resolve.")
     for f in folders:
         docs = [p for p in iter_docs(f)]

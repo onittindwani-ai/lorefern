@@ -15,6 +15,7 @@ from datetime import date
 from lorefern.textproc import split_sentences, stems
 
 MAX_WORDS = 110
+MAX_PDF_PAGES = 300  # a longer PDF is read up to this page, so one huge file cannot stall the single worker loop
 
 
 @dataclass
@@ -37,17 +38,40 @@ class ChunkSpec:
     end: int
 
 
+HEADER_KEYS = {"title", "date", "provider", "visibility", "owner", "updated", "type", "status", "review_by"}
+
+
+def normalise_text(raw: str) -> str:
+    """One line ending style, no byte order mark and no NUL bytes, so a header written on Windows or exported from Google Docs reads the same as one written on a Mac,
+    and a stray NUL byte cannot make the database refuse the document."""
+    return raw.replace("\x00", "").lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+
+
+def _pairs(lines: list[str]) -> dict:
+    meta = {}
+    for line in lines:
+        if ":" in line:
+            k, v = line.split(":", 1)
+            meta[k.strip().lower()] = v.strip()
+    return meta
+
+
 def parse_front_matter(raw: str) -> tuple[dict, str]:
-    raw = raw.lstrip("\ufeff")
+    """Two header layouts. Standard front matter between two `---` lines at the top, and the transcript layout: a few `key: value` lines (title, date, provider, visibility ...)
+    then one `---` line. The second one is read only when every line before the rule is such a line with a known key, so ordinary prose above a horizontal rule is left alone."""
+    raw = normalise_text(raw)
     if raw.startswith("---\n"):
         end = raw.find("\n---\n", 4)
         if end > 0:
-            meta = {}
-            for line in raw[4:end].splitlines():
-                if ":" in line:
-                    k, v = line.split(":", 1)
-                    meta[k.strip().lower()] = v.strip()
-            return meta, raw[end + 5:].lstrip("\n")
+            return _pairs(raw[4:end].splitlines()), raw[end + 5:].lstrip("\n")
+    lines = raw.split("\n")
+    for i, line in enumerate(lines[:12]):
+        if line.strip() == "---" and i > 0:
+            head = [ln for ln in lines[:i] if ln.strip()]
+            keys = [ln.split(":", 1)[0].strip().lower() for ln in head if ":" in ln]
+            if head and len(keys) == len(head) and all(k in HEADER_KEYS for k in keys):
+                return _pairs(head), "\n".join(lines[i + 1:]).lstrip("\n")
+            break
     return {}, raw
 
 
@@ -65,17 +89,21 @@ def parse_pdf(name: str, data: bytes, slug: str) -> ParsedDoc:
     from pypdf import PdfReader
 
     reader = PdfReader(io.BytesIO(data))
-    pages = [(p.extract_text() or "").strip() for p in reader.pages]
-    text = "\n\n".join(p for p in pages if p)
+    pages = [(p.extract_text() or "").strip() for p in reader.pages[:MAX_PDF_PAGES]]
+    text = normalise_text("\n\n".join(p for p in pages if p))
     first = text.splitlines()[0] if text else slug
-    meta_title = (reader.metadata.title if reader.metadata and reader.metadata.title else "") or first
+    meta_title = normalise_text((reader.metadata.title if reader.metadata and reader.metadata.title else "") or first)
     m = re.search(r"effective (\d{1,2}) (\w+) (\d{4})", text)
     upd = None
     if m:
         months = {n: i for i, n in enumerate(["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], 1)}
         if m.group(2) in months:
             upd = date(int(m.group(3)), months[m.group(2)], int(m.group(1)))
-    return ParsedDoc(str(meta_title).strip(), text + "\n", "pdf", upd, slug, {})
+    info = {}
+    if reader.metadata:
+        wanted = next((str(v) for k, v in reader.metadata.items() if str(k).lstrip("/").lower() == "visibility" and v), "")
+        info = {"visibility": normalise_text(wanted).strip().lower()} if wanted else {}  # a PDF may carry its own tag as a custom document property named Visibility
+    return ParsedDoc(str(meta_title).strip(), text + "\n", "pdf", upd, slug, info)
 
 
 def content_hash(text: str) -> str:

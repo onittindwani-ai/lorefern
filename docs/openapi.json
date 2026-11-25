@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Lorefern API",
-  "version": "1.0.0"
+  "version": "1.0.1"
  },
  "paths": {
   "/health": {
@@ -2085,10 +2085,12 @@
     "properties": {
      "email": {
       "type": "string",
+      "maxLength": 254,
       "title": "Email"
      },
      "password": {
       "type": "string",
+      "maxLength": 1024,
       "title": "Password"
      }
     },
@@ -2124,9 +2126,15 @@
       "default": "file"
      },
      "visibility": {
-      "type": "string",
-      "title": "Visibility",
-      "default": "company"
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Visibility"
      }
     },
     "type": "object",
@@ -2185,6 +2193,11 @@
       "type": "string",
       "maxLength": 300,
       "title": "Uri",
+      "default": ""
+     },
+     "untagged_tag": {
+      "type": "string",
+      "title": "Untagged Tag",
       "default": ""
      }
     },
@@ -2388,6 +2401,17 @@
        }
       ],
       "title": "Default Tag"
+     },
+     "untagged_tag": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Untagged Tag"
      }
     },
     "type": "object",

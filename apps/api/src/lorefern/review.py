@@ -27,6 +27,11 @@ def week_start_of(d: date) -> date:
     return d - timedelta(days=d.weekday())
 
 
+def _t(text) -> str:
+    """Text from a transcript or typed by a person goes into the review as plain words: brackets are swapped for round ones so it can never be read as a link."""
+    return str(text).replace("[", "(").replace("]", ")")
+
+
 def _ref(kind: str, i: int) -> str:
     path = {"T": "tasks", "D": "decisions", "M": "meetings", "P": "sops"}[kind]
     return f"[{kind}{i}](/{path}?open={i})"
@@ -62,14 +67,14 @@ def generate(session: Session, ctx, week_start: date, scope: str = "company") ->
         L.append("")
         sections.append({"title": title, "lines": len(lines)})
 
-    section("Completed", [f"- {len(done)} tasks were completed: {_refs('T', [t.id for t in done])}"] + [f"- {t.title} ({names.get(t.owner_id, 'unassigned')}), done on {day(t.done_at).isoformat()}. {_ref('T', t.id)}" for t in done] if done else [], "Nothing was completed last week.")
-    st_lines = [f"- {s.evidence} Owner: {s.owner}. {_ref('T', s.task_id)}" for s in sorted(issues, key=lambda s: -s.days)[:15]]
-    st_lines += [f"- {s.evidence} {_refs('T', s.task_ids)}" for s in overloaded if s.task_ids]
+    section("Completed", [f"- {len(done)} tasks were completed: {_refs('T', [t.id for t in done])}"] + [f"- {_t(t.title)} ({_t(names.get(t.owner_id, 'unassigned'))}), done on {day(t.done_at).isoformat()}. {_ref('T', t.id)}" for t in done] if done else [], "Nothing was completed last week.")
+    st_lines = [f"- {_t(s.evidence)} Owner: {_t(s.owner)}. {_ref('T', s.task_id)}" for s in sorted(issues, key=lambda s: -s.days)[:15]]
+    st_lines += [f"- {_t(s.evidence)} {_refs('T', s.task_ids)}" for s in overloaded if s.task_ids]
     section("Stuck work", st_lines, "No task is stuck.")
-    section("Decisions", [f"- {d.title}. Decided by {d.decided_by} on {d.decided_on.isoformat()}" + (f" because {d.why.strip().rstrip('.')}" if d.why else "") + f". {_ref('D', d.id)}" + (f" {_ref('M', d.meeting_id)}" if d.meeting_id else "") for d in decisions], "No decision was confirmed last week.")
-    section("Meetings", [f"- {m.title} on {m.held_on.isoformat()}. {_ref('M', m.id)}" for m in meetings], "No meeting was recorded last week.")
+    section("Decisions", [f"- {_t(d.title)}. Decided by {_t(d.decided_by)} on {d.decided_on.isoformat()}" + (f" because {_t(d.why.strip().rstrip('.'))}" if d.why else "") + f". {_ref('D', d.id)}" + (f" {_ref('M', d.meeting_id)}" if d.meeting_id else "") for d in decisions], "No decision was confirmed last week.")
+    section("Meetings", [f"- {_t(m.title)} on {m.held_on.isoformat()}. {_ref('M', m.id)}" for m in meetings], "No meeting was recorded last week.")
     section("Waiting for a person", ([f"- {len(pending)} proposed tasks wait for approval: {_refs('T', [t.id for t in pending][:20])}"] if pending else []), "Nothing waits for approval.")
-    section("Process gaps", [f"- The process '{p.label}' has {'no SOP' if p.coverage == 'gap' else 'an SOP past its review date'}, seen {p.mentions} times. {_ref('P', p.id)}" for p in gaps[:10]], "Every recurring process has a current SOP.")
+    section("Process gaps", [f"- The process '{_t(p.label)}' has {'no SOP' if p.coverage == 'gap' else 'an SOP past its review date'}, seen {p.mentions} times. {_ref('P', p.id)}" for p in gaps[:10]], "Every recurring process has a current SOP.")
     body = "\n".join(L).rstrip() + "\n"
     old = session.scalar(select(WeeklyReview).where(WeeklyReview.week_start == start, WeeklyReview.scope_tag == scope))
     if old is not None:

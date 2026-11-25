@@ -34,10 +34,10 @@ def test_tag_rule_is_fail_closed(ctx, tmp_path):
         open_src, locked = src(s), src(s, "finance")
         ingest.ingest_folder(s, open_src, tmp_path)
         tags = {d.title: d.tag for d in s.scalars(select(Document).where(Document.source_id == open_src.id))}
-        assert tags == {"A": "company", "B": "leadership", "C": "finance"}  # an unknown tag becomes the narrowest
+        assert tags == {"A": "company", "B": "people", "C": "finance"}  # an unknown tag becomes the narrowest: `people`, which only the owner sees (it was `leadership`, which leadership also sees)
         ingest.ingest_folder(s, locked, tmp_path)
         assert {d.tag for d in s.scalars(select(Document).where(Document.source_id == locked.id))} == {"finance"}  # a document cannot widen a restricted source
-        assert {c.tag for c in s.scalars(select(Chunk))} <= {"company", "leadership", "finance"}
+        assert {c.tag for c in s.scalars(select(Chunk))} <= {"company", "people", "finance"}
 
 
 def test_chunks_carry_the_tag_of_their_document(world):

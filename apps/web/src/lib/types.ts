@@ -16,7 +16,7 @@ export interface Process { id: number; key: string; label: string; mentions: num
 export interface SopMap { processes: Process[]; unmatched_sops: { id: number; title: string; owner: string; review_by: string | null }[] }
 export interface ReviewRow { id: number; week_start: string; scope: string; title: string; claims: number; linked: number; generated_at: string }
 export interface ReviewDoc extends ReviewRow { body: string; sections: { title: string; lines: number }[] }
-export interface SourceRow { id: number; kind: string; name: string; uri: string; default_tag: string; reliability: string; owner: string; status: string; last_synced_at: string | null; error: string; documents: number; by_tag: Record<string, number> }
+export interface SourceRow { id: number; kind: string; name: string; uri: string; default_tag: string; reliability: string; owner: string; status: string; last_synced_at: string | null; error: string; documents: number; by_tag: Record<string, number>; untagged_tag: string }
 export interface FolderCheck { name: string; documents: number; documents_visible: number; ok: boolean; errors: number; warnings: number; findings: { severity: string; code: string; path: string; message: string }[]; tree: { folder: string; documents: { path: string; owner: string; review_by: string; visibility: string; type: string }[] }[] }
 export interface ApprovalRow { id: number; action: string; summary: string; risk: string; status: string; requested_by: string; decided_by: string | null; note: string | null; created_at: string; payload: Record<string, unknown> }
 export interface AuditRow { id: number; actor: string; action: string; target: string | null; detail: Record<string, unknown>; at: string }

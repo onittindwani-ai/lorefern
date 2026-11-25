@@ -20,12 +20,15 @@ What the code does around the model, and tests prove: document text, questions a
 
 - **Per user source permissions are not mirrored** (doc 13). Tags are the only visibility rule.
 - **Single tenant.** One company per install.
+- **Visibility tags are per document or per folder, set by a person.** A document nobody tagged is owner only until someone tags it, so a fresh read of an untagged company folder looks empty to everyone else.
+- **Asking is not rate limited per person**, and the answers a person asked for are kept in the question list.
+- **The live event stream is not filtered by audience in the shared base.** It carries no titles, ids or counts, but treat it as visible to every signed in person.
 - **Real vendors were never called.** Drive, Notion, Fireflies, Fathom and SMTP were tested only against local stand ins. The Fireflies and Fathom fields were read from their current docs on 2026-11-23. Otter's and Meetily's export layouts and the Slack export layout are UNVERIFIED.
 - **Drive sign in renewal is UNVERIFIED.** The adapter signs in with a service account key or a refresh token and renews its own access token, with expiry handling and one retry on a refused request. That was written from Google's public documentation and tested against a local fake token service and a fake Drive only. It has never run against Google. A single pasted `DRIVE_TOKEN` still expires after about an hour. Revoked or disabled credentials stop the sync with a plain message until someone fixes them.
 - **Onboarding a new client** was not found by the process detector in the demo data (6 of 7 planted processes were found).
 - **A reworded question can return a wrong visible answer** (a limit of word matching, not a leak). Example: "Did anyone make an offer to buy the company?" can hit an unrelated sentence. Always read the passage.
 - **Dates.** "Friday" means the next Friday after the meeting, "next Friday" the Friday of the following week, "end of week" Friday. Check this matches how the company speaks.
-- **Docker, hosting guides and CI** were written but never run (no Docker daemon, no accounts).
+- **Docker, hosting guides and CI.** CI on GitHub builds the images and starts the compose stack. No real host (Hetzner, Railway, Vercel) was deployed to, so the hosting guides are UNVERIFIED.
 - **Postgres** was used for the migration cycle only. The full tests and the browser tests ran on SQLite.
 - **Screen reader use** was not tested. Axe finds no serious or critical problem and the keyboard path works.
 - **Task board by keyboard.** Each board card is a labelled group with a real Open button inside it. Focus a card and press Enter (or Tab to its Open button) to open the task, approve it from the sheet, and use the keyboard lift (Space, arrows, Space) to move it between columns. A browser test covers the open path. The Table view is still there for large lists.

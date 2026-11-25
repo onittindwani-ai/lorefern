@@ -63,7 +63,9 @@ def test_setting_a_source_back_to_company_puts_every_tag_back(client):
     assert len(before) > 2
     r = client.patch(f"/api/sources/{folder['id']}", headers=h, json={"default_tag": "finance"})
     assert r.status_code == 200 and r.json()["changed"] > 0
-    assert _sources(client, h)["folder"]["by_tag"] == {"finance": folder["documents"]}
+    by_tag = _sources(client, h)["folder"]["by_tag"]
+    # Documents that were already narrower than finance keep their own tag (a retag never lets an audience see a row it could not see before). It used to set every one to finance.
+    assert set(by_tag) <= {"finance", "leadership", "people"} and by_tag["finance"] > 0 and sum(by_tag.values()) == folder["documents"]
     assert client.patch(f"/api/sources/{folder['id']}", headers=h, json={"default_tag": "company"}).status_code == 200
     assert _tags(client, h) == before
 

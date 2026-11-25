@@ -1,7 +1,9 @@
 """Bring documents, Slack days and meeting transcripts into the index, each with a visibility tag.
 
-Tag rule (fail closed): a source with a default tag other than `company` fixes the tag of everything in it. A `company` source may tag single documents (front matter
-`visibility:`, or a Slack channel map). A tag nobody recognises becomes `leadership`, the narrowest one, never a wider one.
+Tag rule (fail closed): a source with a default tag other than `company` fixes the tag of everything in it. A `company` source lets a single document say its own tag
+(front matter or transcript header `visibility:`, a Slack channel map, a PDF property) and otherwise gives it the tag of its folder (a `.visibility` file or the folder README).
+A document with no tag at all gets the tag the owner chose for that source's unlabelled items (see untagged.py), and when there is none, the NARROWEST tag.
+A tag nobody recognises becomes the narrowest tag too, never a wider one.
 """
 
 from __future__ import annotations
@@ -10,28 +12,42 @@ import re
 from datetime import date
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from lorefern import search
+from lorefern import search, untagged
 from lorefern.adapters.base import RemoteDoc, RemoteMeeting
-from lorefern.chunking import ParsedDoc, chunk_document, content_hash, parse_pdf, parse_text, stems_for_index
+from lorefern.chunking import ParsedDoc, chunk_document, content_hash, normalise_text, parse_front_matter, parse_pdf, parse_text, stems_for_index
 from lorefern.injection import is_injection
-from lorefern.models import TAGS, Chunk, Document, Meeting, Source, Transcript
+from lorefern.models import TAGS, Chunk, Decision, Document, Meeting, Process, Source, Transcript
 from lorefern.textproc import split_sentences, stems
+from lorefern.visibility import audiences_of, meet_tag, narrowest_tag
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
+MAX_FILES = 5000  # most files one read looks at
+MAX_TOTAL_BYTES = 500 * 1024 * 1024  # most bytes one read looks at. A read that hits either limit stops, says so, and removes nothing.
 STALE_AFTER_DAYS = 540
-NARROWEST = "leadership"
+SKIP_DIRS = {"node_modules", "__pycache__"}
+MEETINGS_DIR = "meetings"  # the meetings reader owns this folder, and it carries each transcript's own visibility header
 
 
-def resolve_tag(source: Source, wanted: str = "") -> str:
+def _narrowest() -> str:
+    return narrowest_tag()
+
+
+def resolve_tag(source: Source, wanted: str = "", inherited: str = "", unlabelled: str = "") -> str:
+    """The tag of one item. `wanted` is what the item says about itself, `inherited` what its folder says, `unlabelled` what the owner chose for unlabelled items of this source.
+    A restricted source fixes the tag, and an item may only narrow it further (never widen it): its own recognised tag is combined with the source's. An open (`company`) source
+    uses the item's own tag, then its folder's, then the owner's choice, and the narrowest tag when there is none of them."""
     if source.default_tag != "company":
-        return source.default_tag if source.default_tag in TAGS else NARROWEST
-    w = (wanted or "").strip().lower()
-    if not w:
-        return "company"
-    return w if w in TAGS else NARROWEST
+        base = source.default_tag if source.default_tag in TAGS else _narrowest()
+        own = (wanted or inherited or "").strip().lower()
+        return meet_tag(base, own) if own in TAGS else base
+    for candidate in (wanted, inherited, unlabelled):
+        c = (candidate or "").strip().lower()
+        if c:
+            return c if c in TAGS else _narrowest()
+    return _narrowest()
 
 
 def _date(v: str | None) -> date | None:
@@ -70,7 +86,11 @@ def _norm_ref(s: str) -> str:
 
 def resolve_replacements(session: Session, pairs: list[tuple[Document, dict]]) -> int:
     """A document whose front matter says `supersedes` or `replaces` (one or more references, by path, file name, title or doc id) makes those documents superseded.
-    The target is found only inside the same list of documents. Returns how many documents were marked."""
+    The target is found only inside the same list of documents, and only when the claim can be trusted: both documents have the same owner (or neither names one),
+    and everyone who may see the replaced document may also see the replacing one. Every read starts from what each document says about itself, so deleting the
+    replacing file puts the replaced one back. Returns how many documents were marked."""
+    for d, meta in pairs:
+        d.status = detect_status(meta, d.text, banner=True)
     by_ref: dict[str, list[Document]] = {}
     for d, meta in pairs:
         for key in (d.external_id, d.slug, d.title, (meta.get("doc_id") or "")):
@@ -82,7 +102,10 @@ def resolve_replacements(session: Session, pairs: list[tuple[Document, dict]]) -
             for ref in re.split(r"[;,]|\s{2,}", meta.get(k) or ""):
                 hits = by_ref.get(_norm_ref(ref.strip().strip("[]\"'")), []) if ref.strip() else []
                 for target in {x.id: x for x in hits}.values():
-                    if target.id != d.id and target.status != "superseded":
+                    if target.id == d.id or target.status == "superseded":
+                        continue
+                    same_owner = (d.owner or "").strip().lower() == (target.owner or "").strip().lower()
+                    if same_owner and audiences_of(target.tag) <= audiences_of(d.tag):
                         target.status = "superseded"
                         marked += 1
     session.flush()
@@ -100,10 +123,10 @@ def guess_type(rel: str, meta: dict, title: str) -> str:
     return "other"
 
 
-def store_document(session: Session, source: Source, external_id: str, parsed: ParsedDoc, today: date | None = None, tag_hint: str = "", rel: str = "") -> tuple[Document, str]:
+def store_document(session: Session, source: Source, external_id: str, parsed: ParsedDoc, today: date | None = None, tag_hint: str = "", rel: str = "", inherited: str = "") -> tuple[Document, str]:
     """Insert or update one document and rebuild its chunks. Returns (document, 'new' | 'changed' | 'same')."""
     meta = parsed.meta or {}
-    tag = resolve_tag(source, tag_hint or meta.get("visibility", ""))
+    tag = resolve_tag(source, tag_hint or meta.get("visibility", ""), inherited, untagged.get(session, source.id))
     h = content_hash(parsed.text + "|" + tag)
     doc = session.scalar(select(Document).where(Document.source_id == source.id, Document.external_id == external_id))
     state = "new"
@@ -131,60 +154,172 @@ def store_document(session: Session, source: Source, external_id: str, parsed: P
     return doc, state
 
 
-def ingest_folder(session: Session, source: Source, folder: Path, today: date | None = None) -> dict:
-    counts = {"new": 0, "changed": 0, "same": 0, "skipped": 0}
+def store_safely(session: Session, counts: dict, *args, **kwargs) -> tuple[Document | None, str]:
+    """store_document inside its own savepoint: one file the database refuses is counted as failed and the rest of the read goes on."""
+    try:
+        with session.begin_nested():
+            return store_document(session, *args, **kwargs)
+    except Exception:  # a bad file must not stop the read. The failure is counted, and the old copy of that document (if any) stays as it was
+        counts["failed"] = counts.get("failed", 0) + 1
+        return None, "failed"
+
+
+def remove_documents(session: Session, docs: list[Document]) -> int:
+    """Take documents out of the index: their passages go with them, and nothing is left pointing at them."""
+    ids = [d.id for d in docs]
+    if not ids:
+        return 0
+    session.execute(update(Meeting).where(Meeting.document_id.in_(ids)).values(document_id=None))
+    session.execute(update(Decision).where(Decision.document_id.in_(ids)).values(document_id=None))
+    session.execute(update(Process).where(Process.sop_id.in_(ids)).values(sop_id=None, coverage="gap"))
+    for d in docs:
+        session.delete(d)
+    session.flush()
+    return len(ids)
+
+
+def remove_missing(session: Session, source: Source, seen: set[str]) -> int:
+    """After a read that finished, drop every document of the source that the read did not see: deleted, moved, renamed or no longer shared files must not stay searchable."""
+    gone = [d for d in session.scalars(select(Document).where(Document.source_id == source.id)) if d.external_id not in seen]
+    return remove_documents(session, gone)
+
+
+def _folder_declared_tag(directory: Path, root: Path, cache: dict) -> str:
+    """The tag a folder declares for what is inside it: a `.visibility` file (one word) or the `visibility:` line of its README.md, nearest folder first, up to the root of the source."""
+    if directory in cache:
+        return cache[directory]
+    found = ""
+    for name in (".visibility", "README.md"):
+        f = directory / name
+        try:
+            if f.is_file() and not f.is_symlink() and f.stat().st_size <= 64 * 1024:
+                raw = normalise_text(f.read_text(errors="replace"))
+                found = (raw.strip().splitlines() or [""])[0].strip().lower() if name == ".visibility" else (parse_front_matter(raw)[0].get("visibility") or "").strip().lower()
+        except OSError:
+            found = ""
+        if found:
+            break
+    if not found and directory != root and root in directory.parents:
+        found = _folder_declared_tag(directory.parent, root, cache)
+    cache[directory] = found
+    return found
+
+
+def ingest_folder(session: Session, source: Source, folder: Path, today: date | None = None, exclude: tuple[Path, ...] = ()) -> dict:
+    """Read a folder of markdown, text and PDF files. `exclude` lists sub folders that belong to another source (a stricter one), which this read leaves alone."""
+    counts = {"new": 0, "changed": 0, "same": 0, "skipped": 0, "removed": 0}
     pairs: list[tuple[Document, dict]] = []
     root = folder.resolve()
+    if not root.is_dir():
+        raise FileNotFoundError("The folder is not there, so nothing was read and nothing was removed.")
+    skip_roots = tuple(p.resolve() for p in exclude)
+    seen: set[str] = set()
+    cache: dict = {}
+    files = total = 0
+    complete = True
     for p in sorted(root.rglob("*")):
         if not p.is_file() or p.suffix.lower() not in {".md", ".txt", ".pdf"}:
+            continue
+        parts = p.relative_to(root).parts
+        if any(x.startswith(".") or x in SKIP_DIRS for x in parts[:-1]) or p.name.startswith("."):
+            counts["skipped"] += 1  # hidden folders, trash and package folders are never read
             continue
         if p.name == "INDEX.md":  # the index lists the title of every document, restricted ones included, so it is never read into the search index
             counts["skipped"] += 1
             continue
+        if (len(parts) > 1 and parts[0] == MEETINGS_DIR) or root.name == MEETINGS_DIR:
+            counts["skipped"] += 1  # transcripts are read by the meetings reader, with the visibility each one declares
+            continue
         try:
-            p.resolve().relative_to(root)  # a link that points outside the folder is skipped
+            resolved = p.resolve()
+            resolved.relative_to(root)  # a link that points outside the folder is skipped
         except ValueError:
             counts["skipped"] += 1
             continue
-        if p.stat().st_size > MAX_FILE_BYTES:
-            counts["skipped"] += 1
+        if any(resolved == s or s in resolved.parents for s in skip_roots):
+            counts["skipped"] += 1  # this sub folder is another source's, with its own tag
             continue
         rel = str(p.relative_to(root))
+        seen.add(rel)  # a file that is there but cannot be read keeps its old copy
+        size = p.stat().st_size
+        if size > MAX_FILE_BYTES:
+            counts["skipped"] += 1
+            continue
+        files, total = files + 1, total + size
+        if files > MAX_FILES or total > MAX_TOTAL_BYTES:
+            complete = False
+            counts["truncated"] = 1
+            break
         slug = re.sub(r"[^a-z0-9]+", "-", rel.rsplit(".", 1)[0].lower()).strip("-")
         try:
             parsed = parse_pdf(p.name, p.read_bytes(), slug) if p.suffix.lower() == ".pdf" else parse_text(p.name, p.read_text(errors="replace"), slug)
         except Exception:  # a damaged PDF must not stop the run
             counts["skipped"] += 1
             continue
-        doc, state = store_document(session, source, rel, parsed, today, rel=rel)
+        doc, state = store_safely(session, counts, source, rel, parsed, today, rel=rel, inherited=_folder_declared_tag(p.parent, root, cache))
+        if doc is None:
+            continue
         pairs.append((doc, parsed.meta or {}))
         counts[state] += 1
+    if complete:
+        counts["removed"] = remove_missing(session, source, seen)
     counts["superseded_by_reference"] = resolve_replacements(session, pairs)
     search.rebuild(session)
     return counts
 
 
+def held_elsewhere(session: Session, source: Source) -> set[str]:
+    """File ids held by another source of the same kind that names its own folders or pages. A source that names none must not also hold those files."""
+    others = session.scalars(select(Source.id).where(Source.kind == source.kind, Source.id != source.id, Source.uri != ""))
+    ids = [i for i in others]
+    if not ids:
+        return set()
+    return set(session.scalars(select(Document.external_id).where(Document.source_id.in_(ids))))
+
+
 def ingest_remote(session: Session, source: Source, docs: list[RemoteDoc], today: date | None = None) -> dict:
-    counts = {"new": 0, "changed": 0, "same": 0}
+    """Store what a Drive or Notion read returned. A file the read no longer returns (deleted, trashed, unshared, moved out of the chosen folders) is removed from the index.
+    A source that names its own folders or pages takes its files from every other source of the same kind, and one that names none leaves those files to them."""
+    counts = {"new": 0, "changed": 0, "same": 0, "removed": 0}
+    if not source.uri:
+        taken = held_elsewhere(session, source)
+        docs = [d for d in docs if d.external_id not in taken]
+    seen = {d.external_id for d in docs}
     for d in docs:
         slug = re.sub(r"[^a-z0-9]+", "-", d.title.lower()).strip("-") or d.external_id
         parsed = parse_text(d.title + ".md", d.text, slug)
-        parsed.title = d.title or parsed.title
+        parsed.title = normalise_text(d.title) or parsed.title
         parsed.updated_on = parsed.updated_on or _date(d.updated_on)
-        counts[store_document(session, source, d.external_id, parsed, today, rel=d.title)[1]] += 1
+        doc, state = store_safely(session, counts, source, d.external_id, parsed, today, rel=d.title)
+        if doc is not None:
+            counts[state] += 1
+    counts["removed"] = remove_missing(session, source, seen)
+    if source.uri:
+        mine = [x for x in session.scalars(select(Document).where(Document.external_id.in_(seen), Document.source_id != source.id)) if x.source.kind == source.kind]
+        counts["removed"] += remove_documents(session, mine)
     search.rebuild(session)
     return counts
 
 
 def ingest_slack(session: Session, source: Source, days, channel_tags: dict[str, str] | None = None, today: date | None = None) -> dict:
-    counts = {"new": 0, "changed": 0, "same": 0}
+    counts = {"new": 0, "changed": 0, "same": 0, "removed": 0}
+    seen: set[str] = set()
     for d in days:
         slug = f"slack-{d.channel}-{d.day}"
-        body = f"# #{d.channel} on {d.day}\n\n{d.text}\n"
-        parsed = ParsedDoc(f"#{d.channel} on {d.day}", body, "slack", date.fromisoformat(d.day), slug, {})
-        doc, st = store_document(session, source, slug, parsed, today, tag_hint=(channel_tags or {}).get(d.channel, ""), rel="slack")
+        seen.add(slug)
+        body = f"# #{d.channel} on {d.day}\n\n{normalise_text(d.text)}\n"
+        try:
+            day = date.fromisoformat(d.day)
+        except ValueError:  # a member name of 15 characters is not a day
+            counts["failed"] = counts.get("failed", 0) + 1
+            continue
+        parsed = ParsedDoc(f"#{d.channel} on {d.day}", body, "slack", day, slug, {})
+        doc, st = store_safely(session, counts, source, slug, parsed, today, tag_hint=(channel_tags or {}).get(d.channel, ""), rel="slack")
+        if doc is None:
+            continue
         doc.doc_type = "slack"
         counts[st] += 1
+    counts["removed"] = remove_missing(session, source, seen)
     search.rebuild(session)
     return counts
 
@@ -196,8 +331,8 @@ def transcript_text(lines: list[tuple[str, str]]) -> str:
 def ingest_meeting(session: Session, source: Source, m: RemoteMeeting, today: date | None = None, tag_hint: str = "") -> tuple[Meeting, str]:
     """Store one meeting, its transcript text, and an indexed document so questions can cite it. Lines that look like instructions are listed and never acted on."""
     held = _date(m.held_on) or (today or date.today())
-    text = transcript_text(m.lines)
-    tag = resolve_tag(source, tag_hint)
+    text = normalise_text(transcript_text(m.lines))
+    tag = resolve_tag(source, tag_hint, "", untagged.get(session, source.id))
     mt = session.scalar(select(Meeting).where(Meeting.source_id == source.id, Meeting.external_id == m.external_id))
     state = "new" if mt is None else "changed"
     if mt is None:
@@ -233,7 +368,12 @@ def sync_meetings(session: Session, ctx, today: date | None = None) -> dict:
         session.add(src)
         session.flush()
     for m in found:
-        _, st = ingest_meeting(session, src, m, today, tag_hint=getattr(m, "visibility", ""))
+        try:
+            with session.begin_nested():  # one transcript the database refuses must not stop the others
+                _, st = ingest_meeting(session, src, m, today, tag_hint=getattr(m, "visibility", ""))
+        except Exception:
+            counts["failed"] = counts.get("failed", 0) + 1
+            continue
         counts[st] += 1
     src.last_synced_at, src.status, src.error = ctx.now(session), "ready", ""
     search.rebuild(session)

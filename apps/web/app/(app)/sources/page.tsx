@@ -18,15 +18,17 @@ export default function SourcesPage() {
   const q = useQuery({ queryKey: ["sources"], queryFn: () => get<SourceRow[]>("/sources") });
   const sync = useMutation({ mutationFn: (id: number) => post<Record<string, number>>(`/sources/${id}/sync`), onSuccess: (r) => { qc.invalidateQueries(); notify.success(`Read again: ${Object.entries(r).map(([k, v]) => `${v} ${k.replace(/_/g, " ")}`).join(", ") || "nothing to read"}.`); }, onError: (e: Error) => notify.error("Could not read the source", e.message) });
   const retag = useMutation({ mutationFn: ({ id, tag }: { id: number; tag: string }) => api<{ changed: number }>(`/sources/${id}`, { method: "PATCH", json: { default_tag: tag } }), onSuccess: (r) => { qc.invalidateQueries(); notify.success(r.changed ? `Visibility changed. ${r.changed} ${r.changed === 1 ? "item was" : "items were"} re tagged.` : "Visibility saved. Nothing needed re tagging."); }, onError: (e: Error) => notify.error("Could not change visibility", e.message) });
+  const untag = useMutation({ mutationFn: ({ id, tag }: { id: number; tag: string }) => api<{ untagged_tag: string }>(`/sources/${id}`, { method: "PATCH", json: { untagged_tag: tag } }), onSuccess: () => { qc.invalidateQueries(); notify.success("Saved. It applies the next time this source is read."); }, onError: (e: Error) => notify.error("Could not save", e.message) });
   const people = useQuery({ queryKey: ["owners"], queryFn: () => get<Owner[]>("/owners") });
   const [addSrc, setAddSrc] = useState(false);
   const [kind, setKind] = useState("folder");
   const [sname, setSname] = useState("");
   const [suri, setSuri] = useState("");
   const [stag, setStag] = useState("company");
+  const [sunt, setSunt] = useState("");
   const [pname, setPname] = useState("");
   const [prole, setProle] = useState("");
-  const addSource = useMutation({ mutationFn: () => post("/sources", { kind, name: sname, uri: suri, default_tag: stag }), onSuccess: () => { qc.invalidateQueries(); notify.success("Source added. Press Read again to bring its documents in."); setAddSrc(false); setSname(""); setSuri(""); }, onError: (e: Error) => notify.error("Could not add the source", e.message) });
+  const addSource = useMutation({ mutationFn: () => post("/sources", { kind, name: sname, uri: suri, default_tag: stag, untagged_tag: sunt }), onSuccess: () => { qc.invalidateQueries(); notify.success("Source added. Press Read again to bring its documents in."); setAddSrc(false); setSname(""); setSuri(""); }, onError: (e: Error) => notify.error("Could not add the source", e.message) });
   const addPerson = useMutation({ mutationFn: () => post("/owners", { name: pname, role: prole }), onSuccess: () => { qc.invalidateQueries({ queryKey: ["owners"] }); notify.success("Person added. They can now own tasks."); setPname(""); setProle(""); }, onError: (e: Error) => notify.error("Could not add the person", e.message) });
   const steps: WizardStep[] = [
     { id: "pick", title: "1. Choose where the knowledge lives", description: "A company folder on this machine, a Drive or Notion workspace, a Slack export, or meeting transcripts from a recorder.", status: q.data?.length ? "ok" : "todo" },
@@ -43,9 +45,11 @@ export default function SourcesPage() {
             <div className="cx-stack">
               <div className="cx-toolbar"><Badge>{s.kind}</Badge><TagBadge tag={s.default_tag} /><Badge tone={s.status === "ready" ? "success" : "warning"}>{s.status}</Badge></div>
               <p className="cx-mini">{s.documents} documents · last read {s.last_synced_at?.slice(0, 10) ?? "never"} · visible to {WHO[s.default_tag] ?? ""}</p>
+              {s.default_tag === "company" ? <p className="cx-mini">A document with no tag of its own or on its folder is visible to: {WHO[s.untagged_tag] ?? s.untagged_tag}</p> : null}
               {s.error ? <p role="alert">{s.error}</p> : null}
               {owner ? (
                 <div className="cx-toolbar">
+                  {s.default_tag === "company" ? <select className="cx-select" aria-label={`Tag for documents with no tag in ${s.name}`} value={s.untagged_tag} onChange={(e) => untag.mutate({ id: s.id, tag: e.target.value })}>{TAGS.map((t) => <option key={t} value={t}>no tag means {t}</option>)}</select> : null}
                   <select className="cx-select" aria-label={`Visibility of ${s.name}`} value={s.default_tag} onChange={(e) => retag.mutate({ id: s.id, tag: e.target.value })}>{TAGS.map((t) => <option key={t} value={t}>{t}</option>)}</select>
                   <Button onClick={async () => { await sync.mutateAsync(s.id); }}>Read again</Button>
                 </div>
@@ -72,9 +76,11 @@ export default function SourcesPage() {
           <label className="sx-label" htmlFor="src-kind">Kind</label>
           <select id="src-kind" className="cx-select" value={kind} onChange={(e) => setKind(e.target.value)}>{["folder", "slack", "drive", "notion"].map((k) => <option key={k} value={k}>{k}</option>)}</select>
           <Field label="Name" value={sname} onChange={setSname} maxLength={120} />
-          <Field label="Path inside KNOWLEDGE_DIR (folder or Slack export)" value={suri} onChange={setSuri} hint="Leave empty for the whole folder" />
+          <Field label="Path inside KNOWLEDGE_DIR (folder or Slack export), or Drive folder ids and Notion page ids separated by commas" value={suri} onChange={setSuri} hint="Leave empty for the whole folder. A folder that has its own source here is left to that source." />
           <label className="sx-label" htmlFor="src-tag">Who may see it</label>
           <select id="src-tag" className="cx-select" value={stag} onChange={(e) => setStag(e.target.value)}>{TAGS.map((t) => <option key={t} value={t}>{t}: {WHO[t]}</option>)}</select>
+          <label className="sx-label" htmlFor="src-untag">A document with no tag at all is visible to</label>
+          <select id="src-untag" className="cx-select" value={sunt} onChange={(e) => setSunt(e.target.value)}><option value="">owner only (the safe choice)</option>{TAGS.map((t) => <option key={t} value={t}>{t}: {WHO[t]}</option>)}</select>
         </div>
       </Dialog>
     </div>

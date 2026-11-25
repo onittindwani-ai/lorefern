@@ -3,7 +3,7 @@
 ## Backups
 
 - **Database.** Postgres: `deploy/hetzner/backup.sh` or your host's managed backups. SQLite: copy the `.sqlite3` file while the API is stopped, or use `sqlite3 lorefern.sqlite3 ".backup backup.sqlite3"`.
-- **Company folder.** It is the source of truth for most knowledge. Keep it in Git or in a backed up volume.
+- **Company folder.** It is the source of truth for most knowledge. Keep it in Git or in a backed up volume. `deploy/hetzner/backup.sh` also writes a compressed copy of the knowledge volume next to the database dump. Copy both off the server (`BACKUP_COPY_TO`): a backup on the same disk is not a backup.
 - **Settings.** Keep the `.env` file in a password manager, never in Git.
 
 ## Test a restore

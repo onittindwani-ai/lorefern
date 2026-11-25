@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import httpx
 
 from lorefern.adapters.base import RemoteDoc, safe_base_url
@@ -9,10 +11,17 @@ from lorefern.adapters.drive_auth import DriveTokenProvider
 from sendora_core.adapters import AdapterError
 
 
+FOLDER_MIME = "application/vnd.google-apps.folder"
+ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{6,128}")
+
+
 class DriveSource:
     """Google Drive, read only. Signs in with a service account or an OAuth refresh token and renews the access token itself (see drive_auth.py)."""
 
     MAX_PAGES = 50
+    MAX_FOLDERS = 200  # folders one read walks
+    MAX_DEPTH = 6
+    MAX_BYTES = 2_000_000  # a file larger than this is left out
     FIELDS = "nextPageToken,files(id,name,mimeType,modifiedTime)"
 
     def __init__(self, settings, client: httpx.Client | None = None, auth: DriveTokenProvider | None = None, token_client: httpx.Client | None = None):
@@ -30,10 +39,10 @@ class DriveSource:
             return r
         return r  # pragma: no cover
 
-    def list_documents(self) -> list[RemoteDoc]:
+    def _list(self, query: str) -> list[dict]:
         files, token = [], None
         for _ in range(self.MAX_PAGES):
-            r = self._get("/drive/v3/files", fields=self.FIELDS, pageSize=100, **({"pageToken": token} if token else {}))
+            r = self._get("/drive/v3/files", q=query, fields=self.FIELDS, pageSize=100, **({"pageToken": token} if token else {}))
             if r.status_code in (401, 403):
                 raise AdapterError("Google Drive refused the access. Check the sign in details, and that the files are shared with the service account or the consenting person (docs/03).")
             r.raise_for_status()
@@ -42,6 +51,32 @@ class DriveSource:
             token = body.get("nextPageToken")
             if not token:
                 break
+        return files
+
+    def _walk(self, folder_ids: list[str]) -> list[dict]:
+        """The files inside the named folders and the folders below them. A trashed file is never listed."""
+        files: dict[str, dict] = {}
+        queue, seen = [(fid, 0) for fid in folder_ids], set(folder_ids)
+        while queue and len(seen) <= self.MAX_FOLDERS:
+            fid, depth = queue.pop(0)
+            for f in self._list(f"'{fid}' in parents and trashed = false"):
+                if f["mimeType"] == FOLDER_MIME:
+                    if depth < self.MAX_DEPTH and f["id"] not in seen:
+                        seen.add(f["id"])
+                        queue.append((f["id"], depth + 1))
+                else:
+                    files[f["id"]] = f
+        return list(files.values())
+
+    def list_documents(self, scope: list[str] | None = None) -> list[RemoteDoc]:
+        """Documents the credential can read, or only those inside the folders named in `scope` (folder ids). Trashed files are left out."""
+        if scope:
+            bad = [x for x in scope if not ID_PATTERN.fullmatch(x)]
+            if bad:
+                raise AdapterError("A Drive folder id may only hold letters, digits, dashes and underscores. Check the path of this source.")
+            files = self._walk(scope)
+        else:
+            files = self._list("trashed = false")
         out = []
         for f in files:
             mime = f["mimeType"]
@@ -51,7 +86,7 @@ class DriveSource:
                 e = self._get(f"/drive/v3/files/{f['id']}", alt="media")
             else:
                 continue
-            if e.status_code == 200:
+            if e.status_code == 200 and len(e.content) <= self.MAX_BYTES:
                 out.append(RemoteDoc(f["id"], f["name"], e.text, str(f.get("modifiedTime", ""))[:10]))
         return out
 
@@ -76,7 +111,8 @@ class NotionSource:
     def _h(self):
         return {"Authorization": f"Bearer {self.settings.notion_token}", "Notion-Version": self.VERSION}
 
-    def list_documents(self) -> list[RemoteDoc]:
+    def list_documents(self, scope: list[str] | None = None) -> list[RemoteDoc]:
+        """Pages the integration can read, or only the pages named in `scope` and the pages directly below them."""
         results, cursor = [], None
         for _ in range(self.MAX_PAGES):
             r = self.client.post("/v1/search", headers=self._h(), json={"filter": {"property": "object", "value": "page"}, "page_size": 100, **({"start_cursor": cursor} if cursor else {})})
@@ -88,6 +124,9 @@ class NotionSource:
             cursor = body.get("next_cursor") if body.get("has_more") else None
             if not cursor:
                 break
+        if scope:
+            wanted = {x.replace("-", "").lower() for x in scope}
+            results = [p for p in results if p["id"].replace("-", "").lower() in wanted or str((p.get("parent") or {}).get("page_id", "")).replace("-", "").lower() in wanted]
         out = []
         for p in results:
             title = "".join(t.get("plain_text", "") for t in (p.get("properties", {}).get("title", {}) or {}).get("title", [])) or "Untitled"

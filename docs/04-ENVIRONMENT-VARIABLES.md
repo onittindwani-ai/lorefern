@@ -2,6 +2,8 @@
 
 Every variable, in plain words. Values are never printed by any tool in this repo. `python3 tools/doctor.py` checks them and `make check-env` compares your file with `.env.example`.
 
+The API, the worker and `alembic upgrade head` all read the same settings: the environment, then the file named by `ENV_FILE` (default `.env`, relative to the folder you run the command in, so `ENV_FILE=../../.env` from `apps/api`). They always run on the same settings. Docker also needs `POSTGRES_PASSWORD` (below).
+
 Where to put them: **local** in a `.env` file at the repo root (copied from `.env.example`); **Vercel** in the project's Environment Variables (web variables only: `API_BASE_URL` and `SESSION_SECRET`); **Railway** in each service's Variables tab; **Hetzner** in the `.env` file next to `docker-compose.yml` on the server. Vendor steps were read from the vendor's own pages where a date is shown with VERIFIED. Steps marked UNVERIFIED come from general knowledge and must be checked against the vendor's current page before you rely on them.
 
 
@@ -12,6 +14,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it:
   1. Run `python3 -c "import secrets; print(secrets.token_urlsafe(48))"`.
   2. Paste the result as the value. Use a different one for every install.
+  3. With `DEMO_MODE=false` the API and the worker refuse to start when it is shorter than 32 characters or still looks like an example (`change-me`, `example`, `dev-only` and similar). Anyone who has read the public code could otherwise sign in as the owner.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
 - Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
@@ -24,7 +27,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - How to get it:
   1. Demo: leave `sqlite:///./lorefern.sqlite3`.
   2. Postgres: create a database, then use `postgresql+psycopg://USER:PASSWORD@HOST:5432/DBNAME`.
-  3. Run `cd apps/api && ../../.venv/bin/alembic upgrade head` once, and again after every update.
+  3. Run `cd apps/api && ../../.venv/bin/alembic upgrade head` once, and again after every update. Alembic reads this value from the environment or from `.env` (or the file named by `ENV_FILE`) and stops with a message when it finds none. It never creates a stray SQLite file by mistake.
 - Cost: SQLite is free. Postgres is part of your hosting bill.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
 - Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
@@ -35,7 +38,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 - Required: optional
 - What it does: `draft` (the default) sends nothing. `live` allows reminders to be sent after a second person approves.
 - How to get it:
-  1. Leave `draft` until the go live checklist (doc 09) is done.
+  1. Leave `draft` until the go live checklist (doc 09) is done. With `MODE=live` and `DEMO_MODE=false` the API and the worker refuse to start while `COMPANY_NAME` is still the demo company or `EMAIL_FROM` is still the example address.
   2. Change it to `live` on the server only. The app can never switch itself to live.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
@@ -45,9 +48,9 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## DEMO_MODE
 
 - Required: optional
-- What it does: `true` loads the made up company and uses offline tools only. Turn it off for a real client.
+- What it does: `true` loads the made up company, uses offline tools only and moves the clock. It also switches on the public demo password, the made up approver, finance and staff accounts and the button that erases the database, but only while no `OWNER_PASSWORD_HASH` is set: setting a hash turns every one of those off even if `DEMO_MODE` is still `true`. The API also refuses `DEMO_MODE=true` together with `KNOWLEDGE_DIR`, because real documents would sit behind a login anyone can read in the repository. Code default `true`; `.env.example` says `false`.
 - How to get it:
-  1. Set `false` on a real install.
+  1. Set `false` on a real install (the example already does).
   2. Then set OWNER_PASSWORD_HASH.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
@@ -141,18 +144,18 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## COMPANY_NAME
 
 - Required: optional
-- What it does: The company name shown in the app and in the weekly review heading.
+- What it does: The company name shown in the app and in the weekly review heading. The default, `Pinegate Works`, is the made up demo company, so with `DEMO_MODE=false` it is listed as a problem, and with `MODE=live` the app refuses to start on it.
 - How to get it:
   1. Type the company's name.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
 - Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
-- If it is wrong: An empty value falls back to the demo name.
+- If it is wrong: `python3 tools/doctor.py` lists the demo name as a problem.
 
 ## KNOWLEDGE_DIR
 
 - Required: optional
-- What it does: The folder of Markdown, text and PDF files Lorefern reads (the company folder).
+- What it does: The folder of Markdown, text and PDF files Lorefern reads (the company folder). Each folder source reads its own path inside it, and meeting transcripts in its `meetings` folder are read by the meetings reader with the visibility each one declares. A document gets its tag from its own `visibility:` line, then from its folder (a `.visibility` file or the folder's `README.md`), and with neither it is visible to the owner only until you choose another tag for that source on the Sources page.
 - How to get it:
   1. Copy the template: `python3 tools/new_company_folder.py /path/to/folder --name "Client name"`.
   2. Fill it in with the client (doc 10).
@@ -260,7 +263,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## EMAIL_ADAPTER
 
 - Required: optional
-- What it does: How reminders are sent: `seed` (drafted only) or `smtp`.
+- What it does: How reminders are sent: `seed` (drafted only) or `smtp`. Sending needs `MODE=live`, a second person's approval and the kill switch off, all three checked in the app's own settings.
 - How to get it:
   1. Leave `seed` until you are ready to send.
   2. For `smtp` fill the SMTP variables below.
@@ -447,7 +450,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## SMTP_PORT
 
 - Required: optional
-- What it does: The mail server port. Default 587 with TLS.
+- What it does: The mail server port. Default 587 with TLS. The connection checks the server's certificate against the system's trusted list.
 - How to get it:
   1. Use the port your provider names.
 - Cost: Free.
@@ -481,13 +484,151 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## EMAIL_FROM
 
 - Required: optional
-- What it does: The From address on reminders.
+- What it does: The From address on reminders. The default is a placeholder on `example.test`, so with `DEMO_MODE=false` it is listed as a problem, and with `MODE=live` the app refuses to start on it.
 - How to get it:
   1. Use an address you control.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
 - Check it: `python3 tools/doctor.py` (add `--live` to test the real connection).
 - If it is wrong: Mail may be rejected if the domain is not set up for sending.
+
+## SMTP_USE_TLS
+
+- Required: optional
+- What it does: `true` (the default) starts an encrypted connection and checks the mail server's certificate and host name before the password is sent. `false` is allowed only for a mail server on this same computer (`localhost`); for any other host nothing is sent and the settings list it as a problem.
+- How to get it: Leave it `true`.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top.
+- Check it: `python3 tools/doctor.py --live`.
+- If it is wrong: "The mail server's certificate could not be verified" means the server's certificate is not valid for the host name you gave. Use the host name on the certificate.
+
+## TIMEZONE
+
+- Required: optional
+- What it does: The time zone in which "today" is worked out: due dates, reminders, which tasks are overdue and the weekly review. Default `UTC`. A demo uses its own fixed clock.
+- How to get it:
+  1. Use a zone name such as `Europe/Berlin` or `America/Chicago`.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top.
+- Check it: `python3 tools/doctor.py` lists a name it does not know.
+- If it is wrong: A zone behind or ahead of yours moves "today" by a day for part of the day.
+
+## APP_NAME
+
+- Required: optional
+- What it does: The name used in logs and on `/health`. Default `lorefern`.
+- How to get it: Leave it.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top.
+- Check it: Open `/health`.
+- If it is wrong: Nothing breaks.
+
+## ALLOW_DEMO_SERVER
+
+- Required: optional
+- What it does: The API refuses `DEMO_MODE=true` on a Postgres database, because a demo has a button that erases every table. `true` allows it for a throw away trial on a private network.
+- How to get it: Leave it `false` on a real install.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top.
+- Check it: `python3 tools/doctor.py`.
+- If it is wrong: The API stops at start and says why.
+
+## MAX_BODY_BYTES
+
+- Required: optional
+- What it does: The largest request the API reads, in bytes. A larger one is refused before it is read. Default `26214400` (25 MB), which is more than a pasted transcript needs.
+- How to get it: Leave it.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top. Caddy has its own limit in `deploy/hetzner/Caddyfile`.
+- Check it: Send a request over the limit: the answer is 413.
+- If it is wrong: Too low and a long transcript is refused.
+
+## POSTGRES_PASSWORD
+
+- Required: required for Docker, not read by the app itself
+- What it does: The password of the Postgres container. `docker-compose.yml` puts it inside `DATABASE_URL`, so use letters and digits only (or percent encode it).
+- How to get it:
+  1. Run `openssl rand -hex 24` and paste the result.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: only the Docker path (doc 08). `docker compose up` stops with a message when it is empty.
+- Check it: `docker compose up -d --build`.
+- If it is wrong: A character such as `@` or `/` breaks the database address: the API says it cannot connect.
+
+## ENV_FILE
+
+- Required: optional, not a line inside the file
+- What it does: Names the settings file the API, the worker and alembic read. Set it in the shell, for example `ENV_FILE=/etc/lorefern/prod.env`. Default `.env`.
+- How to get it: Not needed with one file.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top.
+- Check it: `make check-env` reads `.env`; pass `--env` for another file.
+- If it is wrong: The API starts on defaults and the refusal checks tell you which setting is missing.
+
+## LLM_MODEL, LLM_HARD_MODEL, LLM_BULK_MODEL
+
+- Required: optional
+- What it does: The model names used when `LLM_BACKEND` is `anthropic`. `LLM_MODEL` sets one name for both jobs. Defaults `claude-sonnet-5-5` and `claude-haiku-5-5`. Not used with `offline`.
+- How to get it: Leave them unless you use `anthropic` and want another model.
+- Cost: Charged per use by the provider with `anthropic`.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top. The web host does not need them.
+- Check it: `python3 tools/doctor.py`.
+- If it is wrong: The provider answers with an unknown model error, shown in plain words.
+
+## ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_VERSION
+
+- Required: the key is required for `LLM_BACKEND=anthropic`
+- What it does: The key, the address (default `https://api.anthropic.com`, plain `http` only for `localhost` tests) and the version header. A key in the environment alone never turns the model on.
+- How to get it:
+  1. Create a key in the Anthropic console and set it in the host's secret settings only.
+  2. Leave the address and the version alone.
+- Cost: Charged per use by the provider.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top. Only the API needs them.
+- Check it: `python3 tools/doctor.py` prints a PROBLEM line when `anthropic` has no key.
+- If it is wrong: The doctor names what is missing.
+
+## LLM_TIMEOUT, LLM_MAX_TOKENS, LLM_MAX_RETRIES, LLM_THINKING
+
+- Required: optional
+- What it does: Seconds per request (default 120), the reply limit (default 4096), retries after a failed try (default 2) and `default` or `off` for the lowest thinking setting. Only used with a model backend.
+- How to get it: Leave them.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top.
+- Check it: `python3 tools/doctor.py`.
+- If it is wrong: Model jobs time out or run short.
+
+## LLM_CALL_BUDGET, LLM_BUDGET_USD
+
+- Required: optional
+- What it does: The most live model calls per process, and the most tracked spend in US dollars. Empty means no limit. A job over the limit stops with a plain message and the rules writer is used.
+- How to get it: Set a number if you use `anthropic` and want a ceiling.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top.
+- Check it: `python3 tools/doctor.py`.
+- If it is wrong: The limit is reached sooner than you expect.
+
+## LLM_FIXTURES_DIR, LLM_RECORD, LLM_REDACT, LLM_LOG_PROMPTS
+
+- Required: `LLM_FIXTURES_DIR` is required for `LLM_BACKEND=fixture` and for `LLM_RECORD`
+- What it does: The folder recorded answers are read from, whether every live answer is saved there, whether prompts and keys are hidden from logs and fixtures (default on), and whether a shortened, redacted prompt is logged (default off).
+- How to get it: Used by developers. Leave them alone on a real install.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top.
+- Check it: `python3 tools/doctor.py` says when `LLM_FIXTURES_DIR` is empty while it is needed.
+- If it is wrong: The doctor names the setting.
+
+## DRIVE_BASE_URL, NOTION_BASE_URL, FIREFLIES_BASE_URL, FATHOM_BASE_URL
+
+- Required: optional
+- What it does: The web address each service is read from. The defaults are the real services. They are checked: only `https` and only public addresses are accepted. They exist so the tests can point at a local fake.
+- How to get it: Leave them.
+- Cost: Free.
+- Local, Vercel, Railway, Hetzner: see the paragraph at the top.
+- Check it: `python3 tools/doctor.py`.
+- If it is wrong: The source says the address is refused.
+
+## Which Drive folders or Notion pages a source reads
+
+This is not a setting. On the Sources page the path of a Drive source is the Drive folder ids (separated by commas) and the path of a Notion source is the page ids. A source that names its own folders or pages reads only those (Drive also walks the folders below them) and takes its files from any other source of the same kind, so each file belongs to one source and one tag. Only one Drive source and one Notion source may leave the field empty (everything the sign in can reach). Trashed files are never listed.
 
 ## API_BASE_URL
 
