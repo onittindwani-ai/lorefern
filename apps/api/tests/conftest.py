@@ -19,7 +19,8 @@ ALL_TAGS = ("company", "clients", "finance", "people", "leadership")
 
 
 def make_ctx(tmp_path, **kw) -> Ctx:
-    s = Settings(database_url=f"sqlite:///{tmp_path / 't.sqlite3'}", session_secret="test-secret-test-secret", seed_dir=DATA, _env_file=None, **kw)
+    kw = {"session_secret": "test-secret-test-secret", **kw}
+    s = Settings(database_url=f"sqlite:///{tmp_path / 't.sqlite3'}", seed_dir=DATA, _env_file=None, **kw)
     eng = make_engine(s.database_url)
     Base.metadata.create_all(eng)
     return Ctx(s, make_session_factory(eng))

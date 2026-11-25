@@ -184,7 +184,7 @@ def test_members_with_a_password_hash_can_sign_in_outside_demo_mode(tmp_path):
     from conftest import make_ctx
 
     members = {"lena@example.test": {"audience": "finance", "password_hash": hash_password("a-long-test-password-9")}, "ghost@example.test": "staff", "boss@example.test": {"audience": "owner"}}
-    ctx = make_ctx(tmp_path, demo_mode=False, session_secret="Rt7Kq2Vw9Xm4Zc8Lb3Nf6Hy1Js5Dp0Ga2Ue7Tq4Wi9", owner_email="owner@example.test", owner_password_hash=hash_password("owner-test-password-9"), members_json=json.dumps(members))
+    ctx = make_ctx(tmp_path, demo_mode=False, session_secret="test-only-Rt7Kq2Vw9Xm4Zc8Lb3Nf6Hy1Js5Dp0Ga2Ue7Tq4Wi9", owner_email="owner@example.test", owner_password_hash=hash_password("owner-test-password-9"), members_json=json.dumps(members))
     assert ctx.settings.members()["lena@example.test"] == "finance"
     assert "boss@example.test" not in ctx.settings.members()  # a second owner can never be added this way
     c = TestClient(create_app(ctx.settings, ctx))
