@@ -2,7 +2,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge, Button, Card, notify } from "@sendora/ui-kit";
-import { ListSkeleton, LoadError, PageHead } from "@/components/Parts";
+import { LeaderGate, ListSkeleton, LoadError, PageHead } from "@/components/Parts";
 import { get, post } from "@/lib/api";
 import { useRole } from "@/lib/hooks";
 import type { Integrations } from "@/lib/types";
@@ -11,6 +11,10 @@ const TITLE: Record<string, string> = { helpdesk: "Help desk", payments: "Refund
 const STEPS = ["Pick what you use", "Add the settings on the server", "Test", "Stay in draft mode until the checklist is done"];
 
 export default function IntegrationsPage() {
+  return <LeaderGate title="Integrations"><IntegrationsBody /></LeaderGate>;
+}
+
+function IntegrationsBody() {
   const { canWrite } = useRole();
   const q = useQuery({ queryKey: ["integrations"], queryFn: () => get<Integrations>("/integrations") });
   const [results, setResults] = useState<Record<string, string>>({});
