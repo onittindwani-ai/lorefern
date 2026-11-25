@@ -3,7 +3,7 @@
 About five minutes. You need Python 3.12 or newer (or uv), Node 22 or newer and pnpm (`corepack enable` or `npm i -g pnpm`). No accounts, no keys.
 
 1. `python3.12 -m venv .venv`. No python3.12 on your Mac? Use uv instead: `uv venv --python 3.12 .venv`.
-2. `.venv/bin/pip install -e packages/core-py -e "apps/api[dev]"`, or with uv: `uv pip install --python .venv/bin/python -e packages/core-py -e "apps/api[dev]"`. (Steps 1 and 2 together: `make install`.)
+2. `.venv/bin/pip install -c constraints.txt -e packages/core-py -e "apps/api[dev]"`, or with uv: `uv pip install --python .venv/bin/python -c constraints.txt -e packages/core-py -e "apps/api[dev]"`. (Steps 1 and 2 together: `make install`.)
 3. `pnpm install` then `pnpm build`
 4. Start the API in demo mode, in one terminal:
    `DEMO_MODE=true .venv/bin/python -m uvicorn lorefern.api.app:app_from_env --factory --port 8000 --proxy-headers`
