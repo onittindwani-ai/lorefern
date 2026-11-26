@@ -9,7 +9,7 @@ status: current
 
 # Clients overview
 
-Pinegate Works has these retainer clients in this demo. All are fictional.
+Pinegate Works has these retainer clients in this demo. All are examples.
 
 - Harbor Dental: Care Plan, renews in March.
 - Elm Street Bakery: Care Plan, renews in June.

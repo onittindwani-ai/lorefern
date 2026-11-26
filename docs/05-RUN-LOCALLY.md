@@ -13,11 +13,11 @@ Windows: use WSL 2 with Ubuntu and work inside it. PowerShell and cmd are not su
 
 ## Settings
 
-`cp .env.example .env`, then follow `04-ENVIRONMENT-VARIABLES.md`. The example has `DEMO_MODE=false`, so the API will not start until you set a real `SESSION_SECRET` (32 or more random characters) and an `OWNER_PASSWORD_HASH`; to look around with the made up company set `DEMO_MODE=true` instead and leave the hash empty. Run `make check-env` (it needs only Python) and then `.venv/bin/python tools/doctor.py`. The first reads your file, the second tests the services. Neither prints a value.
+`cp .env.example .env`, then follow `04-ENVIRONMENT-VARIABLES.md`. The example has `DEMO_MODE=false`, so the API will not start until you set a real `SESSION_SECRET` (32 or more random characters) and an `OWNER_PASSWORD_HASH`; to look around with the sample company set `DEMO_MODE=true` instead and leave the hash empty. Run `make check-env` (it needs only Python) and then `.venv/bin/python tools/doctor.py`. The first reads your file, the second tests the services. Neither prints a value.
 
 ## Database
 
-- **SQLite** (default): tables are created on start. In demo mode the made up company is loaded when the database is empty.
+- **SQLite** (default): tables are created on start. In demo mode the sample company is loaded when the database is empty.
 - **Postgres**: set `DATABASE_URL=postgresql+psycopg://user:pass@host:5432/dbname`, then `cd apps/api && ../../.venv/bin/alembic upgrade head`. Alembic reads `DATABASE_URL` from the environment or from `.env` (or the file named by `ENV_FILE`, relative to the folder you run it in: `ENV_FILE=../../.env`) and stops with a message when it finds none. Do this on every update.
 
 ## Two programs, then the web app

@@ -410,7 +410,7 @@
      "id": "slack",
      "name": "Slack",
      "kind": "paid",
-     "supported_in_lorefern": "Export reader (folder or zip) tested on a made up export. Layout UNVERIFIED",
+     "supported_in_lorefern": "Export reader (folder or zip) tested on a sample export. Layout UNVERIFIED",
      "run": "not run against a real export",
      "sources": [
       {

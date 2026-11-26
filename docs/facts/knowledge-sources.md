@@ -2,7 +2,7 @@
 
 The Google sign in and the Drive paging and export calls were checked against Google's public pages on 2026-11-23 (see `FACTS-AND-SOURCES.md` for what each page did and did not say). Notion was not read from vendor pages. All adapters are tested only against `mock/source_mocks.py`.
 
-- **Google Drive:** the adapter lists files in a folder and reads Google Docs as plain text, and ordinary text files. It signs in with a service account key or an OAuth refresh token, keeps the access token in memory, renews it before it expires and once after a refused request (`adapters/drive_auth.py`, doc 03). The fake token service in `mock/source_mocks.py` checks the signature, issuer, audience, scope and lifetime of the assertion, and the tests move a fake clock past the expiry.
+- **Google Drive:** the adapter lists files in a folder and reads Google Docs as plain text, and ordinary text files. It signs in with a service account key or an OAuth refresh token, keeps the access token in memory, renews it before it expires and once after a refused request (`adapters/drive_auth.py`, doc 03). The mock token service in `mock/source_mocks.py` checks the signature, issuer, audience, scope and lifetime of the assertion, and the tests move a test clock past the expiry.
 - **Notion:** the adapter searches pages the integration can see and reads their blocks as plain text. It reads only pages shared with the integration.
 - **Permissions:** neither adapter reads or copies who may open a file or page. See `13-SECURITY-AND-DATA.md`.
 

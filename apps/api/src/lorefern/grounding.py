@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from lorefern.textproc import digitize, has_negation, numbers, split_sentences, stem, stems, words
 
 THRESHOLD = 0.65
-OOV_W = 6.0  # a word the knowledge never uses is a strong sign of an invented claim
+OOV_W = 6.0  # a word the knowledge never uses is a strong sign of an unsupported claim
 SYN = {"valid": "work", "stay": "keep", "remain": "keep", "retain": "keep", "receive": "get", "obtain": "get", "limit": "max", "maximum": "max", "largest": "max", "biggest": "max", "up": "", "reach": "keep", "back": "", "every": "each",
        "available": "offer", "pay": "paid", "cost": "price", "charge": "price", "retry": "again", "tried": "again", "try": "again", "need": "", "may": "can", "able": "can", "allow": "can", "yearly": "year", "monthly": "month", "annual": "year", "switch": "turn", "switched": "turn", "mention": "mention"}
 

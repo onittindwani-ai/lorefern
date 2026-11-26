@@ -1,4 +1,4 @@
-"""Fictional company documents, part A (folders 00 to 04). Every person, client and number here is invented for the demo."""
+"""Sample company documents, part A (folders 00 to 04). Every person, client and number here is sample data for the demo."""
 
 D = []  # (path, meta, body)
 
@@ -13,7 +13,7 @@ def add(path, body, owner="Priya Nair", updated="2026-10-01", review_by="2027-04
 add("00 Governance/operating-rules.md", """
 # Operating rules
 
-Pinegate Works is a fictional company used for this demo. These rules say how work is run.
+Pinegate Works is an example company used for this demo. These rules say how work is run.
 
 ## Decisions and spending
 Any decision that costs more than $2,000 needs approval from Priya Nair and Aisha Khan together. Decisions below that amount are made by the person who owns the work.
@@ -65,7 +65,7 @@ Priya wants to reach 24 retainer clients first and keep the team independent. Th
 add("01 Company/company-profile.md", """
 # Company profile
 
-Pinegate Works is a fictional web and data studio with 10 people. It was founded in 2021 by Priya Nair and is based in Bristol.
+Pinegate Works is a sample web and data studio with 10 people. It was founded in 2021 by Priya Nair and is based in Bristol.
 
 ## What we do
 We build websites and booking systems for small clinics, cafes and local shops. After launch we run them for a monthly fee, and we send each client a monthly performance report.
@@ -114,7 +114,7 @@ Cash on hand at the end of the quarter was enough for 9 months of costs.
 add("03 Clients and Customers/clients-overview.md", """
 # Clients overview
 
-Pinegate Works has these retainer clients in this demo. All are fictional.
+Pinegate Works has these retainer clients in this demo. All are examples.
 
 - Harbor Dental: Care Plan, renews in March.
 - Elm Street Bakery: Care Plan, renews in June.
@@ -127,7 +127,7 @@ Leo Fischer is the account manager for every client.
 add("03 Clients and Customers/harbor-dental-brief.md", """
 # Client brief: Harbor Dental
 
-Fictional client. Owner: Leo Fischer.
+Sample client. Owner: Leo Fischer.
 
 ## Goal
 Harbor Dental wants online booking for its two clinics and a monthly report of how many bookings came from the website.
@@ -144,7 +144,7 @@ Harbor Dental receives its report on the first Monday of each month.
 add("03 Clients and Customers/elm-street-bakery-brief.md", """
 # Client brief: Elm Street Bakery
 
-Fictional client. Owner: Leo Fischer.
+Sample client. Owner: Leo Fischer.
 
 ## Goal
 The bakery wants a simple site with the daily menu and an order-ahead form for cakes.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the demo seed: the filled company folder, the Slack export, the planted tasks with their answer key, and the development question set.
 
-Everything is fictional. Re running rewrites the same files. Usage: python3 tools/make_seed.py
+Everything is sample data. Re running rewrites the same files. Usage: python3 tools/make_seed.py
 """
 
 from __future__ import annotations
@@ -48,11 +48,11 @@ def _agreement_pdf(path: Path) -> None:
     from reportlab.pdfgen import canvas
 
     c = canvas.Canvas(str(path), pagesize=A4)
-    c.setTitle("Standard services agreement (fictional)")
+    c.setTitle("Standard services agreement (sample data)")
     y = 800
-    for line in ["Standard services agreement (fictional sample)", "", "Pinegate Works provides website and booking services to the client named in the order form.",
+    for line in ["Standard services agreement (sample data)", "", "Pinegate Works provides website and booking services to the client named in the order form.",
                  "Payment terms: the client pays each invoice within 30 days of the invoice date.", "Support: questions are answered during working hours, Monday to Friday.",
-                 "Liability is limited to the fees paid in the previous 12 months.", "This document is invented for the demo and is not legal advice."]:
+                 "Liability is limited to the fees paid in the previous 12 months.", "This document is written for the demo and is not legal advice."]:
         c.drawString(60, y, line)
         y -= 22
     c.save()

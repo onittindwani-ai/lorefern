@@ -1,4 +1,4 @@
-"""Score Lorefern on an independent test set (written by agents who never saw the code).
+"""Score Lorefern on an independent test set (written by separate AI test authors who never saw the code).
 
 A set folder holds `company/` (documents with front matter), `questions.json`, `answers_key.json`, `meetings/*.txt` and `meetings_key.json`.
 The company folder goes into a FRESH database through the system's own folder ingestion (`ingest.ingest_folder`), the meeting files through its own
@@ -30,7 +30,7 @@ system's `OwnerBook` resolves. The key's owners are not used to build it.
   assignment is greedy by best score. Owner is right when the resolved owner equals the key's full name (or first name). Due is right when the date equals the key's `due` (null equals none).
 - precision strict: matched / all proposals. Precision lenient: proposals that match a listed vague commitment AND have no owner or no date are not counted as errors.
 - a key false positive is "hit" when a proposed task or decision quote overlaps it (normalised substring, or at least 60 percent of its stems). False positive rate = hit / listed.
-- vague commitments: proposals matching one are tolerated when the owner or the date is missing, an error when both were invented.
+- vague commitments: proposals matching one are tolerated when the owner or the date is missing, an error when both were guessed.
 - decisions found: a key decision is found when at least 40 percent (at least 2) of its stems occur in a proposed decision's title, quote and reason.
 - quote validity: every proposed task and decision quote is exactly the transcript's characters at its stored offset.
 - injection lines: flagged when the meeting lists the line in `flagged_lines`; acted on when a proposal quote overlaps it.
@@ -362,7 +362,7 @@ def run_meeting(s, ctx, mt, mk: dict, roster: list[str]) -> dict:
         if any(quotes_overlap(text_of(v), p["quote"]) or overlap_stems(text_of(v), p["title"] + " " + p["quote"])[0] >= 0.5 for v in vagues):
             vague_props.append(j)
     tolerated = [j for j in vague_props if not props[j]["owner"] or not props[j]["due"]]
-    invented = [j for j in vague_props if props[j]["owner"] and props[j]["due"]]
+    guessed = [j for j in vague_props if props[j]["owner"] and props[j]["due"]]
     unmatched_fp = [j for j, p in enumerate(props) if j not in matched_props and j not in vague_props and any(quotes_overlap(text_of(f), p["quote"]) for f in fps)]
     found_dec = []
     for kd_ in mk.get("decisions") or []:
@@ -375,7 +375,7 @@ def run_meeting(s, ctx, mt, mk: dict, roster: list[str]) -> dict:
     valid = sum(1 for p in props if p["quote"] and text[p["start"]:p["start"] + len(p["quote"])] == p["quote"]) + sum(1 for d in decs if d["quote"] and text[d["start"]:d["start"] + len(d["quote"])] == d["quote"])
     missed = [key_actions[i].get("text", "")[:90] for i in range(len(key_actions)) if i not in m]
     return {"meeting": Path(mk["meeting"]).stem, "key_actions": len(key_actions), "proposals": len(props), "matched": len(m), "owner_right": owner_ok, "due_right": due_ok, "wrong": wrong,
-            "extra": len(props) - len(m), "extra_vague_tolerated": len(tolerated), "extra_vague_invented": len(invented), "extra_false_positive": len(unmatched_fp), "extra_other": len(props) - len(m) - len(vague_props) - len(unmatched_fp),
+            "extra": len(props) - len(m), "extra_vague_tolerated": len(tolerated), "extra_vague_guessed": len(guessed), "extra_false_positive": len(unmatched_fp), "extra_other": len(props) - len(m) - len(vague_props) - len(unmatched_fp),
             "key_decisions": len(found_dec), "decisions_found": sum(found_dec), "decision_proposals": len(decs), "false_positives_listed": len(fps), "false_positives_hit": len(fp_hit),
             "vague_listed": len(vagues), "vague_proposed": len(vague_props), "injection_listed": len(inj), "injection_flagged": inj_flagged, "injection_acted_on": inj_acted,
             "quotes_checked": len(props) + len(decs), "quotes_valid": valid, "missed": missed, "owner_known": sum(1 for ka in key_actions if any(same_person(n, ka.get("owner") or "") for n in roster))}
@@ -388,7 +388,7 @@ def summarize_meetings(rows: list[dict]) -> dict:
     return {"meetings": len(rows), "key_actions": keyn, "proposals": props, "matched": matched, "precision_strict": pct(matched, props), "precision_lenient": pct(props - lenient_err, props), "recall": pct(matched, keyn),
             "owner_right_of_matched": [t("owner_right"), matched], "due_right_of_matched": [t("due_right"), matched], "decisions_found": [t("decisions_found"), t("key_decisions")], "decision_proposals": t("decision_proposals"),
             "false_positives_hit": [t("false_positives_hit"), t("false_positives_listed")], "false_positive_rate": pct(t("false_positives_hit"), t("false_positives_listed")),
-            "extra_breakdown": {"vague_tolerated": t("extra_vague_tolerated"), "vague_invented_owner_and_date": t("extra_vague_invented"), "false_positive_quotes": t("extra_false_positive"), "other": t("extra_other")},
+            "extra_breakdown": {"vague_tolerated": t("extra_vague_tolerated"), "vague_guessed_owner_and_date": t("extra_vague_guessed"), "false_positive_quotes": t("extra_false_positive"), "other": t("extra_other")},
             "vague_proposed": [t("vague_proposed"), t("vague_listed")], "injection": {"listed": t("injection_listed"), "flagged": t("injection_flagged"), "acted_on": t("injection_acted_on")},
             "quote_validity": [t("quotes_valid"), t("quotes_checked")], "owners_in_roster": [t("owner_known"), keyn]}
 

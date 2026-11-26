@@ -9,7 +9,7 @@ status: example
 
 # Client brief: Northlake Cafe
 
-Fictional example. Owner: the account manager.
+Example only. Owner: the account manager.
 
 ## Goal
 A website with the menu and opening hours, updated by the cafe owner without help.

@@ -24,8 +24,8 @@ PATTERNS = {
 }
 SKIP_SUFFIX = {".png", ".jpg", ".pdf", ".ico", ".woff", ".woff2"}
 SKIP_NAMES = {"pnpm-lock.yaml", "scan_secrets.py"}
-# Test fixtures use obviously fake values; a line carrying one of these markers is allowed.
-ALLOW = ("example", "not-for-real", "e2e-only", "dev-only", "fake", "demo-secret", "test-only", "change-me")
+# Test fixtures use obviously placeholder values; a line carrying one of these markers is allowed.
+ALLOW = ("example", "not-for-real", "e2e-only", "dev-only", "stub", "demo-secret", "test-only", "change-me")
 
 
 def tracked() -> list[Path]:

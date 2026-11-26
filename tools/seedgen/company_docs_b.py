@@ -1,4 +1,4 @@
-"""Fictional company documents, part B (folders 05 to 11)."""
+"""Sample company documents, part B (folders 05 to 11)."""
 
 from tools.seedgen.company_docs_a import add, D  # noqa: F401
 
@@ -96,7 +96,7 @@ Revenue target for 2027 is $1.1 million.
 add("07 Finance and Legal/payroll-summary.md", """
 # Payroll summary
 
-Fictional figures. Priya Nair earns $98,000. Marcus Bell earns $82,000. Tom Reyes earns $86,000. Dana Ortiz earns $64,000. Total yearly payroll is $641,000.
+Sample figures. Priya Nair earns $98,000. Marcus Bell earns $82,000. Tom Reyes earns $86,000. Dana Ortiz earns $64,000. Total yearly payroll is $641,000.
 """, vis="finance", owner="Aisha Khan", updated="2026-10-31", typ="other")
 add("07 Finance and Legal/standard-contract-notes.md", """
 # Standard contract notes
@@ -116,7 +116,7 @@ Reviews happen twice a year, in May and in November. Each person writes a short 
 add("08 People/salary-bands.md", """
 # Salary bands
 
-Fictional bands. Developer band: $70,000 to $95,000. Designer band: $55,000 to $75,000. Support band: $42,000 to $58,000.
+Sample bands. Developer band: $70,000 to $95,000. Designer band: $55,000 to $75,000. Support band: $42,000 to $58,000.
 """, vis="people", owner="Grace Lin", updated="2026-07-01", typ="policy")
 add("08 People/performance-notes-2026.md", """
 # Performance notes, 2026

@@ -68,7 +68,7 @@ def test_every_answer_sentence_passes_the_groundedness_check(ro):
                     assert grounding.check_sentence(sn.text, chunks).score >= grounding.THRESHOLD - 0.3 or sn.support >= grounding.THRESHOLD, (q, sn.text)
 
 
-def test_the_check_rejects_an_invented_number_a_wrong_negation_and_a_stranger_fact():
+def test_the_check_rejects_an_unsupported_number_a_wrong_negation_and_a_stranger_fact():
     chunk = [(1, "Each person has 25 days of paid annual leave plus public holidays. Sick leave is paid for up to 10 days a year without a doctor's note.")]
     assert grounding.check_sentence("Each person has 25 days of paid annual leave.", chunk).supported
     assert not grounding.check_sentence("Each person has 30 days of paid annual leave.", chunk).supported

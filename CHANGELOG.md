@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 (2026-11-27)
+
+Documentation and demo label updates.
+
 ## 1.0.1 (2026-11-25)
 
 Security and install hardening. No new screens, but every read and write path is stricter.

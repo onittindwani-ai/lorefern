@@ -11,7 +11,7 @@ Lorefern is a company brain and operations helper for a small company, set up by
 
 It also ships a **company folder template**: a numbered skeleton an implementer fills in with a client, so the company's knowledge is organised the way Lorefern reads best. See `10-USING-IT-FOR-A-CLIENT.md` for the implementer's routine.
 
-You can try everything with made up data in about five minutes, with no accounts and no keys.
+You can try everything with sample data in about five minutes, with no accounts and no keys.
 
 ## Pick your path
 
@@ -32,7 +32,7 @@ You can try everything with made up data in about five minutes, with no accounts
 
 ## What is real and what is not
 
-- The demo uses a fictional company, fictional people and fictional documents. Nothing leaves your computer.
+- Everything in the demo is sample data and nothing leaves your computer.
 - The answer writer in the demo is a set of rules that picks sentences from your documents. It is **not a language model**. Real model wording was not tested here. See `ANSWER-EVAL.md` and `EXTRACTION-EVAL.md` for the measured results, including the poor ones.
 - No real vendor was contacted while building this. Every connection was tested only against a local copy that imitates the vendor. `FACTS-AND-SOURCES.md` lists what was read from vendor pages and what was not.
 - Lorefern is **single tenant**: one company per install. And it **does not copy the permissions** of Drive, Notion or Slack. Who may see what is set by tags in Lorefern. Read `13-SECURITY-AND-DATA.md` before you connect anything that holds private material.

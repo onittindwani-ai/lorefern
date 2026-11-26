@@ -1,4 +1,4 @@
-"""Fake Google token service, Google Drive and Notion servers (read only). Shapes from the public docs, UNVERIFIED live."""
+"""Mock Google token service, Google Drive and Notion servers (read only). Shapes from the public docs, UNVERIFIED live."""
 
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ from fastapi import FastAPI, Header, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
 
-class FakeClock:
-    """A clock the tests move by hand, shared by the token provider and the fake Google servers."""
+class StubClock:
+    """A clock the tests move by hand, shared by the token provider and the mock Google servers."""
 
     def __init__(self, start: float = 1_800_000_000.0):
         self.now = start
@@ -35,14 +35,14 @@ class GoogleTokenMock:
     """A local imitation of the Google token address (POST /token), shapes from Google's public OAuth documents. NOT the real service.
 
     Accepts the service account JWT grant (checks the RS256 signature, issuer, audience, scope and a lifetime of at most an hour) and the refresh token grant.
-    Issues access tokens that expire on the shared fake clock. `mode` can be set to "invalid_grant", "invalid_client" or "server_error" to test failures.
+    Issues access tokens that expire on the shared test clock. `mode` can be set to "invalid_grant", "invalid_client" or "server_error" to test failures.
     """
 
-    def __init__(self, clock: FakeClock | None = None, lifetime: int = 3600, audience: str = "http://testserver/token"):
-        self.clock, self.lifetime, self.audience = clock or FakeClock(), lifetime, audience
+    def __init__(self, clock: StubClock | None = None, lifetime: int = 3600, audience: str = "http://testserver/token"):
+        self.clock, self.lifetime, self.audience = clock or StubClock(), lifetime, audience
         self.service_accounts: dict[str, object] = {}  # client_email -> RSA public key
         self.refresh_tokens: dict[str, tuple[str, str]] = {}  # refresh token -> (client_id, client_secret)
-        self.issued: dict[str, float] = {}  # access token -> expiry on the fake clock
+        self.issued: dict[str, float] = {}  # access token -> expiry on the test clock
         self.requests: list[dict] = []  # grant type and outcome of every call, never a secret
         self.mode = ""
         self.app = FastAPI()

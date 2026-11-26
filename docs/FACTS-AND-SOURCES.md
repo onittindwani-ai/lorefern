@@ -1,6 +1,6 @@
 # Facts and sources
 
-Anything marked UNVERIFIED must be checked against the vendor's current documentation before you depend on it. The seed company, people, documents and meetings are fictional.
+Anything marked UNVERIFIED must be checked against the vendor's current documentation before you depend on it. The seed company, people, documents and meetings are sample data.
 
 | Fact | Source | Read on | Status |
 | --- | --- | --- | --- |
@@ -12,7 +12,7 @@ Anything marked UNVERIFIED must be checked against the vendor's current document
 | Google service account sign in: signed RS256 assertion (claims iss, scope, aud, iat, exp up to one hour, optional sub), POST form `grant_type` `urn:ietf:params:oauth:grant-type:jwt-bearer` and `assertion` to `https://oauth2.googleapis.com/token`, answer `access_token` and `expires_in` | developers.google.com/identity/protocols/oauth2/service-account | 2026-11-23 | VERIFIED from the page. Not run against Google |
 | Google refresh token grant: POST form `grant_type=refresh_token`, `client_id`, `client_secret`, `refresh_token` to the same address; `invalid_grant` when a token was revoked or expired | developers.google.com/identity/protocols/oauth2/web-server | 2026-11-23 | VERIFIED from the page. Not run against Google |
 | Drive `files.list` paging (`pageToken`, `nextPageToken`, `pageSize` up to 1000, scope `drive.readonly`) and `files.export` (`GET /drive/v3/files/{id}/export?mimeType=`, 10 MB limit) | developers.google.com/workspace/drive/api/reference/rest/v3 | 2026-11-23 | VERIFIED from the pages. The `fields` parameter, the default fields and `alt=media` for plain text files were not on those pages: UNVERIFIED |
-| Anthropic Messages API as used by the model path (`POST /v1/messages`, `x-api-key`, `anthropic-version`, JSON schema in `output_config.format`, models `claude-sonnet-5-5` and `claude-haiku-5-5`) | The shared base, from the vendor docs it read on 2026-11-23 | 2026-11-23 | UNVERIFIED live. Run only against a fake server on this machine and against recordings made by that fake server. Never run with a real key. See `facts/models.md` |
+| Anthropic Messages API as used by the model path (`POST /v1/messages`, `x-api-key`, `anthropic-version`, JSON schema in `output_config.format`, models `claude-sonnet-5-5` and `claude-haiku-5-5`) | The shared base, from the vendor docs it read on 2026-11-23 | 2026-11-23 | UNVERIFIED live. Run only against a mock server on this machine and against recordings made by that mock server. Never run with a real key. See `facts/models.md` |
 | Notion search request (`POST /v1/search`, `Notion-Version: 2026-03-11`, paging with `has_more` and `next_cursor`) | developers.notion.com/reference/post-search | 2026-11-23 | VERIFIED from the page text, not run. The blocks children endpoint was not read: UNVERIFIED |
 | Vercel monorepo Root Directory steps | vercel.com/docs/monorepos (read for a sibling system) | 2026-11-23 | VERIFIED |
 | Railway and Hetzner steps | Not read | none | UNVERIFIED |

@@ -169,7 +169,7 @@ def test_the_slack_export_reader_handles_the_documented_message_record(tmp_path)
 def test_a_reminder_message_has_the_rfc_5322_header_fields(monkeypatch):
     sent, started = [], []
 
-    class FakeSmtp:
+    class StubSmtp:
         def __init__(self, *a, **k): pass
         def __enter__(self): return self
         def __exit__(self, *a): return False
@@ -177,7 +177,7 @@ def test_a_reminder_message_has_the_rfc_5322_header_fields(monkeypatch):
         def login(self, *a): pass
         def send_message(self, m): sent.append(m)
 
-    monkeypatch.setattr("smtplib.SMTP", FakeSmtp)
+    monkeypatch.setattr("smtplib.SMTP", StubSmtp)
     s = Settings(_env_file=None, mode=Mode.LIVE, demo_mode=False, smtp_host="smtp.example.test", smtp_user="u", smtp_password="p", email_from="lorefern@example.test")
     mid = SmtpEmail(s).send(to="dev@example.test", subject="Reminder", body="Hello")
     m = sent[0]

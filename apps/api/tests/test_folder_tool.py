@@ -29,9 +29,9 @@ def test_the_template_has_twelve_numbered_folders_each_with_a_readme_owner_and_c
         assert (TEMPLATE / need).exists(), need
 
 
-def test_examples_are_labelled_fictional():
+def test_examples_are_labelled_as_examples():
     ex = list(TEMPLATE.rglob("EXAMPLE-*.md"))
-    assert len(ex) == 4 and all("Fictional example" in p.read_text() for p in ex)
+    assert len(ex) == 4 and all("Example only" in p.read_text() for p in ex)
 
 
 def test_instantiate_fills_the_company_and_owner_and_refuses_a_used_folder(tmp_path):

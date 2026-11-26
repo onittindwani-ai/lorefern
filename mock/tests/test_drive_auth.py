@@ -1,4 +1,4 @@
-"""Drive sign in with token refresh, against a LOCAL fake Google token service and a fake Drive. Nothing here reaches Google (UNVERIFIED live)."""
+"""Drive sign in with token refresh, against a LOCAL mock Google token service and a mock Drive. Nothing here reaches Google (UNVERIFIED live)."""
 
 import base64
 import json
@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from lorefern.adapters.drive_auth import EARLY, DriveTokenProvider, sign_jwt
 from lorefern.adapters.sources import DriveSource
 from lorefern.config import Settings
-from mock.source_mocks import DriveMock, FakeClock, GoogleTokenMock
+from mock.source_mocks import DriveMock, StubClock, GoogleTokenMock
 from sendora_core.adapters import AdapterError
 
 EMAIL = "reader@lorefern-test.iam.example"
@@ -32,7 +32,7 @@ def settings(**kw):
 
 class World:
     def __init__(self, **kw):
-        self.clock = FakeClock()
+        self.clock = StubClock()
         self.token = GoogleTokenMock(self.clock, **kw)
         self.drive = DriveMock(issuer=self.token, page_size=2)
         self.token_client, self.drive_client = TestClient(self.token.app), TestClient(self.drive.app)
@@ -163,7 +163,7 @@ def test_answer_without_expires_in_is_treated_as_short_lived():
         calls.append(1)
         return httpx.Response(200, json={"access_token": "ya29.x"})
 
-    clock = FakeClock()
+    clock = StubClock()
     _, key_json = make_key()
     auth = DriveTokenProvider(settings(drive_service_account_json=key_json), client=httpx.Client(transport=httpx.MockTransport(handler)), clock=clock)
     auth.token(); auth.token()

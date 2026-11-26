@@ -49,11 +49,11 @@ class StressIn(BaseModel):
     n: int = Field(ge=1, le=20000)
 
 
-@router.post("/stress-tasks", summary="Add many fictional tasks, to check that long tables stay fast")
+@router.post("/stress-tasks", summary="Add many sample tasks, to check that long tables stay fast")
 def stress(b: StressIn, s: Session = Depends(db, scope="function"), ctx: Ctx = Depends(get_ctx), u: dict = Depends(owner)):
     from lorefern.models import Task
 
     now = ctx.now(s)
-    s.bulk_insert_mappings(Task, [{"title": f"Fictional load task {i}", "owner_raw": "", "due_on": None, "due_raw": "", "status": "done", "confidence": 1.0, "quote": "", "quote_start": -1, "tag": "company", "process_key": "",
+    s.bulk_insert_mappings(Task, [{"title": f"Sample load task {i}", "owner_raw": "", "due_on": None, "due_raw": "", "status": "done", "confidence": 1.0, "quote": "", "quote_start": -1, "tag": "company", "process_key": "",
                                    "blocked_reason": "", "created_at": now - timedelta(minutes=i), "updated_at": now - timedelta(minutes=i), "done_at": now - timedelta(minutes=i)} for i in range(b.n)])
     return {"added": b.n}

@@ -48,7 +48,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## DEMO_MODE
 
 - Required: optional
-- What it does: `true` loads the made up company, uses offline tools only and moves the clock. It also switches on the public demo password, the made up approver, finance and staff accounts and the button that erases the database, but only while no `OWNER_PASSWORD_HASH` is set: setting a hash turns every one of those off even if `DEMO_MODE` is still `true`. The API also refuses `DEMO_MODE=true` together with `KNOWLEDGE_DIR`, because real documents would sit behind a login anyone can read in the repository. Code default `true`; `.env.example` says `false`.
+- What it does: `true` loads the sample company, uses offline tools only and moves the clock. It also switches on the public demo password, the sample approver, finance and staff accounts and the button that erases the database, but only while no `OWNER_PASSWORD_HASH` is set: setting a hash turns every one of those off even if `DEMO_MODE` is still `true`. The API also refuses `DEMO_MODE=true` together with `KNOWLEDGE_DIR`, because real documents would sit behind a login anyone can read in the repository. Code default `true`; `.env.example` says `false`.
 - How to get it:
   1. Set `false` on a real install (the example already does).
   2. Then set OWNER_PASSWORD_HASH.
@@ -82,7 +82,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## LLM_BACKEND
 
 - Required: optional
-- What it does: Where the model jobs would run. `offline` (the default) is a built in rules stand in, not a language model, and needs no account. `fixture` replays recorded answers from `LLM_FIXTURES_DIR`. `anthropic` calls a real model and needs `ANTHROPIC_API_KEY`; it has been run only against a fake server on the developer's machine and never against the real service (UNVERIFIED). An API key in the environment alone never turns it on: only `LLM_BACKEND` does. Whatever writes the sentences, the code checks on them do not change.
+- What it does: Where the model jobs would run. `offline` (the default) is a built in rules stand in, not a language model, and needs no account. `fixture` replays recorded answers from `LLM_FIXTURES_DIR`. `anthropic` calls a real model and needs `ANTHROPIC_API_KEY`; it has been run only against a mock server on the developer's machine and never against the real service (UNVERIFIED). An API key in the environment alone never turns it on: only `LLM_BACKEND` does. Whatever writes the sentences, the code checks on them do not change.
 - How to get it:
   1. Leave it as `offline` to try the product.
   2. For `anthropic`, create a key in the Anthropic console and set `ANTHROPIC_API_KEY` in the host's secret settings only.
@@ -154,7 +154,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## COMPANY_NAME
 
 - Required: optional
-- What it does: The company name shown in the app and in the weekly review heading. The default, `Pinegate Works`, is the made up demo company, so with `DEMO_MODE=false` it is listed as a problem, and with `MODE=live` the app refuses to start on it.
+- What it does: The company name shown in the app and in the weekly review heading. The default, `Pinegate Works`, is the sample demo company, so with `DEMO_MODE=false` it is listed as a problem, and with `MODE=live` the app refuses to start on it.
 - How to get it:
   1. Type the company's name.
 - Cost: Free.
@@ -362,7 +362,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## DRIVE_SERVICE_ACCOUNT_JSON, DRIVE_SERVICE_ACCOUNT_FILE
 
 - Required: one of the three Drive sign in ways is required for `drive`
-- What it does: The key of a Google service account that may read the folders shared with it. Lorefern signs in with it and renews its own access token (doc 03). Read only. UNVERIFIED: written from Google's public documentation (https://developers.google.com/identity/protocols/oauth2/service-account, read 2026-11-23) and tested against a local fake token service, not against Google.
+- What it does: The key of a Google service account that may read the folders shared with it. Lorefern signs in with it and renews its own access token (doc 03). Read only. UNVERIFIED: written from Google's public documentation (https://developers.google.com/identity/protocols/oauth2/service-account, read 2026-11-23) and tested against a local mock token service, not against Google.
 - How to get it:
   1. In the client's Google Cloud console create a project and enable the Drive API.
   2. Create a service account, then create a JSON key for it and download the file once.
@@ -399,7 +399,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## DRIVE_SUBJECT, DRIVE_SCOPE, DRIVE_TOKEN_URI
 
 - Required: optional
-- What it does: `DRIVE_SUBJECT` is a user's email to act as when the Google Workspace admin has granted the service account domain wide delegation (leave empty otherwise). `DRIVE_SCOPE` defaults to the read only Drive scope; do not widen it. `DRIVE_TOKEN_URI` defaults to Google's token address and exists so tests can point at a local fake. It must be https and public.
+- What it does: `DRIVE_SUBJECT` is a user's email to act as when the Google Workspace admin has granted the service account domain wide delegation (leave empty otherwise). `DRIVE_SCOPE` defaults to the read only Drive scope; do not widen it. `DRIVE_TOKEN_URI` defaults to Google's token address and exists so tests can point at a local mock. It must be https and public.
 - How to get it: Leave all three alone unless you know you need delegation.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.
@@ -640,7 +640,7 @@ Where to put them: **local** in a `.env` file at the repo root (copied from `.en
 ## DRIVE_BASE_URL, NOTION_BASE_URL, FIREFLIES_BASE_URL, FATHOM_BASE_URL
 
 - Required: optional
-- What it does: The web address each service is read from. The defaults are the real services. They are checked: only `https` and only public addresses are accepted. They exist so the tests can point at a local fake.
+- What it does: The web address each service is read from. The defaults are the real services. They are checked: only `https` and only public addresses are accepted. They exist so the tests can point at a local mock.
 - How to get it: Leave them.
 - Cost: Free.
 - Local, Vercel, Railway, Hetzner: see the paragraph at the top.

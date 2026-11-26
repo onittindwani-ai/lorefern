@@ -10,7 +10,7 @@ Three ways to give Lorefern access, picked by which variables are set (the first
 An access token is kept in memory with its expiry and renewed two minutes early. A refused request (401) renews it once and retries once. Secrets come from the
 environment only. Nothing here logs, prints or puts a secret in an error message: failures are reported with Google's short error code only.
 
-Written from Google's public documentation (service account and web server OAuth pages, read 2026-11-23) and tested against a local fake token server only.
+Written from Google's public documentation (service account and web server OAuth pages, read 2026-11-23) and tested against a local mock token server only.
 UNVERIFIED against the real Google token service and the real Drive API until a client uses it.
 """
 

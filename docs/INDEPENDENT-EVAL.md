@@ -1,6 +1,6 @@
-# Independent evaluation (two sets written by people who never saw the code)
+# Independent evaluation (two sets written by separate AI test authors who never saw the code)
 
-This page reports how Lorefern's offline rules did on two test sets written by separate authors who read only the product spec, the start guide and the capabilities page. Neither author opened any code, test, data folder or other document of this repository. Everything in the sets is fictional (set A: a small heating and plumbing company, set B: a 41 person data consultancy).
+This page reports how Lorefern's offline rules did on two test sets written by separate AI test authors who never saw the code and who read only the product spec, the start guide and the capabilities page. Neither author opened any code, test, data folder or other document of this repository. Everything in the sets is sample data (set A: a small heating and plumbing company, set B: a 41 person data consultancy).
 
 **These numbers are for the offline rules stand in, which is plain rules and not a language model.** They say nothing about a live model (see the model path section of doc 14, which is UNVERIFIED live).
 
@@ -19,7 +19,7 @@ For comparison, the scores the system's own authors wrote and tuned themselves: 
 
 ## How the sets were read as Lorefern's words (fixed before any run)
 
-The authors invented tags (public, staff, managers, leadership, owner) and askers (guest, staff, leadership, owner). Lorefern has its own tags and audiences. The mapping, applied to a temporary copy of each set (the files in `data/eval/independent/` are untouched):
+The authors chose their own tags (public, staff, managers, leadership, owner) and askers (guest, staff, leadership, owner). Lorefern has its own tags and audiences. The mapping, applied to a temporary copy of each set (the files in `data/eval/independent/` are untouched):
 
 | Authors' word | Lorefern word |
 | --- | --- |
@@ -77,7 +77,7 @@ The mechanism is the same as before: every query filters by the asker's tags, so
 | Owner right of matched | 16 of 16 | 19 of 19 | 15 of 15 |
 | Due date right of matched | 15 of 16 | 18 of 19 | 14 of 15 |
 | Extra proposals that are listed vague commitments with no owner or no date (tolerated) | 6 | 6 | 7 |
-| Extra proposals that invented both an owner and a date for a vague item | 0 | 0 | 0 |
+| Extra proposals that guessed both an owner and a date for a vague item | 0 | 0 | 0 |
 | Extra proposals that overlap a listed false positive quote | 0 | 0 | 3 |
 | Other extra proposals | 4 | 3 | 3 |
 | Listed false positives that became a task or decision (false positive rate) | 2 of 23 (0.09) | 2 of 23 (0.09) | 3 of 28 (0.11) |
@@ -112,7 +112,7 @@ Set B scores higher than set A. Part of that is the style: set B's documents are
 
 - **Reworded questions that share few words with the document.** 8 single document questions in set A and 3 in set B came back as not found. A language model writer behind the same checks would help here (model path, doc 14), but that is UNVERIFIED.
 - **Questions that need two documents** are the weakest kind (3 of 11 and 7 of 13).
-- **Answering when it should say not found.** About a third of the not written anywhere questions got an answer from a nearby document. The sentence is supported by that document, so it is not invented, but it answers a different question.
+- **Answering when it should say not found.** About a third of the not written anywhere questions got an answer from a nearby document. The sentence is supported by that document, so it is not unsupported, but it answers a different question.
 - **Meetings.** Recall of 0.64 to 0.76 and strict precision of 0.54 to 0.68. Nothing is stored as approved, so extra and missed items cost a person's time, not a wrong task. The date words follow the conventions of `dates.py` (a weekday means the next one after the meeting; "next Friday" is the Friday of the following week).
 - **Two documents that differ with no status and no replaces field** are not resolved by date: Lorefern says they disagree and asks the owners, by design.
 

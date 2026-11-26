@@ -9,4 +9,4 @@ status: current
 
 # Payroll summary
 
-Fictional figures. Priya Nair earns $98,000. Marcus Bell earns $82,000. Tom Reyes earns $86,000. Dana Ortiz earns $64,000. Total yearly payroll is $641,000.
+Sample figures. Priya Nair earns $98,000. Marcus Bell earns $82,000. Tom Reyes earns $86,000. Dana Ortiz earns $64,000. Total yearly payroll is $641,000.

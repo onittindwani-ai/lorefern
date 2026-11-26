@@ -9,7 +9,7 @@ status: example
 
 # Decision: use one shared inbox for client email
 
-Fictional example. Decided on 2026-01-12 by the founder.
+Example only. Decided on 2026-01-12 by the founder.
 
 ## Decision
 Client email goes to one shared inbox instead of personal inboxes.

@@ -16,7 +16,7 @@
 
 ## The banner
 
-- **Demo mode** means fictional data and offline tools.
+- **Demo mode** means sample data and offline tools.
 - **Draft mode** means reminders are drafted and never sent.
 - **Live** means reminders can go out, but only after another person approves them.
 - **Kill switch on** means nothing is sent and no change is saved (approvals, imports, edits, reading sources, the background jobs) until the owner turns it off. Asking questions still works.

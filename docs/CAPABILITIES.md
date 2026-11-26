@@ -1,6 +1,6 @@
 # Capabilities
 
-What Lorefern does, with a picture of each page. Pictures are of the demo with made up data. Counts are from `data/counts.json`: <!--n:pages-->11<!--/n--> pages, <!--n:api_operations-->58<!--/n--> API operations, <!--n:tables-->14<!--/n--> tables.
+What Lorefern does, with a picture of each page. Pictures are of the demo with sample data. Counts are from `data/counts.json`: <!--n:pages-->11<!--/n--> pages, <!--n:api_operations-->58<!--/n--> API operations, <!--n:tables-->14<!--/n--> tables.
 
 ## Ask, with sources
 

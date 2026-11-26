@@ -81,7 +81,7 @@ def test_a_real_owner_password_switches_every_demo_shortcut_off_even_in_demo_mod
         assert db.scalars(select(Owner)).first() is None  # a real install is never filled with the demo world
 
 
-def test_the_made_up_accounts_exist_only_in_a_demo_with_no_owner_password(tmp_path):
+def test_the_sample_accounts_exist_only_in_a_demo_with_no_owner_password(tmp_path):
     c = TestClient(create_app(demo_settings(tmp_path)), base_url="http://api.test")
     for email, role in (("approver@example.test", "leadership"), ("finance@example.test", "finance"), ("staff@example.test", "staff"), ("owner@example.test", "owner")):
         r = c.post("/api/auth/login", json={"email": email, "password": "demo-password-1"})
@@ -136,7 +136,7 @@ def test_live_mode_refuses_the_demo_identity_and_lists_it_in_draft_mode(tmp_path
     create_app(draft)
     ok = real_settings(tmp_path, mode="live")
     assert ok.runtime_errors() == [] and not [p for p in ok.problems() if "COMPANY_NAME" in p or "EMAIL_FROM" in p]
-    assert not any("COMPANY_NAME" in p for p in demo_settings(tmp_path).problems())  # a demo has its own fictional company, and that is not a problem
+    assert not any("COMPANY_NAME" in p for p in demo_settings(tmp_path).problems())  # a demo has its own sample company, and that is not a problem
 
 
 def test_a_bad_time_zone_and_plain_text_mail_are_problems(tmp_path):

@@ -1,4 +1,4 @@
-"""General language handling of the offline stand in. Every example here is made up for the test; none is taken from an evaluation set."""
+"""General language handling of the offline stand in. Every example here is written for the test; none is taken from an evaluation set."""
 
 from datetime import date
 from types import SimpleNamespace

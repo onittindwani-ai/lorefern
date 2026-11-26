@@ -30,7 +30,7 @@ A language model writer, per user source permissions, multi tenant, webhooks, mo
 
 ## Seed data
 
-A fictional company with 59 files of documents (including READMEs, a PDF agreement and three planted conflicts), 12 made up meeting transcripts, a Slack export, 35 planted tasks with an answer key, an answer key for stuck work, restricted documents under every tag, and held out sets (56 questions, 8 transcripts). Counts are in `data/counts.json`.
+A sample company with 59 files of documents (including READMEs, a PDF agreement and three planted conflicts), 12 sample meeting transcripts, a Slack export, 35 planted tasks with an answer key, an answer key for stuck work, restricted documents under every tag, and held out sets (56 questions, 8 transcripts). Counts are in `data/counts.json`.
 
 ## Quality bars
 

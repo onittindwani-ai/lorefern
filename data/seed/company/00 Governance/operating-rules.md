@@ -9,7 +9,7 @@ status: current
 
 # Operating rules
 
-Pinegate Works is a fictional company used for this demo. These rules say how work is run.
+Pinegate Works is an example company used for this demo. These rules say how work is run.
 
 ## Decisions and spending
 Any decision that costs more than $2,000 needs approval from Priya Nair and Aisha Khan together. Decisions below that amount are made by the person who owns the work.

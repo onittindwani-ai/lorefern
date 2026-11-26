@@ -32,7 +32,7 @@ def build_registry(settings) -> AdapterRegistry:
     add = lambda c, n, t, f, notes="": reg.register(AdapterSpec(c, n, t, f, False, notes))  # noqa: E731
     add("knowledge", "seed", "A", seed.SeedKnowledge, "Offline. The seed folder is read by the folder source.")
     add("knowledge", "folder", "A", lambda s: None, "A local folder of markdown, text and PDF files. Run by the Sources page.")
-    add("knowledge", "drive", "B", DriveSource, "Read only. Signs in with a service account key or an OAuth refresh token and renews its own access token (docs 03). Written from Google's public docs, tested against a local fake token server and fake Drive only (UNVERIFIED live). Per user Drive permissions are not mirrored.")
+    add("knowledge", "drive", "B", DriveSource, "Read only. Signs in with a service account key or an OAuth refresh token and renews its own access token (docs 03). Written from Google's public docs, tested against a local mock token server and mock Drive only (UNVERIFIED live). Per user Drive permissions are not mirrored.")
     add("knowledge", "notion", "B", NotionSource, "Read only. From memory of public docs. Tested against a mock. Per user Notion permissions are not mirrored.")
     add("knowledge", "slack_export", "A", lambda s: None, "A Slack export folder or zip. Tested on a sample export.")
     add("meetings", "seed", "A", seed.SeedMeetings, "Offline. Transcript files are read from a folder.")

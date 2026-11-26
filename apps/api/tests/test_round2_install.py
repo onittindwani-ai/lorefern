@@ -26,9 +26,9 @@ def test_a_failed_migration_stops_the_api_and_the_health_check_reads_the_databas
 def test_the_backup_files_are_private_to_the_user_who_runs_the_backup(tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
-    fake = bin_dir / "docker"
-    fake.write_text("#!/bin/sh\necho dump-bytes\n")
-    fake.chmod(0o755)
+    stub = bin_dir / "docker"
+    stub.write_text("#!/bin/sh\necho dump-bytes\n")
+    stub.chmod(0o755)
     out = tmp_path / "out"
     env = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}", "BACKUP_DIR": str(out)}
     old = os.umask(0o022)  # a normal umask, which would make the files readable by everyone

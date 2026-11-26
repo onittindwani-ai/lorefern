@@ -32,7 +32,7 @@ class Settings(BaseAppSettings):
     meetings_max_removals: int = Field(default=5, ge=1, le=1000)  # most meetings one read may remove from the app. A bigger drop waits until the owner confirms it on the Sources page
     login_burst: int = Field(default=5, ge=1, le=1000)  # sign in tries in a row before a short wait; the browser tests raise it
 
-    company_name: str = "Pinegate Works"  # shown at the top of every page. The default is the fictional demo company: set your own before MODE=live
+    company_name: str = "Pinegate Works"  # shown at the top of every page. The default is the sample demo company: set your own before MODE=live
     timezone: str = "UTC"  # the zone in which "today" is worked out (due dates, reminders, the weekly review). A name such as Europe/Berlin or America/Chicago
     knowledge_adapter: str = "seed"  # seed, drive, notion
     meetings_adapter: str = "seed"  # seed, fireflies, fathom, file
@@ -98,7 +98,7 @@ class Settings(BaseAppSettings):
         base = {clean_email(self.owner_email): "owner"}
         if self.approver_email:
             base[clean_email(self.approver_email)] = "leadership"
-        if self.demo_shortcuts:  # the made up people exist only in a demo with no owner password, never next to a real owner
+        if self.demo_shortcuts:  # the sample people exist only in a demo with no owner password, never next to a real owner
             base.update({"approver@example.test": "leadership", "finance@example.test": "finance", "staff@example.test": "staff"})
         for email, v in self._members_raw().items():
             aud = v.get("audience") if isinstance(v, dict) else v
@@ -138,7 +138,7 @@ class Settings(BaseAppSettings):
         """Identity settings still on the demo values. They are a problem for a real install and are never a problem for a demo."""
         out = []
         if self.company_name.strip() in {"", "Pinegate Works"}:
-            out.append("COMPANY_NAME is still the fictional demo company (Pinegate Works). Set your own company name.")
+            out.append("COMPANY_NAME is still the sample demo company (Pinegate Works). Set your own company name.")
         if self.email_from.strip().lower().endswith("@example.test"):
             out.append("EMAIL_FROM is still the example address. Set the address task reminders are sent from.")
         if util.zone(self.timezone) is None:

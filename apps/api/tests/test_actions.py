@@ -33,7 +33,7 @@ def test_every_quote_is_the_transcripts_own_characters():
         assert validate_quote(T, d.quote, d.quote_start)
 
 
-def test_a_made_up_quote_fails_the_validity_check():
+def test_a_quote_not_in_the_text_fails_the_validity_check():
     assert not validate_quote(T, "I'll send the invoice to everyone", 40)
     assert not validate_quote(T, "I'll send the revised proposal", 0)
     assert not validate_quote(T, "", 0)

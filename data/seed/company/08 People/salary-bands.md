@@ -9,4 +9,4 @@ status: current
 
 # Salary bands
 
-Fictional bands. Developer band: $70,000 to $95,000. Designer band: $55,000 to $75,000. Support band: $42,000 to $58,000.
+Sample bands. Developer band: $70,000 to $95,000. Designer band: $55,000 to $75,000. Support band: $42,000 to $58,000.

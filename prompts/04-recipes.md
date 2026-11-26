@@ -2,7 +2,7 @@
 
 ## A knowledge source or recorder that is not on the Integrations page
 
-Read apps/api/src/lorefern/adapters/base.py and one existing adapter in sources.py or meetings.py. Write a new adapter for <tool> that follows the same shape, reads the vendor's current API docs and links the page you used, is read only, and adds tests against a local fake of the vendor in mock/. Register it in apps/api/src/lorefern/registry.py as tier B. Do not call the real service. Tell me which facts you could not verify.
+Read apps/api/src/lorefern/adapters/base.py and one existing adapter in sources.py or meetings.py. Write a new adapter for <tool> that follows the same shape, reads the vendor's current API docs and links the page you used, is read only, and adds tests against a local mock of the vendor in mock/. Register it in apps/api/src/lorefern/registry.py as tier B. Do not call the real service. Tell me which facts you could not verify.
 
 ## Set up the company folder for a client
 

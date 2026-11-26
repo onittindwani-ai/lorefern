@@ -182,7 +182,7 @@ def test_a_reminder_is_sent_once_and_a_failed_batch_does_not_resend_the_first_ma
 def test_smtp_checks_the_certificate_and_refuses_plain_text_to_other_machines(monkeypatch):
     calls = {}
 
-    class Fake:
+    class Stub:
         def __init__(self, host, port, timeout=0):
             calls["host"] = host
 
@@ -201,7 +201,7 @@ def test_smtp_checks_the_certificate_and_refuses_plain_text_to_other_machines(mo
         def noop(self):
             pass
 
-    monkeypatch.setattr("smtplib.SMTP", Fake)
+    monkeypatch.setattr("smtplib.SMTP", Stub)
     ok = Settings(_env_file=None, smtp_host="smtp.acme.test", smtp_user="u", smtp_password="p")
     assert SmtpEmail(ok).healthcheck()[0] is True
     assert calls["context"].check_hostname is True and calls["context"].verify_mode.name == "CERT_REQUIRED"
@@ -372,18 +372,18 @@ def test_env_example_loads_as_it_is_and_the_docker_steps_are_in_the_docs():
 
 # ---- the backup script
 
-def fake_docker(tmp_path, dump: str):
+def stub_docker(tmp_path, dump: str):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     d = bin_dir / "docker"
-    d.write_text("#!/bin/sh\ncase \"$*\" in\n  *pg_dump*) printf '%s' \"$FAKE_DUMP\" ;;\n  *tar*) printf 'tarbytes' ;;\nesac\n")
+    d.write_text("#!/bin/sh\ncase \"$*\" in\n  *pg_dump*) printf '%s' \"$STUB_DUMP\" ;;\n  *tar*) printf 'tarbytes' ;;\nesac\n")
     d.chmod(d.stat().st_mode | stat.S_IEXEC)
     return bin_dir
 
 
 def run_backup(tmp_path, dump):
     out = tmp_path / "out"
-    env = {"PATH": f"{fake_docker(tmp_path, dump)}:/usr/bin:/bin", "BACKUP_DIR": str(out), "FAKE_DUMP": dump, "HOME": str(tmp_path)}
+    env = {"PATH": f"{stub_docker(tmp_path, dump)}:/usr/bin:/bin", "BACKUP_DIR": str(out), "STUB_DUMP": dump, "HOME": str(tmp_path)}
     r = subprocess.run(["sh", str(ROOT / "deploy" / "hetzner" / "backup.sh")], cwd="/", env=env, capture_output=True, text=True)  # cwd is not the repo, as under cron
     return r, out
 

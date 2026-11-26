@@ -9,7 +9,7 @@ status: example
 
 # SOP: send the monthly invoice
 
-Fictional example. Owner: the finance lead. Last reviewed 2026-01-05.
+Example only. Owner: the finance lead. Last reviewed 2026-01-05.
 
 ## Steps
 1. On the first working day, export the billable items.

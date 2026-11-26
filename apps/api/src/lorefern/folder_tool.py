@@ -1,6 +1,6 @@
 """The company folder template: build it, customise it, index it, check it. Used by tools/new_company_folder.py, tools/check_company_folder.py and the Company folder page.
 
-The template is built from scratch for small companies. It holds no content from any real company. Example documents inside it are labelled fictional.
+The template is built from scratch for small companies. It holds no content from any real company. Example documents inside it are labelled as examples.
 """
 
 from __future__ import annotations
@@ -121,7 +121,7 @@ Owner: <account manager>.
 EXAMPLES = {
     "00 Governance/decisions/EXAMPLE-decision-use-a-shared-inbox.md": ("decision", """# Decision: use one shared inbox for client email
 
-Fictional example. Decided on 2026-01-12 by the founder.
+Example only. Decided on 2026-01-12 by the founder.
 
 ## Decision
 Client email goes to one shared inbox instead of personal inboxes.
@@ -134,7 +134,7 @@ Weekly operating review, 2026-01-12.
 """),
     "05 Operations/EXAMPLE-sop-send-the-monthly-invoice.md": ("sop", """# SOP: send the monthly invoice
 
-Fictional example. Owner: the finance lead. Last reviewed 2026-01-05.
+Example only. Owner: the finance lead. Last reviewed 2026-01-05.
 
 ## Steps
 1. On the first working day, export the billable items.
@@ -146,7 +146,7 @@ The invoice is sent and recorded.
 """),
     "03 Clients and Customers/EXAMPLE-client-brief-northlake-cafe.md": ("client_brief", """# Client brief: Northlake Cafe
 
-Fictional example. Owner: the account manager.
+Example only. Owner: the account manager.
 
 ## Goal
 A website with the menu and opening hours, updated by the cafe owner without help.
@@ -159,7 +159,7 @@ A short monthly summary on the first Monday.
 """),
     "05 Operations/EXAMPLE-meeting-note-weekly-sync.md": ("meeting_note", """# Meeting: weekly sync
 
-Fictional example. Date: 2026-01-12. Attendees: the whole team.
+Example only. Date: 2026-01-12. Attendees: the whole team.
 
 ## Decisions
 - We will use one shared inbox for client email.

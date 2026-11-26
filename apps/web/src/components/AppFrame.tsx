@@ -88,7 +88,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
       ) : preview ? (
         <div className="cx-banner" role="status"><strong>Previewing as {preview}.</strong> <span className="cx-hide-sm cx-grow">You see only what that audience sees. Nothing can be changed in a preview.</span> <Button size="sm" onClick={async () => changePreview("")}>Back to owner view</Button></div>
       ) : s && demo ? (
-        <div className="cx-banner cx-banner--info" role="status"><strong>Demo mode.</strong> <span className="cx-grow cx-hide-sm">Fictional company, fictional people. A rules based stand in reads the text, not a language model.</span><span className="cx-grow show-sm-only" />
+        <div className="cx-banner cx-banner--info" role="status"><strong>Demo mode.</strong> <span className="cx-grow cx-hide-sm">Sample company, sample people. A rules based stand in reads the text, not a language model.</span><span className="cx-grow show-sm-only" />
           <Button size="sm" variant="primary" disabled={!canWrite} disabledReason="Your sign in can read but not change things" onClick={async () => { await run.mutateAsync(); }}>Run now</Button>
           <Button size="sm" disabled={!canWrite} disabledReason="Your sign in can read but not change things" onClick={async () => { await advance.mutateAsync(24); }}>+1 day</Button></div>
       ) : s?.effective_mode === "draft" ? (
@@ -122,7 +122,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
       </AppShell>
       <AskBar open={askOpen} onOpenChange={setAskOpen} go={goItems} commands={commands} />
       <ConfirmDialog open={confirmKill} onOpenChange={setConfirmKill} title="Pause everything?" description="The kill switch stops every send and every change at once, including the background jobs. You can turn it off again from the banner or the top bar." confirmLabel="Pause all" destructive onConfirm={() => void toggleKill.mutateAsync(true)} />
-      <ConfirmDialog open={confirmReset} onOpenChange={setConfirmReset} title="Reset the demo?" description="This puts the fictional seed data back and clears everything you did in the demo." confirmLabel="Reset" destructive onConfirm={() => void reset.mutateAsync()} />
+      <ConfirmDialog open={confirmReset} onOpenChange={setConfirmReset} title="Reset the demo?" description="This puts the sample seed data back and clears everything you did in the demo." confirmLabel="Reset" destructive onConfirm={() => void reset.mutateAsync()} />
     </>
   );
 }

@@ -38,7 +38,7 @@ The worker runs `read` (read sources and new transcripts, propose tasks, detect 
 
 ## The model path
 
-`model_tasks.py` holds the four jobs a language model may do (answer sentences, meeting reading, process names, the review intro) behind the shared wrapper. `offline_llm.py` is the rules stand in that speaks the same JSON, so recorded fixtures and the fake server (`mock/anthropic_mock.py`) use the same shapes as a real model would. Order of safety: marked data blocks, sentences and lines that give orders never sent, a fixed schema with no field for a tag, status, owner id or approval, then code that checks every quote, citation and number before anything is stored, and approval by a person. Live use is UNVERIFIED; see `facts/models.md`.
+`model_tasks.py` holds the four jobs a language model may do (answer sentences, meeting reading, process names, the review intro) behind the shared wrapper. `offline_llm.py` is the rules stand in that speaks the same JSON, so recorded fixtures and the mock server (`mock/anthropic_mock.py`) use the same shapes as a real model would. Order of safety: marked data blocks, sentences and lines that give orders never sent, a fixed schema with no field for a tag, status, owner id or approval, then code that checks every quote, citation and number before anything is stored, and approval by a person. Live use is UNVERIFIED; see `facts/models.md`.
 
 ## What is not here
 

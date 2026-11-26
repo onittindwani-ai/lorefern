@@ -1,4 +1,4 @@
-"""Demo mode: reset to the seed data and move the clock. Fictional people, offline stand ins, nothing real is touched."""
+"""Demo mode: reset to the seed data and move the clock. Sample people, offline stand ins, nothing real is touched."""
 
 from __future__ import annotations
 

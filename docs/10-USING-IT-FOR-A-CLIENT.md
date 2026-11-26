@@ -14,7 +14,7 @@ This guide gives no price figures. It gives the shape of the offer, so you can p
 - **Writing the missing documents, separately.** The SOP map shows which processes have no written procedure, and questions that get "not found" show where a document is missing. Writing those documents is real work for the client's team or for you, priced on its own.
 - **Running it, monthly.** A short review of the proposed tasks that waited too long, the stuck list, the documents that disagree, the sources that were not read again, and a check of who can see what after any change of staff. State plainly how many hours a month that includes.
 - **Costs that pass through, at cost.** Hosting, the meeting recorder's own fees, the document tool's fees and any model usage. Show these as the client's own accounts, not as your markup.
-- **Never charge for** a promised number of tasks found, a promised score, or promised time saved. Never present the demo numbers as a result: the demo company is fictional.
+- **Never charge for** a promised number of tasks found, a promised score, or promised time saved. Never present the demo numbers as a result: the demo company is sample data.
 
 ## Onboarding checklist
 
@@ -45,7 +45,7 @@ Plain wording, checked by your own lawyer: what is included in setup and in the 
 
 ## Keep it honest
 
-The answer writer in the demo is a rule based stand in, not a language model, and its measured scores are in `ANSWER-EVAL.md` and `EXTRACTION-EVAL.md`. An answer is supported by the document it quotes, which is only as true as the document. The task finder reads made up meetings in the demo: measure it on the client's real ones before you trust it.
+The answer writer in the demo is a rule based stand in, not a language model, and its measured scores are in `ANSWER-EVAL.md` and `EXTRACTION-EVAL.md`. An answer is supported by the document it quotes, which is only as true as the document. The task finder reads sample meetings in the demo: measure it on the client's real ones before you trust it.
 
 ## The company folder routine, step by step
 

@@ -21,4 +21,4 @@ About five minutes. You need Python 3.12 or newer (or uv), Node 22 or newer and 
 7. **Who sees what.** As the owner, choose **View as** in the top bar and pick staff. Ask "What did the Larkspur Group propose?". You get the same "not found" you would get for something that does not exist. Press **Back to owner view** in the banner.
 8. **Sign in as someone else.** The demo accounts are `owner@`, `approver@` (leadership), `finance@` and `staff@` at `example.test`.
 
-The demo clock starts on a made up Tuesday. **+1 day** moves it forward so overdue and stuck work appear. To start again, press Cmd K and choose **Reset the demo data** (owner only).
+The demo clock starts on a fixed Tuesday. **+1 day** moves it forward so overdue and stuck work appear. To start again, press Cmd K and choose **Reset the demo data** (owner only).

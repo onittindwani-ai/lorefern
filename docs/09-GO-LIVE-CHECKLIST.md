@@ -7,7 +7,7 @@ Do every line. Do not skip the first run in draft mode.
 3. **Decide the visibility tag of every source** (doc 13) before the first read. A document with no tag of its own, on its folder or from you is visible to the owner only: check the Sources page for what each source gives such documents, and tag the rest. Read the plain statement there: Lorefern does not copy Drive, Notion or Slack permissions.
 4. Run the company folder check (`python3 tools/check_company_folder.py <folder>`) and fix every error. Read the warnings.
 5. Load the real documents. Open the Sources page and read the counts. Sign in as each audience (or use View as) and ask a question you know only leadership should see. It must answer "not found" for staff.
-6. Run in draft mode for at least two weeks. Compare the tasks Lorefern proposed with what people actually agreed. Count the misses and the false items, because the demo numbers in `EXTRACTION-EVAL.md` are for made up meetings only.
+6. Run in draft mode for at least two weeks. Compare the tasks Lorefern proposed with what people actually agreed. Count the misses and the false items, because the demo numbers in `EXTRACTION-EVAL.md` are for sample meetings only.
 7. Write 50 or more real questions with the right document for each, and run `tools/eval_questions.py` on them. Do not rely on answers you did not measure.
 8. Test the kill switch: press Pause all, confirm an approval or an import answers that the kill switch is on, then release it.
 9. Test one reminder send end to end: request it, have a second person approve it, check the email arrived. The person who asked cannot approve it.

@@ -23,7 +23,7 @@ class Login(BaseModel):
 
 
 def _accounts(ctx: Ctx) -> dict[str, tuple[str | None, str]]:
-    """email to (password hash, audience). The owner, the approver and anyone in MEMBERS_JSON with a password_hash can sign in for real. The made up demo accounts, and the owner without
+    """email to (password hash, audience). The owner, the approver and anyone in MEMBERS_JSON with a password_hash can sign in for real. The sample demo accounts, and the owner without
     a password, exist only while the public demo password is on (settings.demo_shortcuts), never next to a real owner password."""
     s = ctx.settings
     out: dict[str, tuple[str | None, str]] = {}

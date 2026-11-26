@@ -52,7 +52,7 @@ def create_app(settings: Settings | None = None, ctx: Ctx | None = None) -> Fast
     app = create_base_app(ctx.settings, ctx.factory)  # refuses an unsafe configuration before anything is written
     if ctx.settings.demo_shortcuts:
         _seed_if_empty(ctx)
-    app.title, app.version = "Lorefern API", "1.0.1"
+    app.title, app.version = "Lorefern API", "1.0.2"
     app.state.ctx = ctx
     app.state.limiter = TokenBucket(capacity=600, refill_per_sec=20.0)
     app.state.streams = StreamGuard()

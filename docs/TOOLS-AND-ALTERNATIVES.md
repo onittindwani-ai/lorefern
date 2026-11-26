@@ -141,7 +141,7 @@ What Lorefern has for each: Google Drive: Read only adapter tested against a sta
 | Mattermost | open_source | 65 | 50 | 75 | 85 | 100 | 0 | **64.2** | 93 percent of Slack |
 | Zulip | open_source | 60 | 50 | 75 | 85 | 100 | 0 | **62.5** | 86 percent of Slack |
 
-What Lorefern has for each: Slack: Export reader (folder or zip) tested on a made up export. Layout UNVERIFIED (not run against a real export); Mattermost: No reader (not run); Zulip: No reader (not run).
+What Lorefern has for each: Slack: Export reader (folder or zip) tested on a sample export. Layout UNVERIFIED (not run against a real export); Mattermost: No reader (not run); Zulip: No reader (not run).
 
 **Evidence, Slack**
 

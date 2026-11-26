@@ -9,7 +9,7 @@ status: current
 
 # Client brief: Harbor Dental
 
-Fictional client. Owner: Leo Fischer.
+Sample client. Owner: Leo Fischer.
 
 ## Goal
 Harbor Dental wants online booking for its two clinics and a monthly report of how many bookings came from the website.

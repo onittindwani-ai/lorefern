@@ -9,7 +9,7 @@ status: example
 
 # Meeting: weekly sync
 
-Fictional example. Date: 2026-01-12. Attendees: the whole team.
+Example only. Date: 2026-01-12. Attendees: the whole team.
 
 ## Decisions
 - We will use one shared inbox for client email.

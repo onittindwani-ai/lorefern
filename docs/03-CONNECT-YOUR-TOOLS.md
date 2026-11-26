@@ -5,8 +5,8 @@ Start with the company folder (doc 10). It needs no account and it is the best t
 | Source | How | Status |
 | --- | --- | --- |
 | Company folder (Markdown, text, PDF) | Set `KNOWLEDGE_DIR` to the folder. Press **Read again** on the Sources page. | Built and tested |
-| Slack export (folder or zip) | Put the export under the seed or knowledge folder and map each channel to a visibility tag. | Built, tested on a made up export. The layout is UNVERIFIED against a real export |
-| Google Drive | Add a source of kind Drive and put the folder ids (comma separated) in its path; an empty path reads everything the credential can reach, and only one source may do that. Trashed files are never read. `KNOWLEDGE_ADAPTER=drive` and a service account key (`DRIVE_SERVICE_ACCOUNT_JSON`) or a consent given once (`DRIVE_CLIENT_ID`, `DRIVE_CLIENT_SECRET`, `DRIVE_REFRESH_TOKEN`). Read only. Lorefern renews its own access token, so it keeps working past the first hour. | Sign in and renewal tested against a local fake token service and fake Drive only (UNVERIFIED against Google) |
+| Slack export (folder or zip) | Put the export under the seed or knowledge folder and map each channel to a visibility tag. | Built, tested on a sample export. The layout is UNVERIFIED against a real export |
+| Google Drive | Add a source of kind Drive and put the folder ids (comma separated) in its path; an empty path reads everything the credential can reach, and only one source may do that. Trashed files are never read. `KNOWLEDGE_ADAPTER=drive` and a service account key (`DRIVE_SERVICE_ACCOUNT_JSON`) or a consent given once (`DRIVE_CLIENT_ID`, `DRIVE_CLIENT_SECRET`, `DRIVE_REFRESH_TOKEN`). Read only. Lorefern renews its own access token, so it keeps working past the first hour. | Sign in and renewal tested against a local mock token service and mock Drive only (UNVERIFIED against Google) |
 | Notion | Add a source of kind Notion with page ids in its path (pages below them are read), or leave it empty for every shared page (one source). `KNOWLEDGE_ADAPTER=notion` and `NOTION_TOKEN`. Read only. | Tested against a local stand in only |
 | Fireflies | `MEETINGS_ADAPTER=fireflies` and `FIREFLIES_TOKEN`. | Fields read from the vendor docs on 2026-11-23, tested against a stand in only |
 | Fathom | `MEETINGS_ADAPTER=fathom` and `FATHOM_TOKEN`. | Fields read from the vendor docs on 2026-11-23, tested against a stand in only |
@@ -24,7 +24,7 @@ Use this before any client's Drive is connected. An access token from Google las
 
 What the code does: it keeps the access token in memory, renews it two minutes before it expires, and if Drive answers 401 it renews once and tries once more. When Google refuses a renewal it says why in plain words (for example the key was disabled, or the person must consent again) and shows only Google's short error code, never a key or token. If the Google token service is down it says to try again and the next sync retries. Secrets come from environment variables only and are never printed or logged. A refresh token can stop working when the person revokes access or a company policy limits it, and then the consent must be repeated.
 
-Written from Google's public documentation read on 2026-11-23 and tested against a local fake token service and a fake Drive. It has never been run against Google (UNVERIFIED). Run `.venv/bin/python tools/doctor.py --live` once with the real settings before you rely on it.
+Written from Google's public documentation read on 2026-11-23 and tested against a local mock token service and a mock Drive. It has never been run against Google (UNVERIFIED). Run `.venv/bin/python tools/doctor.py --live` once with the real settings before you rely on it.
 
 ## Read this before connecting Drive, Notion or Slack
 

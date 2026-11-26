@@ -1,4 +1,4 @@
-"""Fake Fireflies and Fathom servers. Shapes follow the vendors' public docs read on 2026-11-23 (fields named in docs/facts/meetings.md). Never run against the real services: UNVERIFIED live."""
+"""Mock Fireflies and Fathom servers. Shapes follow the vendors' public docs read on 2026-11-23 (fields named in docs/facts/meetings.md). Never run against the real services: UNVERIFIED live."""
 
 from __future__ import annotations
 

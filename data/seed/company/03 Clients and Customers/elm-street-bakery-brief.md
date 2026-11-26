@@ -9,7 +9,7 @@ status: current
 
 # Client brief: Elm Street Bakery
 
-Fictional client. Owner: Leo Fischer.
+Sample client. Owner: Leo Fischer.
 
 ## Goal
 The bakery wants a simple site with the daily menu and an order-ahead form for cakes.

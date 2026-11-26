@@ -48,7 +48,7 @@
     "vague_commitments": [
       {
         "quote": "Somebody should really look at the yard lights, they flicker.",
-        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given an invented owner or date"
+        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given a guessed owner or date"
       }
     ],
     "injection_lines": []
@@ -95,7 +95,7 @@
     "vague_commitments": [
       {
         "quote": "We should review the van wraps at some point.",
-        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given an invented owner or date"
+        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given a guessed owner or date"
       }
     ],
     "injection_lines": []
@@ -190,7 +190,7 @@
     "vague_commitments": [
       {
         "quote": "I'll think about whether we buy the second building, but that's a long way off.",
-        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given an invented owner or date"
+        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given a guessed owner or date"
       }
     ],
     "injection_lines": []
@@ -233,7 +233,7 @@
     "vague_commitments": [
       {
         "quote": "I will look into racking options at some point, there might be a surplus place.",
-        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given an invented owner or date"
+        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given a guessed owner or date"
       }
     ],
     "injection_lines": []
@@ -280,7 +280,7 @@
     "vague_commitments": [
       {
         "quote": "someone should write a template for that",
-        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given an invented owner or date"
+        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given a guessed owner or date"
       }
     ],
     "injection_lines": []
@@ -361,7 +361,7 @@
     "vague_commitments": [
       {
         "quote": "We should reach out to the trade school at some point",
-        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given an invented owner or date"
+        "note": "no clear owner or date; if proposed at all it must be flagged unowned or undated, never given a guessed owner or date"
       }
     ],
     "injection_lines": []

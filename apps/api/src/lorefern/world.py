@@ -1,4 +1,4 @@
-"""Load the demo world: owners, the company folder, a Slack export, meeting transcripts, planted tasks and their decisions. Fictional, offline."""
+"""Load the demo world: owners, the company folder, a Slack export, meeting transcripts, planted tasks and their decisions. Sample data, offline."""
 
 from __future__ import annotations
 
