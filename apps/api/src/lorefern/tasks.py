@@ -67,7 +67,7 @@ def propose_from_meeting(session: Session, meeting: Meeting, now: datetime, with
     meeting.extracted = True
     meeting.flagged_lines = sorted(set(list(meeting.flagged_lines or []) + flagged))
     session.flush()
-    record_event(session, "meeting.extracted", "meeting", meeting.id, {"tasks": new_tasks, "decisions": new_dec, "flagged": len(meeting.flagged_lines)})
+    record_event(session, "meeting.extracted", None, None, {})  # the live stream goes to every signed in person, so it says that something was read, never which meeting or what it held
     return {"tasks": new_tasks, "decisions": new_dec, "flagged": len(meeting.flagged_lines)}
 
 
@@ -107,7 +107,7 @@ def reject(session: Session, task: Task, actor: str, now: datetime, reason: str 
         raise TaskError("Only a proposed task can be rejected.")
     task.status = "rejected"
     _ev(session, task, "rejected", actor, now, "from:proposed " + reason)
-    record_audit(session, actor, "task.reject", f"task:{task.id}", {"reason": reason[:200]})
+    record_audit(session, actor, "task.reject", f"task:{task.id}", {"reason_given": bool(reason.strip())})  # the words stay on the task, which only people who may see it can open
     return task
 
 

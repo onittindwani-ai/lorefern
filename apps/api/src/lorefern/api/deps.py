@@ -81,7 +81,8 @@ def owner_write(request: Request) -> dict:
 
 
 def demo_only(request: Request) -> None:
-    if not request.app.state.ctx.settings.demo_mode:
+    """The demo routes (clock, reset, extra load) exist only for a demo with no owner password. With a real owner they answer 404, whatever DEMO_MODE says."""
+    if not request.app.state.ctx.settings.demo_shortcuts:
         raise HTTPException(404, "Not found.")
 
 

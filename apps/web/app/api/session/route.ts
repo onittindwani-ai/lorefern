@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 const API = process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -21,6 +22,10 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   if (request.headers.get("x-lorefern") !== "1") return NextResponse.json({ error: { message: "Bad request." } }, { status: 400 });
+  const token = (await cookies()).get("sx_session")?.value;
+  if (token) {
+    try { await fetch(`${API}/api/auth/logout`, { method: "POST", headers: { "x-session": token }, cache: "no-store" }); } catch { /* the cookie is cleared below either way; the token still expires on its own */ }
+  }
   const res = NextResponse.json({ ok: true });
   res.cookies.delete("sx_session");
   return res;

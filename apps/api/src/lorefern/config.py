@@ -2,11 +2,23 @@
 
 from __future__ import annotations
 
+import re
 from typing import Literal
 
 from pydantic import Field
 
-from sendora_core.settings import BaseAppSettings
+from lorefern import util
+from sendora_core.auth import clean_email
+from sendora_core.settings import BaseAppSettings, Mode
+
+
+def _is_local(host: str) -> bool:
+    return host.strip().lower() in {"localhost", "127.0.0.1", "::1"}
+
+
+DOMAIN_RE = re.compile(r"[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?)+")
+ADDRESS_BAD_CHARS = frozenset(",;<>()[]\"'\\:")
+ACTOR_MAX = 80  # the width of the actor columns of the shared audit log and approvals tables
 
 
 class Settings(BaseAppSettings):
@@ -14,12 +26,14 @@ class Settings(BaseAppSettings):
     database_url: str = "sqlite:///./lorefern.sqlite3"
 
     owner_email: str = "owner@example.test"
-    owner_password_hash: str | None = None
+    owner_password_hash: str | None = Field(default=None, repr=False)  # hashes and the members list never show in a printed settings object or a log
     approver_email: str | None = None
-    approver_password_hash: str | None = None
+    approver_password_hash: str | None = Field(default=None, repr=False)
+    meetings_max_removals: int = Field(default=5, ge=1, le=1000)  # most meetings one read may remove from the app. A bigger drop waits until the owner confirms it on the Sources page
     login_burst: int = Field(default=5, ge=1, le=1000)  # sign in tries in a row before a short wait; the browser tests raise it
 
-    company_name: str = "Pinegate Works"
+    company_name: str = "Pinegate Works"  # shown at the top of every page. The default is the fictional demo company: set your own before MODE=live
+    timezone: str = "UTC"  # the zone in which "today" is worked out (due dates, reminders, the weekly review). A name such as Europe/Berlin or America/Chicago
     knowledge_adapter: str = "seed"  # seed, drive, notion
     meetings_adapter: str = "seed"  # seed, fireflies, fathom, file
     email_adapter: str = "seed"  # seed or smtp (task reminders)
@@ -27,7 +41,7 @@ class Settings(BaseAppSettings):
     seed_dir: str = ""
 
     # Who may sign in as which audience. JSON object of email to audience. Nobody is added by default outside demo mode: the implementer lists the client's people.
-    members_json: str = ""
+    members_json: str = Field(default="", repr=False)
     drive_token: str = Field(default="", repr=False)  # one short lived access token, for a first try only
     drive_service_account_json: str = Field(default="", repr=False)  # the text of a service account key file
     drive_service_account_file: str = ""  # or the path to that file
@@ -38,18 +52,19 @@ class Settings(BaseAppSettings):
     drive_scope: str = "https://www.googleapis.com/auth/drive.readonly"
     drive_token_uri: str = "https://oauth2.googleapis.com/token"
     drive_base_url: str = "https://www.googleapis.com"
-    notion_token: str = ""
+    notion_token: str = Field(default="", repr=False)
     notion_base_url: str = "https://api.notion.com"
-    fireflies_token: str = ""
+    fireflies_token: str = Field(default="", repr=False)
     fireflies_base_url: str = "https://api.fireflies.ai"
-    fathom_token: str = ""
+    fathom_token: str = Field(default="", repr=False)
     fathom_base_url: str = "https://api.fathom.ai"
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
-    smtp_password: str = ""
+    smtp_password: str = Field(default="", repr=False)
     smtp_use_tls: bool = True
-    email_from: str = "lorefern@example.test"
+    email_from: str = "lorefern@example.test"  # the From address of task reminders. The default is a placeholder: set your own before MODE=live
+    allowed_email_domains: str = ""  # comma separated domains task reminders may be sent to and task owners may have. Required outside demo mode: empty means nobody has an address and nothing is sent
 
     # What a language model may do when LLM_BACKEND is fixture or anthropic (with LLM_BACKEND=offline, the default, none of these call anything). Live use is UNVERIFIED.
     answer_writer: Literal["rules", "model"] = "model"  # ANSWER_WRITER=model writes the answer sentences with the model when a model backend is on; the groundedness check still runs on every sentence
@@ -63,10 +78,8 @@ class Settings(BaseAppSettings):
     stuck_blocked_days: int = 5
     overload_open_tasks: int = 8
     overload_due_soon: int = 5
-    approve_min_confidence: float = 0.0  # every proposal needs a person regardless
     sop_review_days: int = 180
     weekly_review_weekday: int = 0  # Monday
-    require_second_approver: bool = False
 
     def _members_raw(self) -> dict:
         import json
@@ -75,31 +88,89 @@ class Settings(BaseAppSettings):
             raw = json.loads(self.members_json) if self.members_json else {}
         except ValueError:
             return {}
-        return {str(k).lower(): v for k, v in raw.items()} if isinstance(raw, dict) else {}
+        return {clean_email(str(k)): v for k, v in raw.items()} if isinstance(raw, dict) else {}
 
     def member_hashes(self) -> dict[str, str]:
         """Password hashes for people added in MEMBERS_JSON as {"email": {"audience": "staff", "password_hash": "..."}}."""
         return {e: v["password_hash"] for e, v in self._members_raw().items() if isinstance(v, dict) and v.get("password_hash")}
 
     def members(self) -> dict[str, str]:
-        base = {self.owner_email.lower(): "owner"}
+        base = {clean_email(self.owner_email): "owner"}
         if self.approver_email:
-            base[self.approver_email.lower()] = "leadership"
-        if self.demo_mode:
+            base[clean_email(self.approver_email)] = "leadership"
+        if self.demo_shortcuts:  # the made up people exist only in a demo with no owner password, never next to a real owner
             base.update({"approver@example.test": "leadership", "finance@example.test": "finance", "staff@example.test": "staff"})
         for email, v in self._members_raw().items():
             aud = v.get("audience") if isinstance(v, dict) else v
-            if aud in ("leadership", "finance", "staff") and email != self.owner_email.lower():
+            if aud in ("leadership", "finance", "staff") and email != clean_email(self.owner_email):
                 base[email] = aud
         return base
 
+    def _domain_entries(self) -> list[str]:
+        return [d for d in (x.strip().lower().lstrip("@") for x in self.allowed_email_domains.split(",")) if d]
+
+    def named_email_domains(self) -> set[str]:
+        """The domains written in ALLOWED_EMAIL_DOMAINS that look like a domain name (an entry with a space, a comma or an at sign inside is not one)."""
+        return {d for d in self._domain_entries() if DOMAIN_RE.fullmatch(d)}
+
+    def email_domains(self) -> set[str]:
+        """The domains an address may be on. A real install must name them (ALLOWED_EMAIL_DOMAINS): nothing is guessed from the sign in addresses, because an owner who signs in with a
+        free mail address would then allow the whole of that provider. In demo mode only, the domains people sign in with are used, free mail providers left out."""
+        named = self.named_email_domains()
+        if named or not self.demo_mode:
+            return named
+        return {e.rsplit("@", 1)[1] for e in self.members() if "@" in e} - util.FREE_MAIL_DOMAINS
+
+    def email_allowed(self, email: str) -> bool:
+        """True when the text is exactly one valid address on one of the company's domains (or a sub domain of one). A list of addresses, a name with angle brackets, a comma, a
+        semicolon, a space or a line break inside it, or a domain that is not listed, is never allowed: the To header of a mail would split it into several recipients."""
+        raw = (email or "").strip()
+        e = clean_email(raw)
+        if not e or len(raw) > 254 or any(c in ADDRESS_BAD_CHARS or c.isspace() or ord(c) < 32 for c in e) or e.count("@") != 1 or not util.is_valid_email(e):
+            return False
+        domain = e.rpartition("@")[2]
+        return any(domain == d or domain.endswith("." + d) for d in self.email_domains())
+
     def drive_credentials(self) -> bool:
         return bool(self.drive_service_account_json or self.drive_service_account_file or (self.drive_client_id and self.drive_client_secret and self.drive_refresh_token) or self.drive_token)
+
+    def placeholder_problems(self) -> list[str]:
+        """Identity settings still on the demo values. They are a problem for a real install and are never a problem for a demo."""
+        out = []
+        if self.company_name.strip() in {"", "Pinegate Works"}:
+            out.append("COMPANY_NAME is still the fictional demo company (Pinegate Works). Set your own company name.")
+        if self.email_from.strip().lower().endswith("@example.test"):
+            out.append("EMAIL_FROM is still the example address. Set the address task reminders are sent from.")
+        if util.zone(self.timezone) is None:
+            out.append(f"TIMEZONE {self.timezone!r} is not a time zone name. Use a name such as Europe/Berlin.")
+        return out
+
+    def runtime_errors(self) -> list[str]:
+        """Problems that stop the app from starting. Beyond the shared ones: MODE=live with the demo identity still in place, and a demo with public logins next to a real folder of documents."""
+        out = list(super().runtime_errors())
+        if self.mode is Mode.LIVE and not self.demo_mode:
+            out += self.placeholder_problems()
+        if any(len(e) > ACTOR_MAX for e in self.members()):
+            out.append(f"A sign in email is longer than {ACTOR_MAX} characters. The audit log and approval columns of the shared base hold {ACTOR_MAX}, so every change that person made would fail on Postgres. Use a shorter address.")
+        if self.demo_shortcuts and self.knowledge_dir:
+            out.append("KNOWLEDGE_DIR is set while the public demo password is on. Real documents would sit behind a login anyone can read in the repository. Set OWNER_PASSWORD_HASH (and DEMO_MODE=false), or leave KNOWLEDGE_DIR empty.")
+        return list(dict.fromkeys(out))
 
     def problems(self) -> list[str]:
         out = [p for p in super().problems() if not (self.demo_mode and p.startswith("MODE is live while DEMO_MODE"))]
         if not self.demo_mode and not self.owner_password_hash:
             out.append("OWNER_PASSWORD_HASH is empty. Create one with tools/hash_password.py and set it before you run outside demo mode.")
+        if self.demo_mode and self.owner_password_hash:
+            out.append("DEMO_MODE is on although OWNER_PASSWORD_HASH is set. The public demo logins are off, but the clock, the demo bar and the offline adapters are still demo. Set DEMO_MODE=false.")
+        if not self.demo_mode:
+            out += self.placeholder_problems()
+            if not self.named_email_domains():
+                out.append("ALLOWED_EMAIL_DOMAINS is empty, so no task reminder is sent and no task owner can have an email address. List your company's domains, for example yourcompany.com.")
+        out += [f"ALLOWED_EMAIL_DOMAINS lists {d}, a free mail provider, so every address there would be allowed. List your own company domain instead." for d in sorted(self.named_email_domains() & util.FREE_MAIL_DOMAINS)]
+        if any(not DOMAIN_RE.fullmatch(d) for d in self._domain_entries()):
+            out.append("ALLOWED_EMAIL_DOMAINS has an entry that is not a domain name (such as yourcompany.com), so it is ignored.")
+        if self.smtp_host and not self.smtp_use_tls and not _is_local(self.smtp_host):
+            out.append("SMTP_USE_TLS is off for a mail server that is not on this machine. The password would travel in plain text. Turn it on.")
         need = {"drive": (self.drive_credentials(), "DRIVE_SERVICE_ACCOUNT_JSON, DRIVE_SERVICE_ACCOUNT_FILE, DRIVE_CLIENT_ID with DRIVE_CLIENT_SECRET and DRIVE_REFRESH_TOKEN, or DRIVE_TOKEN"), "notion": (self.notion_token, "NOTION_TOKEN")}
         if self.knowledge_adapter in need and not need[self.knowledge_adapter][0]:
             out.append(f"KNOWLEDGE_ADAPTER is {self.knowledge_adapter} but {need[self.knowledge_adapter][1]} is empty.")

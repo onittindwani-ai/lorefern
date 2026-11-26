@@ -33,6 +33,10 @@ def build_company() -> int:
         p = target / rel
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text("---\n" + "\n".join(f"{k}: {v}" for k, v in meta.items()) + "\n---\n\n" + body, encoding="utf-8")
+    for mixed in ("03 Clients and Customers", "04 Revenue", "07 Finance and Legal", "08 People"):
+        # These demo folders hold documents for different audiences (the leave policy is for everyone, the salary bands are not), and every document carries its own tag.
+        # A document can never be wider than its folder, so the folder's own line says `company` (the widest) and the documents narrow it.
+        (target / mixed / ".visibility").write_text("company\n", encoding="utf-8")
     _agreement_pdf(target / "03 Clients and Customers/standard-services-agreement.pdf")
     _source_register(target)
     folder_tool.reindex(target, "Pinegate Works", BUILD_DATE)

@@ -3,12 +3,12 @@
 About five minutes. You need Python 3.12 or newer (or uv), Node 22 or newer and pnpm (`corepack enable` or `npm i -g pnpm`). No accounts, no keys.
 
 1. `python3.12 -m venv .venv`. No python3.12 on your Mac? Use uv instead: `uv venv --python 3.12 .venv`.
-2. `.venv/bin/pip install -e packages/core-py -e "apps/api[dev]"`, or with uv: `uv pip install --python .venv/bin/python -e packages/core-py -e "apps/api[dev]"`. (Steps 1 and 2 together: `make install`.)
-3. `pnpm install` then `pnpm build`
+2. `.venv/bin/pip install -c constraints.txt -e packages/core-py -e "apps/api[dev]"`, or with uv: `uv pip install --python .venv/bin/python -c constraints.txt -e packages/core-py -e "apps/api[dev]"`. (Steps 1 and 2 together: `make install`.)
+3. `pnpm install` then `NEXT_PUBLIC_DEMO_HINT=1 pnpm build`. The hint on the sign in page is copied into the page when it is built, so it must be set here, not only when the web app starts.
 4. Start the API in demo mode, in one terminal:
    `DEMO_MODE=true .venv/bin/python -m uvicorn lorefern.api.app:app_from_env --factory --port 8000 --proxy-headers`
-5. Start the web app in another: `API_BASE_URL=http://127.0.0.1:8000 INSECURE_COOKIES=1 NEXT_PUBLIC_DEMO_HINT=1 pnpm --filter web start`
-6. Open http://localhost:3000 and sign in as `owner@example.test` with the password shown on the sign in page (demo only).
+5. Start the web app in another: `API_BASE_URL=http://127.0.0.1:8000 INSECURE_COOKIES=1 pnpm --filter web start`
+6. Open http://localhost:3000 and sign in as `owner@example.test` with the password `demo-password-1` (the sign in page shows it when step 3 was built with the hint). This password exists only in demo mode with no owner password set.
 
 ## A walk through
 

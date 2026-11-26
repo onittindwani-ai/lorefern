@@ -30,6 +30,7 @@ FOLDERS = [
 ]
 CADENCE = {7: "weekly", 30: "monthly", 90: "quarterly", 180: "every 6 months", 365: "yearly"}
 SKIP_DIRS = {".git", "node_modules"}
+MAX_DOC_BYTES = 10 * 1024 * 1024  # the same limit the reader of the index uses
 LINK = re.compile(r"\[[^\]]*\]\(([^)#]+?)(?:#[^)]*)?\)")
 
 
@@ -54,7 +55,7 @@ The {role.lower()} owns this folder at {company}. The owner keeps every document
 This folder is reviewed {CADENCE.get(days, f'every {days} days')}. The review date of each document sits in its header. A document past its review date is flagged in the weekly operating review.
 
 ## Who may see it
-Visibility tag: {vis}. See `00 Governance/document-standards.md`.
+Visibility tag: {vis}. Every document here takes this tag, or a narrower one when its own header says so (`visibility: inherit` means "take the folder's tag"). A document can never be seen by more people than the folder allows.
 """
 
 
@@ -206,10 +207,10 @@ def build_template(target: Path, company: str = "{{COMPANY}}", today: date | Non
     for name, belongs, role, days, vis, nb in FOLDERS:
         w(f"{name}/README.md", readme_text(name, belongs, role, days, vis, nb, "{{COMPANY}}", today))
     for fname, (title, typ, body) in TEMPLATES.items():
-        meta = {"title": title, "owner": "{{OWNER}}", "updated": today.isoformat(), "review_by": (today + timedelta(days=365)).isoformat(), "visibility": "company", "type": "template", "status": "current"}
+        meta = {"title": title, "owner": "{{OWNER}}", "updated": today.isoformat(), "review_by": (today + timedelta(days=365)).isoformat(), "visibility": "inherit", "type": "template", "status": "current"}
         w(f"11 Templates/{fname}", _fm(meta) + body)
     for rel, (typ, body) in EXAMPLES.items():
-        meta = {"owner": "Example owner", "updated": "2026-01-12", "review_by": (today + timedelta(days=365)).isoformat(), "visibility": "company", "type": typ, "status": "example"}
+        meta = {"owner": "Example owner", "updated": "2026-01-12", "review_by": (today + timedelta(days=365)).isoformat(), "visibility": "inherit", "type": typ, "status": "example"}
         w(rel, _fm(meta) + body)
     root_meta = {"owner": "{{OWNER}}", "updated": today.isoformat(), "review_by": (today + timedelta(days=90)).isoformat(), "visibility": "company", "status": "current"}
     w("SOURCE-REGISTER.md", _fm({**root_meta, "title": "Source register", "type": "register"}) + """# Source register
@@ -261,14 +262,26 @@ def instantiate(template: Path, target: Path, company: str, owner: str, today: d
     return done
 
 
+def _inside(root: Path, p: Path) -> bool:
+    try:
+        p.resolve().relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
+
+
 def iter_docs(root: Path):
+    """The documents of the folder, with the same guards as the reader of the index: nothing hidden, nothing that is a link out of the folder, nothing over the size limit."""
     for p in sorted(root.rglob("*")):
         if p.is_file() and p.suffix.lower() in {".md", ".pdf", ".txt"} and not any(part in SKIP_DIRS or part.startswith(".") for part in p.relative_to(root).parts) and p.name != "INDEX.md":
-            yield p
+            if _inside(root, p) and p.stat().st_size <= MAX_DOC_BYTES:
+                yield p
 
 
 def doc_meta(p: Path) -> dict:
     if p.suffix.lower() != ".md":
+        return {}
+    if p.stat().st_size > MAX_DOC_BYTES:
         return {}
     meta, _ = parse_front_matter(p.read_text(encoding="utf-8", errors="replace"))
     return meta
@@ -292,10 +305,12 @@ Every document in this folder is listed once. Rebuild it with `python3 tools/che
 
 
 def check(root: Path, today: date | None = None) -> FolderReport:
-    """Every numbered folder has a README and an owner, INDEX lists every document, links resolve, review dates are not overdue, tags are known."""
-    from lorefern.visibility import TAGS
+    """Every numbered folder has a README and an owner, INDEX lists every document, links resolve, review dates are not overdue, tags are known, and no document claims to be wider than its folder."""
+    from lorefern.foldertag import folder_declared_tag
+    from lorefern.visibility import INHERIT, TAGS, meet_tag
 
     today = today or date.today()
+    folder_cache: dict = {}
     rep = FolderReport()
     root = root.resolve()
     add = lambda sev, code, p, msg: rep.findings.append(Finding(sev, code, p, msg))  # noqa: E731
@@ -326,8 +341,15 @@ def check(root: Path, today: date | None = None) -> FolderReport:
         m, body = parse_front_matter(txt)
         if not m.get("owner"):
             add("error", "owner_missing", rel, "No owner in the header.")
-        if m.get("visibility") and m["visibility"] not in TAGS:
-            add("error", "bad_tag", rel, f"Unknown visibility tag '{m['visibility']}'.")
+        vis = (m.get("visibility") or "").strip().lower()
+        if vis and vis != INHERIT and vis not in TAGS:
+            add("error", "bad_tag", rel, f"Unknown visibility tag '{m['visibility']}'. Until it is fixed the document is visible to the owner only.")
+        elif not vis:
+            add("error", "visibility_missing", rel, "No visibility tag in the header. A document with none takes the tag of its folder, and with no folder tag it is visible to the owner only. Write `visibility: inherit` to take the folder's tag on purpose.")
+        elif vis in TAGS:
+            folder_tag = folder_declared_tag(p.parent, root, folder_cache)
+            if folder_tag and meet_tag(vis, folder_tag) != vis:
+                add("warning", "wider_than_folder", rel, f"The header says '{vis}', but its folder says '{folder_tag}'. The narrower tag '{meet_tag(vis, folder_tag)}' is used. Write `visibility: inherit`, or move the file to the folder that matches.")
         rb = m.get("review_by", "")
         if not rb:
             add("warning", "review_missing", rel, "No review date. A document without one counts as overdue.")
@@ -340,7 +362,8 @@ def check(root: Path, today: date | None = None) -> FolderReport:
         for target in LINK.findall(body):
             if re.match(r"^(https?:|mailto:)", target):
                 continue
-            if not (p.parent / target.replace("%20", " ")).resolve().exists():
+            dest = (p.parent / target.replace("%20", " ")).resolve()
+            if not _inside(root, dest) or not dest.exists():  # a link that leaves the folder is reported like a missing one, so the check cannot be used to find out which files exist elsewhere
                 add("error", "broken_link", rel, f"The link to {target} does not resolve.")
     for f in folders:
         docs = [p for p in iter_docs(f)]

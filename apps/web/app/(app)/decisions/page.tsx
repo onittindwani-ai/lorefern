@@ -17,7 +17,7 @@ export default function DecisionsPage() {
     { key: "date", header: "Decided", width: "110px", render: (d) => d.decided_on ?? "", sortValue: (d) => d.decided_on ?? "" },
     { key: "title", header: "Decision", width: "1.4fr", render: (d) => <span><strong>{d.title}</strong>{d.why ? <span className="cx-mini"> · {d.why}</span> : null}</span>, sortValue: (d) => d.title },
     { key: "by", header: "By", width: "140px", render: (d) => d.decided_by, sortValue: (d) => d.decided_by },
-    { key: "src", header: "Meeting", width: "1fr", render: (d) => d.meeting_id ? <Link href={`/meetings/${d.meeting_id}`}>{d.meeting_title || "Open"}</Link> : "" },
+    { key: "src", header: "Meeting", width: "1fr", render: (d) => d.meeting_id ? <Link href={`/meetings/${d.meeting_id}`}>{d.meeting_title || "Open"}</Link> : d.source_gone ? <span className="cx-mini">Source removed or renamed</span> : "" },
     { key: "tag", header: "Visible to", width: "110px", render: (d) => <TagBadge tag={d.tag} /> },
     { key: "st", header: "Status", width: canWrite ? "230px" : "110px", render: (d) => d.status === "proposed" && canWrite ? <span className="cx-card__acts"><Button size="sm" variant="primary" onClick={async () => { await act.mutateAsync({ id: d.id, ok: true }); }}>Confirm</Button><Button size="sm" onClick={async () => { await act.mutateAsync({ id: d.id, ok: false }); }}>Reject</Button></span> : <Badge tone={d.status === "confirmed" ? "success" : d.status === "proposed" ? "accent" : "neutral"}>{d.status}</Badge> },
   ];

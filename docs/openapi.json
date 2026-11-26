@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Lorefern API",
-  "version": "1.0.0"
+  "version": "1.0.1"
  },
  "paths": {
   "/health": {
@@ -135,7 +135,7 @@
     "tags": [
      "auth"
     ],
-    "summary": "End the session (the web app clears the cookie)",
+    "summary": "End the session: the token stops working on this server and its live streams close (the web app also clears the cookie)",
     "operationId": "logout_api_auth_logout_post",
     "responses": {
      "200": {
@@ -1444,6 +1444,18 @@
        "type": "integer",
        "title": "Sid"
       }
+     },
+     {
+      "name": "confirm_removals",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "description": "Meetings sources only: the owner confirms that a large drop in the number of meetings is real, so they are removed.",
+       "default": false,
+       "title": "Confirm Removals"
+      },
+      "description": "Meetings sources only: the owner confirms that a large drop in the number of meetings is real, so they are removed."
      }
     ],
     "responses": {
@@ -1581,7 +1593,7 @@
     "tags": [
      "admin"
     ],
-    "summary": "Pending and recent approvals",
+    "summary": "Pending and recent approvals, with the recipients and the exact text of anything that would be sent",
     "operationId": "approvals_api_approvals_get",
     "responses": {
      "200": {
@@ -2085,10 +2097,12 @@
     "properties": {
      "email": {
       "type": "string",
+      "maxLength": 254,
       "title": "Email"
      },
      "password": {
       "type": "string",
+      "maxLength": 1024,
       "title": "Password"
      }
     },
@@ -2124,9 +2138,15 @@
       "default": "file"
      },
      "visibility": {
-      "type": "string",
-      "title": "Visibility",
-      "default": "company"
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Visibility"
      }
     },
     "type": "object",
@@ -2185,6 +2205,11 @@
       "type": "string",
       "maxLength": 300,
       "title": "Uri",
+      "default": ""
+     },
+     "untagged_tag": {
+      "type": "string",
+      "title": "Untagged Tag",
       "default": ""
      }
     },
@@ -2388,6 +2413,17 @@
        }
       ],
       "title": "Default Tag"
+     },
+     "untagged_tag": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Untagged Tag"
      }
     },
     "type": "object",

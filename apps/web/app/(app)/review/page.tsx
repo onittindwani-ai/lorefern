@@ -8,9 +8,9 @@ import { get, post } from "@/lib/api";
 import { useRole } from "@/lib/hooks";
 import type { ReviewDoc, ReviewRow } from "@/lib/types";
 
-const LINK = /\[([^\]]+)\]\((\/[^)\s]*)\)/g;
+const LINK = /\[([^\]]+)\]\((\/(?:tasks|decisions|meetings|sops)\?open=\d+)\)/g;
 
-/** Inline links point only inside the app. A meeting link goes to the meeting page. */
+/** Inline links point only at the records a review is built from (a task, a decision, a meeting or a process), never anywhere else. A meeting link goes to the meeting page. */
 function inline(text: string): ReactNode[] {
   const out: ReactNode[] = [];
   let at = 0;

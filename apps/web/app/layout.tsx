@@ -5,7 +5,7 @@ import "@sendora/ui-kit/styles.css";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
-export const metadata: Metadata = { title: "Lorefern", description: "Support and success desk with cited answers, a groundedness check and refunds that always need a person." };
+export const metadata: Metadata = { title: "Lorefern", description: "A company knowledge base with cited answers and a visibility tag on every document." };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

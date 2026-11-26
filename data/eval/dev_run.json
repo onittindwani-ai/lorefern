@@ -3,8 +3,8 @@
  "correct": 33,
  "accuracy": 0.868,
  "leaks": 0,
- "citations_checked": 41,
- "citations_valid": 41,
+ "citations_checked": 42,
+ "citations_valid": 42,
  "per_class": {
   "conflict": {
    "n": 4,
@@ -70,7 +70,7 @@
    "question": "Who is the account manager and what does onboarding start with?",
    "audience": "staff",
    "why": "missing: welcome email",
-   "answer": "She owns invoicing and spending approvals. - Leo Fischer: account manager. Leo, Brightside Physio signed the Care Plan, so the onboarding of"
+   "answer": "She owns invoicing and spending approvals. - Leo Fischer: account manager. Order the laptop two weeks before the start date. He owns client "
   },
   {
    "id": "d29",

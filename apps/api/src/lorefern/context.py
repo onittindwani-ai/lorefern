@@ -8,7 +8,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from lorefern import clock, model_tasks
+from lorefern import clock, model_tasks, util
 from lorefern.config import Settings
 from lorefern.models import State
 from lorefern.offline_llm import OfflineBackend
@@ -45,7 +45,10 @@ class Ctx:
         return clock.now(session, self.settings.demo_mode)
 
     def today(self, session: Session) -> date:
-        return clock.today(session, self.settings.demo_mode)
+        """Today's date in the company's time zone (TIMEZONE). A demo uses its own fixed clock in UTC."""
+        n = clock.now(session, self.settings.demo_mode)
+        tz = None if self.settings.demo_mode else util.zone(self.settings.timezone)
+        return (n.astimezone(tz) if tz else n).date()
 
     def llm(self, session: Session) -> LLM:
         # LLM_BACKEND=offline (default) | fixture | anthropic. The offline stand in is the zero account default.

@@ -10,4 +10,4 @@ Lorefern reads company documents and meeting transcripts and turns them into ans
 6. **A second person approves.** Lorefern never lets the person who proposed a task approve it. Agree who the second person is.
 7. **Know your rules.** Employee data, recordings and cross border storage are regulated in some places. Check where you operate.
 
-Run `make check-env` and `python3 tools/doctor.py` for the technical side. They never print a secret.
+Run `make check-env` and `.venv/bin/python tools/doctor.py` for the technical side. They never print a secret.

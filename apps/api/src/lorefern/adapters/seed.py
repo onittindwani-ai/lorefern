@@ -9,7 +9,7 @@ class SeedKnowledge:
     def __init__(self, settings=None):
         self.settings = settings
 
-    def list_documents(self) -> list[RemoteDoc]:
+    def list_documents(self, scope=None) -> list[RemoteDoc]:
         return []
 
     def healthcheck(self):

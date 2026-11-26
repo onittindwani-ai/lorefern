@@ -2,14 +2,39 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from datetime import date, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from lorefern.models import Owner, Reminder, Task
 from lorefern.tasks import OPEN_STATES
 from sendora_core.safety import guard_write
+
+
+SUBJECT = "Task reminder"
+
+
+def preview(session: Session, settings, ids: list[int]) -> list[dict]:
+    """Exactly what a send of these reminders would put in front of the outside world: the address, the subject and the body of each one, and whether the address is outside the
+    company's domains. The person who approves a send reads this, and the approval is bound to it (see `digest`)."""
+    out = []
+    for rid in ids:
+        r = session.get(Reminder, rid)
+        t = session.get(Task, r.task_id) if r is not None else None
+        if r is None or t is None:
+            continue
+        o = session.get(Owner, t.owner_id) if t.owner_id else None
+        to = (o.email if o else "") or ""
+        out.append({"id": r.id, "task": t.title, "to": to, "subject": SUBJECT, "body": r.body, "outside": bool(to) and not settings.email_allowed(to)})
+    return out
+
+
+def digest(items: list[dict]) -> str:
+    """A fingerprint of the recipients and the texts. An approval keeps it, and a send is refused when what would go out is no longer what was approved."""
+    return hashlib.sha256(json.dumps([[i["id"], i["to"], i["subject"], i["body"]] for i in items], ensure_ascii=True).encode()).hexdigest()
 
 
 def plan(session: Session, today: date, settings) -> int:
@@ -37,12 +62,28 @@ def plan(session: Session, today: date, settings) -> int:
 
 
 def send(session: Session, settings, email, reminder_ids: list[int]) -> int:
+    """Send drafted reminders, each at most once. A reminder is claimed with one conditional update before its message goes out, so two people (or two clicks) cannot both send it,
+    and each sent reminder is saved at once, so a failure part way never sends the earlier ones again."""
     guard_write(settings, "reminders.send")
     n = 0
-    for r in session.scalars(select(Reminder).where(Reminder.id.in_(reminder_ids), Reminder.status == "drafted")):
+    for rid in reminder_ids:
+        r = session.get(Reminder, rid)
+        if r is None:
+            continue
         o = session.get(Owner, session.get(Task, r.task_id).owner_id)
-        if o and o.email:
-            email.send(to=o.email, subject="Task reminder", body=r.body)
-            r.status = "sent"
-            n += 1
+        if not (o and o.email) or not settings.email_allowed(o.email):
+            continue  # nobody to send to, or an address that is not the company's: never sent, whoever approved
+        claimed = session.execute(update(Reminder).where(Reminder.id == rid, Reminder.status == "drafted").values(status="sending")).rowcount
+        if claimed != 1:
+            continue
+        session.commit()
+        try:
+            email.send(to=o.email, subject=SUBJECT, body=r.body)
+        except Exception:
+            session.execute(update(Reminder).where(Reminder.id == rid).values(status="drafted"))  # not sent: it can be asked for again
+            session.commit()
+            raise
+        session.execute(update(Reminder).where(Reminder.id == rid).values(status="sent"))
+        session.commit()
+        n += 1
     return n

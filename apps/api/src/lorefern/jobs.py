@@ -57,5 +57,5 @@ def schedule_due(session: Session, ctx: Ctx) -> int:
 
 def run_cycle(session: Session, ctx: Ctx) -> dict:
     out = {"read": job_read(session, ctx), "review": job_review(session, ctx)}
-    record_event(session, "cycle.ran", None, None, {"proposed": out["read"]["proposed_tasks"]})
+    record_event(session, "cycle.ran", None, None, {})
     return out

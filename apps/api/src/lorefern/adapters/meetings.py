@@ -10,11 +10,12 @@ What each provider documents (read 2026-11-23, see docs/facts/meetings.md):
 
 from __future__ import annotations
 
+import os
 import re
 
 import httpx
 
-from lorefern.adapters.base import RemoteMeeting, safe_base_url
+from lorefern.adapters.base import RemoteMeeting, RemoteMeetings, safe_base_url
 from sendora_core.adapters import AdapterError
 
 _LINE = re.compile(r"^\s*(?:\[[\d:]+\]\s*)?([A-Z][\w .'\-]{0,40}?)\s*:\s+(.+)$")
@@ -56,6 +57,37 @@ def meeting_from_file(name: str, raw: str, provider: str, held_on: str, title: s
     return RemoteMeeting(name, title or name.rsplit(".", 1)[0].replace("-", " ").title(), held_on, provider, lines)
 
 
+def _json_body(r: httpx.Response, who: str):
+    """The reply as JSON. A reply that is not JSON (a maintenance page) is an error, never an empty list of meetings."""
+    try:
+        return r.json()
+    except ValueError as exc:
+        raise AdapterError(f"{who} answered with something that is not JSON, so nothing was read and nothing was removed.") from exc
+
+
+def _fireflies_transcripts(body) -> list[dict]:
+    """The `transcripts` list of a Fireflies reply, only when the reply has the documented shape. A GraphQL `errors` entry, a null `data` or `transcripts`, or any other shape is an
+    incomplete read (an error): "no meetings came back" is not the same as "there are no meetings", and only the second may remove anything."""
+    if not isinstance(body, dict):
+        raise AdapterError("Fireflies answered in a shape that was not expected, so nothing was read and nothing was removed.")
+    if body.get("errors"):
+        raise AdapterError("Fireflies answered with an error (for example a rate limit), so nothing was read and nothing was removed. It will be tried again.")
+    data = body.get("data")
+    found = data.get("transcripts") if isinstance(data, dict) else None
+    if not isinstance(found, list) or not all(isinstance(t, dict) and "id" in t for t in found):
+        raise AdapterError("Fireflies answered without the list of transcripts (a wrong or swapped key, or a change on their side), so nothing was read and nothing was removed.")
+    return found
+
+
+def _fathom_items(body) -> tuple[list[dict], str | None]:
+    """The `items` and the next cursor of a Fathom reply, only when the reply has the documented shape (see `_fireflies_transcripts`)."""
+    items = body.get("items") if isinstance(body, dict) else None
+    if not isinstance(items, list) or not all(isinstance(m, dict) for m in items):
+        raise AdapterError("Fathom answered without the list of meetings (a wrong key, or a change on their side), so nothing was read and nothing was removed.")
+    cursor = body.get("next_cursor")
+    return items, cursor if isinstance(cursor, str) and cursor else None
+
+
 class FirefliesMeetings:
     def __init__(self, settings, client: httpx.Client | None = None):
         self.settings = settings
@@ -63,28 +95,34 @@ class FirefliesMeetings:
             raise AdapterError("FIREFLIES_TOKEN is empty.")
         self.client = client or httpx.Client(base_url=safe_base_url(settings.fireflies_base_url), timeout=30)
 
-    QUERY = "query { transcripts(limit: 50) { id title date sentences { speaker_name text } summary { action_items } participants } }"
+    LIMIT = 50
+    QUERY = "query { transcripts(limit: %d) { id title date sentences { speaker_name text } summary { action_items } participants } }" % LIMIT
 
-    def list_meetings(self) -> list[RemoteMeeting]:
+    def list_meetings(self) -> RemoteMeetings:
         r = self.client.post("/graphql", headers={"Authorization": f"Bearer {self.settings.fireflies_token}"}, json={"query": self.QUERY})
         if r.status_code in (401, 403):
             raise AdapterError("Fireflies refused the key. Copy a new API key from the Integrations page of your Fireflies account.")
         r.raise_for_status()
-        out = []
-        for t in (r.json().get("data") or {}).get("transcripts") or []:
+        found = _fireflies_transcripts(_json_body(r, "Fireflies"))
+        out = RemoteMeetings(complete=len(found) < self.LIMIT)  # a full page may have more behind it, so it is not known to be everything
+        for t in found:
             date = str(t.get("date") or "")[:10]
             if date.isdigit():  # milliseconds since 1970
                 from datetime import UTC, datetime
 
                 date = datetime.fromtimestamp(int(t["date"]) / 1000, UTC).strftime("%Y-%m-%d")
-            lines = [(s.get("speaker_name") or "Unknown", s.get("text") or "") for s in t.get("sentences") or [] if (s.get("text") or "").strip()]
+            lines = [(s.get("speaker_name") or "Unknown", s.get("text") or "") for s in t.get("sentences") or [] if isinstance(s, dict) and (s.get("text") or "").strip()]
             ai = (t.get("summary") or {}).get("action_items") or ""
             out.append(RemoteMeeting(str(t["id"]), t.get("title") or "Meeting", date, "fireflies", lines, list(t.get("participants") or []), [x.strip("* -") for x in ai.splitlines() if x.strip()] if isinstance(ai, str) else []))
         return out
 
     def healthcheck(self):
+        """One small request (who the key belongs to), never a download of 50 transcripts."""
         try:
-            self.list_meetings()
+            r = self.client.post("/graphql", headers={"Authorization": f"Bearer {self.settings.fireflies_token}"}, json={"query": "query { user { user_id } }"})
+            if r.status_code in (401, 403):
+                raise AdapterError("Fireflies refused the key. Copy a new API key from the Integrations page of your Fireflies account.")
+            r.raise_for_status()
             return True, "Connected."
         except Exception as exc:
             return False, str(exc) if isinstance(exc, AdapterError) else f"Could not reach Fireflies: {type(exc).__name__}."
@@ -97,30 +135,60 @@ class FathomMeetings:
             raise AdapterError("FATHOM_TOKEN is empty.")
         self.client = client or httpx.Client(base_url=safe_base_url(settings.fathom_base_url), timeout=30)
 
-    def list_meetings(self) -> list[RemoteMeeting]:
-        out, cursor = [], None
+    def list_meetings(self) -> RemoteMeetings:
+        out, cursor = RemoteMeetings(), None
         for _ in range(20):
             params = {"include_transcript": "true", "include_action_items": "true", **({"cursor": cursor} if cursor else {})}
             r = self.client.get("/external/v1/meetings", params=params, headers={"X-Api-Key": self.settings.fathom_token})
             if r.status_code in (401, 403):
                 raise AdapterError("Fathom refused the key. Create a new API key in your Fathom settings.")
             r.raise_for_status()
-            body = r.json()
-            for m in body.get("items", []):
-                lines = [((t.get("speaker") or {}).get("display_name") or "Unknown", t.get("text") or "") for t in m.get("transcript") or [] if (t.get("text") or "").strip()]
+            items, cursor = _fathom_items(_json_body(r, "Fathom"))
+            for m in items:
+                lines = [((t.get("speaker") or {}).get("display_name") or "Unknown", t.get("text") or "") for t in m.get("transcript") or [] if isinstance(t, dict) and (t.get("text") or "").strip()]
                 items = [a.get("description", "") for a in m.get("action_items") or []]
                 out.append(RemoteMeeting(str(m.get("recording_id")), m.get("title") or m.get("meeting_title") or "Meeting", str(m.get("created_at", ""))[:10], "fathom", lines, [], items))
-            cursor = body.get("next_cursor")
             if not cursor:
+                out.complete = True  # paged to the end
                 break
         return out
 
     def healthcheck(self):
+        """One small request (the first page of meetings, without transcripts), never every page with every transcript."""
         try:
-            self.list_meetings()
+            r = self.client.get("/external/v1/meetings", headers={"X-Api-Key": self.settings.fathom_token})
+            if r.status_code in (401, 403):
+                raise AdapterError("Fathom refused the key. Create a new API key in your Fathom settings.")
+            r.raise_for_status()
             return True, "Connected."
         except Exception as exc:
             return False, str(exc) if isinstance(exc, AdapterError) else f"Could not reach Fathom: {type(exc).__name__}."
+
+
+_INVISIBLE = {ord(c): None for c in "\ufeff\u200b\u200c\u200d\u2060\u00ad\x00"}  # byte order mark, zero width characters, soft hyphen and NUL: invisible in an editor, fatal to a string match
+_HEADER_END = re.compile(r"\n[ \t]*---[ \t]*(?:\n|$)")
+
+
+def split_header(raw: str) -> tuple[list[str], str]:
+    """The header lines of a transcript file (each stripped of invisible characters and of indentation) and the body after the `---` line. Windows line ends, a byte order mark, a
+    zero width character or an indented line cannot hide a header line. A file with no `---` line is all header and has no body (as it always was), so a `visibility:` line anywhere in it
+    is still honoured."""
+    text = raw.replace("\r\n", "\n").replace("\r", "\n").translate(_INVISIBLE)
+    m = _HEADER_END.search("\n" + text)
+    if m is None:
+        return [ln.strip() for ln in text.split("\n") if ln.strip()], ""
+    head, body = ("\n" + text)[: m.start()], ("\n" + text)[m.end():]
+    return [ln.strip() for ln in head.split("\n") if ln.strip()], body
+
+
+def header_fields(lines: list[str]) -> dict[str, str]:
+    """`key: value` per header line, keys in lower case. A key may have spaces around its colon. The first line of a key wins."""
+    out: dict[str, str] = {}
+    for ln in lines:
+        if ":" in ln:
+            k, v = ln.split(":", 1)
+            out.setdefault(k.strip().lower(), v.strip())
+    return out
 
 
 def load_transcript_file(path) -> RemoteMeeting:
@@ -128,9 +196,8 @@ def load_transcript_file(path) -> RemoteMeeting:
     from pathlib import Path
 
     p = Path(path)
-    raw = p.read_text(encoding="utf-8", errors="replace")
-    head, _, body = raw.partition("\n---\n")
-    meta = {k.strip().lower(): v.strip() for k, v in (ln.split(":", 1) for ln in head.splitlines() if ":" in ln)}
+    head, body = split_header(p.read_text(encoding="utf-8", errors="replace"))
+    meta = header_fields(head)
     provider = meta.get("provider", "file")
     m = meeting_from_file(p.name, body, provider, meta.get("date", ""), meta.get("title", ""))
     m.external_id = p.stem
@@ -138,13 +205,11 @@ def load_transcript_file(path) -> RemoteMeeting:
 
 
 def visibility_of(path) -> str:
+    """The tag a transcript file writes about itself in its header ("" when it writes none)."""
     from pathlib import Path
 
-    head = Path(path).read_text(encoding="utf-8", errors="replace").partition("\n---\n")[0]
-    for ln in head.splitlines():
-        if ln.lower().startswith("visibility:"):
-            return ln.split(":", 1)[1].strip()
-    return ""
+    head, _ = split_header(Path(path).read_text(encoding="utf-8", errors="replace"))
+    return header_fields(head).get("visibility", "")
 
 
 class FileMeetings:
@@ -160,17 +225,34 @@ class FileMeetings:
 
         return Path(self.settings.knowledge_dir) / "meetings" if self.settings.knowledge_dir else None
 
-    def list_meetings(self) -> list[RemoteMeeting]:
-        d, out = self._dir(), []
+    def list_meetings(self) -> RemoteMeetings:
+        """Complete only when the folder is there, could be listed, and every transcript file in it was read: a file that is skipped (a link, too large, unreadable), a folder that is not
+        there and a folder that cannot be listed are not deleted meetings."""
+        d, out = self._dir(), RemoteMeetings()
         if d is None or not d.is_dir():
             return out
-        root = d.resolve()
-        for p in sorted(d.glob("*.txt")):
-            if p.is_symlink() or root not in p.resolve().parents or p.stat().st_size > self.MAX_BYTES:
+        try:
+            root = d.resolve()
+            with os.scandir(d) as entries:  # a folder the app may not read raises here, where `glob` would quietly return an empty list
+                names = sorted(e.name for e in entries if e.name.endswith(".txt"))
+        except OSError:
+            return out
+        complete = True
+        for name in names:
+            p = d / name
+            try:
+                if p.is_dir():
+                    continue
+                if p.is_symlink() or root not in p.resolve().parents or p.stat().st_size > self.MAX_BYTES:
+                    complete = False
+                    continue
+                m = load_transcript_file(p)
+                m.visibility = visibility_of(p)  # type: ignore[attr-defined]
+            except OSError:
+                complete = False
                 continue
-            m = load_transcript_file(p)
-            m.visibility = visibility_of(p)  # type: ignore[attr-defined]
             out.append(m)
+        out.complete = complete
         return out
 
     def healthcheck(self):

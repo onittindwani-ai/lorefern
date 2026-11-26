@@ -2,11 +2,11 @@
 
 ## Built in
 
-- **Visibility:** every document, passage, meeting, task, decision and review has one tag. The filter runs inside every query. A restricted item answers "not found" exactly like a missing one. A source with a stricter tag fixes the tag of everything in it, and an unknown tag becomes `leadership`.
+- **Visibility:** every document, passage, meeting, task, decision and review has one tag. The filter runs inside every query. A restricted item answers "not found" exactly like a missing one. A source with a stricter tag fixes the tag of everything in it, and a missing or unknown tag becomes `people` (owner only), never `company`. A document's own tag, the tags of its folders and the source's tag are combined and the narrowest wins (a document can narrow its folder, never widen it; `visibility: inherit` takes the folder's tag). Deleted or unshared documents leave the index on the next read that finishes: a read that stopped early, or could not read a file, removes nothing. A meeting's tasks and decisions carry the meeting's tag, and narrowing a meeting clears the weekly reviews, process evidence and stored answers built before. Setting a source back never reopens a row that was narrowed meanwhile. A meeting that its recorder or folder no longer returns is removed (after a read that saw everything), with its transcript, passages, decisions and proposed tasks.
 - **A preview can narrow, never widen,** and cannot change anything.
 - **Content is data.** Instruction like lines in a transcript or a document are flagged and never become tasks, decisions or answer text.
 - **Proposals need a person.** Nothing becomes a task without an owner or leadership approval.
-- **Sending needs two people.** Reminders are drafted. A different person approves. Execution is idempotent and blocked in draft mode and by the kill switch. The requester cannot approve their own request.
+- **Sending needs two people.** Reminders are drafted. A different person approves, after reading the recipients and the exact text, and the approval is refused if either changed. Task owners and recipients must be on the company's email domains. Execution is idempotent and blocked in draft mode and by the kill switch. The requester cannot approve their own request, and an approval about work a person may not see cannot be decided by them.
 - **Fetch guard:** outbound requests refuse private and local addresses.
 - **Files:** the folder reader skips links that leave the folder, files over 10 MB and damaged PDFs. The Slack zip reader limits member sizes and refuses paths that leave the folder. Source paths must be inside `KNOWLEDGE_DIR`.
 - **Login:** password hashes only, rate limited, cookie flags set, a required header on every change so another site cannot make the browser change data.
@@ -24,12 +24,17 @@ Tests cover the visibility boundary for four audiences (search, lists, counts, e
 - **Per user source permissions are not mirrored.** Tags are the only rule. Read `docs/13-SECURITY-AND-DATA.md`.
 - **Single tenant.** One company per install.
 - No penetration test. No real vendor was contacted.
-- Docker images were not built and the deploy files were not run.
-- Rate limits are per process. Behind several processes they are not shared.
-- The Drive token is not refreshed automatically.
+- CI builds the Docker images and starts the compose stack on GitHub. The deploy files were not run on a real host.
+- Rate limits are per process. Behind several processes they are not shared. Signing out ends a token in this process only (the list is in memory); there is no real session store in the shared base.
 - The injection detector is a list of patterns. Safety does not rest on it alone, because nothing can become a task or decision without a person.
-- If you connect a language model later, document text and questions go to that vendor.
+- If you connect a language model (`LLM_BACKEND`), document passages the person may see, questions and, for the optional jobs, transcripts and company wide process lines go to that vendor. The default sends nothing.
+- Search ranking uses statistics of the passages a person may see, and compares at most the newest 20,000 visible passages by word vector per question.
 
 ## Report a problem
 
-Open a private security advisory on the repository. Do not post keys or company documents in an issue.
+Use the repository's **Security** tab, then **Report a vulnerability**, which is private. We aim to acknowledge within 5 working days. Do not post keys or company documents in a public issue.
+
+## Two risks to know
+
+- **Demo mode.** `DEMO_MODE=true` with no owner password hash switches on a public demo password, example accounts and a route that wipes the database. The app refuses to start with that on a server database, and refuses `DEMO_MODE=false` with an example secret. Never run a demo on a real company's documents.
+- **Secrets.** `SESSION_SECRET`, password hashes, the Drive key, tokens and the SMTP password live only in the environment. Use a random `SESSION_SECRET` of 32 or more characters, rotate anything that was ever pasted into a chat or a ticket, and never commit a `.env` file.

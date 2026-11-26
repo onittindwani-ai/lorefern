@@ -3,8 +3,8 @@
 Do every line. Do not skip the first run in draft mode.
 
 1. **Facts to confirm with the company** (Lorefern ships decided defaults, a starting point you change per client): working days, how many days of silence make a task stuck, how many open tasks make a person overloaded, who may approve tasks, who counts as leadership, who may see finance and people material.
-2. `DEMO_MODE=false`, a real `OWNER_PASSWORD_HASH`, a long `SESSION_SECRET`, the second approver login set (`APPROVER_EMAIL`, `APPROVER_PASSWORD_HASH`), and a password hash for everyone in `MEMBERS_JSON`.
-3. **Decide the visibility tag of every source** (doc 13) before the first read. Read the plain statement there: Lorefern does not copy Drive, Notion or Slack permissions.
+2. `DEMO_MODE=false`, a real `OWNER_PASSWORD_HASH`, a long `SESSION_SECRET` (32 or more random characters: the app will not start with `DEMO_MODE=false` and an example value), `COMPANY_NAME`, `EMAIL_FROM` and `TIMEZONE` set to your own (with `MODE=live` the app refuses to start while the first two are the demo values), the second approver login set (`APPROVER_EMAIL`, `APPROVER_PASSWORD_HASH`), and a password hash for everyone in `MEMBERS_JSON`.
+3. **Decide the visibility tag of every source** (doc 13) before the first read. A document with no tag of its own, on its folder or from you is visible to the owner only: check the Sources page for what each source gives such documents, and tag the rest. Read the plain statement there: Lorefern does not copy Drive, Notion or Slack permissions.
 4. Run the company folder check (`python3 tools/check_company_folder.py <folder>`) and fix every error. Read the warnings.
 5. Load the real documents. Open the Sources page and read the counts. Sign in as each audience (or use View as) and ask a question you know only leadership should see. It must answer "not found" for staff.
 6. Run in draft mode for at least two weeks. Compare the tasks Lorefern proposed with what people actually agreed. Count the misses and the false items, because the demo numbers in `EXTRACTION-EVAL.md` are for made up meetings only.

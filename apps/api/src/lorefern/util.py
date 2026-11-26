@@ -12,7 +12,8 @@ ROLE_LOCALPARTS = {
     "info", "sales", "admin", "office", "support", "hello", "contact", "team", "billing", "help",
     "marketing", "hr", "jobs", "careers", "noreply", "no-reply", "enquiries", "inquiries", "accounts",
 }
-FREE_MAIL_DOMAINS = {"gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com", "proton.me", "gmail.example.test"}
+FREE_MAIL_DOMAINS = {"gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.uk", "outlook.com", "hotmail.com", "live.com", "msn.com", "aol.com", "icloud.com", "me.com", "mac.com", "proton.me", "protonmail.com", "pm.me",
+                     "gmx.com", "gmx.net", "mail.com", "yandex.com", "zoho.com", "gmail.example.test"}  # addresses anyone can get: listing one of these as "the company's domain" would allow the whole world
 
 
 def normalize_email(value: str) -> str:

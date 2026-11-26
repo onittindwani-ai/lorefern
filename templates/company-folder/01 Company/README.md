@@ -23,4 +23,4 @@ The founder owns this folder at {{COMPANY}}. The owner keeps every document here
 This folder is reviewed every 6 months. The review date of each document sits in its header. A document past its review date is flagged in the weekly operating review.
 
 ## Who may see it
-Visibility tag: company. See `00 Governance/document-standards.md`.
+Visibility tag: company. Every document here takes this tag, or a narrower one when its own header says so (`visibility: inherit` means "take the folder's tag"). A document can never be seen by more people than the folder allows.

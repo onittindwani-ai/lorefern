@@ -12,7 +12,7 @@ from sendora_core.adapters import AdapterError
 
 
 class KnowledgeSource(Protocol):
-    def list_documents(self) -> list["RemoteDoc"]: ...
+    def list_documents(self, scope: list[str] | None = None) -> list["RemoteDoc"]: ...
     def healthcheck(self) -> tuple[bool, str]: ...
 
 
@@ -27,6 +27,24 @@ class RemoteDoc:
     title: str
     text: str
     updated_on: str = ""
+
+
+class RemoteDocs(list):
+    """The documents one read returned. `complete` is False when the read stopped before it saw everything (a page limit, a folder limit, a request that failed): a document that is not in
+    the list may still be there, so the reader must not treat it as deleted."""
+
+    def __init__(self, items=(), complete: bool = True):
+        super().__init__(items)
+        self.complete = complete
+
+
+class RemoteMeetings(list):
+    """The meetings one read returned. `complete` is True only when the read is known to have seen every meeting there is: a folder that was read in full, or an API that was paged to its
+    end. A meeting that is not in an incomplete list may still be there, so the reader must not treat it as deleted. A plain list counts as incomplete."""
+
+    def __init__(self, items=(), complete: bool = False):
+        super().__init__(items)
+        self.complete = complete
 
 
 def safe_base_url(url: str, *, allow_http_local: bool = False) -> str:

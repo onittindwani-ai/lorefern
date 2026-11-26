@@ -52,9 +52,7 @@ for (const email of ["finance@example.test", "staff@example.test"]) {
     const { ctx, page, errors } = await as(browser, email);
     await expect(page.getByRole("button", { name: "Run now" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "+1 day" })).toBeDisabled();
-    await page.goto("/integrations");
-    await expect(page.getByRole("button", { name: "Test the one in use" }).first()).toBeDisabled();
-    for (const p of ["/folder", "/approvals", "/audit"]) {
+    for (const p of ["/integrations", "/folder", "/approvals", "/audit"]) {
       await page.goto(p);
       await expect(page.getByText("This page is for the owner and leadership")).toBeVisible();
     }
