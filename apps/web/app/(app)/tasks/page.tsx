@@ -56,7 +56,7 @@ export default function TasksPage() {
   return (
     <div className="cx-page">
       <PageHead title="Tasks" sub="Tasks found in meetings wait in Proposed until a person approves them. Nothing becomes a task by itself." actions={<><SegmentedControl label="View" value={view} onChange={setView} options={[{ value: "board", label: "Board" }, { value: "table", label: "Table" }]} />{canWrite && proposedCount ? <Button variant="primary" onClick={async () => { await bulk.mutateAsync(); }}>{`Approve all proposed (${proposedCount})`}</Button> : null}<Button variant={onlyStuck ? "primary" : "ghost"} feedback={false} onClick={() => setOnlyStuck((v) => !v)}>{onlyStuck ? "Showing stuck work" : `Stuck work (${stuckIds.size})`}</Button></>} />
-      {q.isError ? <LoadError error={q.error} onRetry={() => q.refetch()} what="tasks" /> : !q.data ? <ListSkeleton rows={6} /> : items.length === 0 ? <EmptyState title="No tasks to show" body="Import a meeting transcript and Lorefern will propose the action items it finds." actionLabel="Open meetings" onAction={() => window.location.assign("/meetings")} /> : view === "table" || items.length > 400 ? (
+      {q.isError ? <LoadError error={q.error} onRetry={() => q.refetch()} what="tasks" /> : !q.data || stuck.isPending ? <ListSkeleton rows={6} /> : items.length === 0 ? <EmptyState title="No tasks to show" body="Import a meeting transcript and Lorefern will propose the action items it finds." actionLabel="Open meetings" onAction={() => window.location.assign("/meetings")} /> : view === "table" || items.length > 400 ? (
         <Card><DataTable label="Task table" rows={items} rowKey={(t) => String(t.taskId)} columns={cols} height={560} onRowOpen={(t) => setOpenId(t.taskId)} /></Card>
       ) : (
         <Kanban label="Task board" columns={COLS} items={items} onMove={onMove} onOpen={(t) => setOpenId(t.taskId)} cardLabel={(t) => `task ${t.title}`} renderCard={(t) => {
@@ -69,7 +69,7 @@ export default function TasksPage() {
           );
         }} />
       )}
-      {q.data ? <Reminders /> : null}
+      {q.data && !stuck.isPending ? <Reminders /> : null}
       <Sheet open={!!detail} onOpenChange={(o) => !o && setOpenId(null)} title={detail?.title ?? "Task"} description={detail ? `${detail.status.replace("_", " ")} · ${detail.owner || "no owner"} · ${detail.due_on ? `due ${detail.due_on}` : "no due date"}` : ""}>
         {detail ? <TaskDetail id={detail.id} owners={owners.data ?? []} canWrite={canWrite} onChange={refresh} onApprove={async () => { await approve.mutateAsync(detail); setOpenId(null); }} onReject={async () => { await reject.mutateAsync(detail); setOpenId(null); }} /> : null}
       </Sheet>
